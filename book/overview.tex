@@ -1,6 +1,15 @@
 
 \chapter{OpenMP overview}
-Quick crash course in OpenMP.
-Fork-join parallelism.
+\section{Quick crash course in OpenMP}
+\subsection{Fork-join parallelism}
+\subsection{Shared memory between threads}
+\subsubsection{Data sharing clauses}
 Need to be careful how we explain “shared memory” given the memory sharing rules between host/target we’ll introduce later.
+
+\section{Example: serial to parallel vector add with stack arrays}
 Example: vector add as the first example instead of pi (no reduction, so don’t need map clauses later).
+Stack arrays are useful for the target parts, highlight data sharing clauses
+
+\section{Example: serial to parallel pi}
+Shows use of reduction clause
+
