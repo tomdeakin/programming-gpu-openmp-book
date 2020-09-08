@@ -2,7 +2,29 @@
 
 \chapter{Asynchronous offload}
 \label{chapter:async}
-\section{OpenMP tasking model}
-\section{Target regions as tasks}
+\section{OpenMP tasking model and target regions as tasks}
+\begin{itemize}
+  \item Very brief introduction to tasking.
+  \item Target region is a task.
+  \item Initial thread on host.
+  \item Mergable included target task.
+  \item Initial thread on device, encounters the parallelsim.
+  \item Undeferred, runs straight away.
+\end{itemize}
+
 \section{no wait clause}
-\section{Example: Need something strong. File IO? MPI comms?}
+\begin{itemize}
+  \item nowait clause
+  \item host continues execution
+  \item waiting for tasks with taskwait
+  \item simple depends clause
+  \item Read Using OpenMP book.
+\end{itemize}
+
+\section{Example: TBA}
+\begin{itemize}
+  \item Need something strong.
+  \item File IO?
+  \item MPI comms?
+\end{itemize}
+

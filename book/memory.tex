@@ -4,22 +4,106 @@
 \label{chapter:memory}
 
 \section{Recap implicit data movement}
+\begin{itemize}
+  \item So far only could work with scalars and stack arrays.
+  \item Now we explain heap arrays.
+  \item Recall firstprivate clause.
+  \item The pointer itself will be mapped firstprivate.
+  \item But the data needs to be mapped\dots
+\end{itemize}
+
 \section{Explicit data sharing with the map clause}
-\subsection{Array syntax: impoprtant as non-intuitive in C}
+\subsection{Array syntax: important as non-intuitive in C}
+\begin{itemize}
+  \item Introduce OpenMP array notation.
+  \item array[start:length].
+  \item It is not array[start:end] in C.
+  \item Follows pointer size rules, so don't have to worry about sizeof(T).
+  \item Array notation in Fortran.
+\end{itemize}
+
+\subsection{The map clause}
+\begin{itemize}
+  \item Map clause on a target directive.
+  \item List notation of things to map.
+  \item to, from and tofrom.
+  \item Recall the scoped behaviour: from transfer happens on the closing curly brace.
+  \item allocate and delete and release.
+  \item Some mention of reference counting. Things only transfer based on that. Read the spec for the details.
+\end{itemize}
 
 \subsection{Example: Vector add on the heap}
+\begin{itemize}
+  \item Similar to vector add example so far.
+  \item Arrays now allocated on the heap.
+  \item Show use of map(tofrom) clauses to copy the data to the device, run in parallel, then copy back at end.
+\end{itemize}
 
 \section{Reductions and mapping back result.}
+\begin{itemize}
+  \item Need to know the map clause in OpenMP 4.5 in order to do a reduction on the device.
+  \item map(tofrom: scalar)
+  \item Explain that without this it is firstprivate and not copied back.
+  \item OpenMP 5.0 changes this.
+  \item Explain interation of reduction clause with teams and threads and simd in the OpenMP hierarchy of parallelism.
+\end{itemize}
+
 \subsection{Example: Pi}
+\begin{itemize}
+  \item Show pi reduction example.
+  \item Has no data arrays to map.
+  \item But need to map the reduction result.
+\end{itemize}
 
 \section{Data regions}
+\begin{itemize}
+  \item Motivation: so far expressed data movement for each target region.
+  \item Wasteful as can often just leave it there.
+  \item Wasteful as only want to write it down once.
+\end{itemize}
+
 \subsection{Target data directive}
+\begin{itemize}
+  \item Scoped target data region.
+  \item Useful for lots of kernels running after each other.
+  \item Show an example of this.
+  \item No need to map on the target regions themselves.
+  \item Downsides are the structured block requirements.
+\end{itemize}
+
 \subsection{Target update directive}
+\begin{itemize}
+  \item Need to get data back in the middle of target data region.
+  \item target update directive.
+  \item Uses same map clauses as before.
+  \item Example: convergence, or halo exchange.
+\end{itemize}
+
 \subsection{Target enter/exit data}
-\subsubsection{Mention how this helps with C++ class data in constructors}
+\begin{itemize}
+  \item Change target data environment in unstructured way.
+  \item Expect will need to talk about reference counting again.
+  \item Useful because don't need scoped. But behaves similarly.
+  \item Example use just after every allocation.
+  \item Means this helps with C++ class data in constructors.
+  \item Example: Show the same target data example with the target enter/exit data.
+\end{itemize}
 
 \subsection{Pointer swapping}
+\begin{itemize}
+  \item Pointers are mapped firstprivate.
+  \item Will be remapped on each target region.
+  \item How do you do pointer swapping in a target data region.
+  \item How do you do pointer swapping when you use target enter/exit.
+\end{itemize}
 
 \section{Example: Jacobi or CG or simple linear solver.}
-Key requirements: iterative and pointer swap to motivate cutting down memory movement.
+\begin{itemize}
+  \item Biggest example, showing off everything so far.
+  \item Key requirements: iterative and pointer swap to motivate cutting down memory movement
+  \item Use target enter/exit data regions.
+  \item Use pointer swapping.
+  \item Use target update.
+  \item Uses parallelism, with/without reduction clause.
+\end{itemize}
 
