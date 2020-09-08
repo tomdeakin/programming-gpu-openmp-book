@@ -4,16 +4,64 @@
 \label{chapter:portable}
 
 \section{Performance portability motivation}
+\begin{itemize}
+  \item Computer architectures changing.
+  \item Lots of vendors, CPUs, GPUs etc.
+  \item Want to write code that can run well, and equally well, on all platforms.
+\end{itemize}
+
 \section{Case studies of OpenMP doing well, and not so well}
-Some case studies from experience.
+\begin{itemize}
+  \item Some case studies from experience.
+  \item Use P3HPC studies.
+\end{itemize}
 
 \section{Clause recommendations}
+\begin{itemize}
+  \item In general, don't specify number of threads, number of teams, schedule, etc.
+  \item Some clauses are helpful: collapse.
+\end{itemize}
+
 \subsection{collapse}
-\subsection{schedule}
+\begin{itemize}
+  \item This was explained in Chapter~\ref{chapter:overview}.
+  \item Useful for exposing all the parallelism.
+\end{itemize}
+
 
 \section{Directive recommendations use target teams distribute parallel for simd}
-\subsection{three levels of parallelism in OpenMP vs two in OpenMP}
+\begin{itemize}
+  \item Already recomended the combined directive in Chapter~\ref{chapter:parallelism}.
+  \item Explain the dangers here.
+  \item Part of the picture is the hierarcy of parallelism in OpenMP.
+\end{itemize}
+
+\subsection{three levels of parallelism in OpenMP vs two in hardware}
+\begin{itemize}
+  \item Two levels of parallelism exposed in GPU hardware.
+  \item Ideally use OpenCL terminology of processing elements and compute units.
+  \item Show there is a choice of mapping teams, threads and SIMD onto two levels.
+  \item This is why specifying the number of teams and threads is not portable.
+  \item Case study: Older Cray compilers vs LLVM compilers.
+  \item Cray used to map teams to compute units, and simd to processing elements. Threads are ignored.
+  \item LLVM maps teams to compute units, threads to processing elements. SIMD is ignore.
+  \item Modern cray (9 and 10) follow LLVM approach.
+\end{itemize}
 
 \section{OpenMP 5 features}
+Might be overlap with Chapter~\ref{chapter:future}.
+
 \subsection{Loop}
+\begin{itemize}
+  \item See Chapter~\ref{chapter:parallelism}
+\end{itemize}
+
 \subsection{Metadirectives}
+\begin{itemize}
+  \item Want to write one version which runs on CPUs and GPUs.
+  \item Metadirectives might help.
+  \item Parallelism is universal and compilers ignore the right bits.
+  \item Target tasks probably ignored by compiler too.
+  \item What about the two memory spaces?
+\end{itemize}
+
