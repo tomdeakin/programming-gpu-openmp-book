@@ -1,13 +1,58 @@
 
 \chapter{Running on a target device}
 \section{Host/device model}
-Host with target attached.
+\begin{itemize}
+  \item Host with target attached.
+  \item Target has its own memory space.
+  \item Can have more than one target, device() clause.
+  \item Data moved between host and device by implicit rules and explicit directives.
+\end{itemize}
+
 \subsection{Target construct offloading execution}
+\begin{itemize}
+  \item Target directive.
+  \item Defines movement of execution to the target device.
+  \item Host waits for the region to finish.
+  \item Don't want too much detail here because will go into it in Chapter~\ref{chapter:async}.
+\end{itemize}
 
 \section{The target memory environment and implicit mapping rules.}
+\begin{itemize}
+  \item target directive also triggers data movement
+\end{itemize}
+
 \subsection{Scalar variables}
+\begin{itemize}
+  \item Mapped as firstprivate.
+  \item Example: {\tt int N; double x;}
+  \item What happens to a struct?
+  \item {\bf Not} copied back to the host at end of target region.
+\end{itemize}
+
 \subsection{Stack arrays}
+\begin{itemize}
+  \item Fixed sized stack arrays.
+  \item Complete types. Question: what about arrays of structs?
+  \item Example: {\tt double arr[1024];}
+  \item Copied to device at start of target region, copied back at the end.
+  \item Host not allowed to use copy in the meantime (might be a rule for Chapter~\ref{chapter:async}\dots).
+  \item Data shared between {\bf all threads} on a device.
+\end{itemize}
+
 \subsection{Warning: heap arrays and pointers - reference later chapter}
+\begin{itemize}
+  \item We don't introduce the map clause yet.
+  \item This is done in Chapter~\ref{chapter:memory}.
+  \item This section says that we must do something explicit for everything not covered by the implicit rules.
+  \item Examples of those would be heap arrays, and data-structures with pointers.
+\end{itemize}
 
 \section{Example: Vector add. arrays on stack. No need for map clauses yet.}
+\begin{itemize}
+  \item Takes vector add example from Chatper~\ref{chapter:overview}.
+  \item Arrays are allocated on the stack, so follows implicit mapping rules.
+  \item Example will simply transfer execution.
+  \item Parallelism comes in Chapter~\ref{chapter:parallelism}.
+  \item In OpenCL, have to deal with the host API copying buffers to/from host and device before we can run a meaningful kernel. Thinking in OpenCL might help here.
+\end{itemize}
 

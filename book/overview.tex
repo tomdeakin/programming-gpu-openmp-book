@@ -1,15 +1,45 @@
 
 \chapter{OpenMP overview}
+\label{chapter:overview}
+
 \section{Quick crash course in OpenMP}
+\begin{itemize}
+  \item What OpenMP shared memory is: cores share memory.
+  \item Annotate code with compiler directives.
+  \item API calls.
+\end{itemize}
+
 \subsection{Fork-join parallelism}
+\begin{itemize}
+  \item Parallel: threads in a team.
+  \item Worksharing loops: parallel for.
+  \item Clauses to change effects: num\_threads, etc.
+  \item schedule(static) important to introduce as will need it later.
+  \item collapse() clause.
+  \item Keep simple enough so reader knows notation, but refer to Common Core and Using OpenMP book for more details.
+\end{itemize}
+
 \subsection{Shared memory between threads}
 \subsubsection{Data sharing clauses}
-Need to be careful how we explain “shared memory” given the memory sharing rules between host/target we’ll introduce later.
+\begin{itemize}
+  \item private and firstprivate.
+  \item shared and default(none) clauses.
+  \item Need to be careful how we explain “shared memory” given the memory sharing rules between host/target we’ll introduce later.
+\end{itemize}
 
 \section{Example: serial to parallel vector add with stack arrays}
-Example: vector add as the first example instead of pi (no reduction, so don’t need map clauses later).
-Stack arrays are useful for the target parts, highlight data sharing clauses
+\begin{itemize}
+  \item vector add.
+  \item arrays allocated on the stack instead of heap.
+  \item no reduction yet.
+  \item can reuse this as the first target example without needing map clauses.
+  \item stack arrays might also be useful for first target example to highlight data sharing clauses.
+\end{itemize}
 
 \section{Example: serial to parallel pi}
-Shows use of reduction clause
+\begin{itemize}
+  \item Pi reduction example.
+  \item Shows use of reduction clause.
+\end{itemize}
+
 

@@ -1,18 +1,77 @@
 
 \chapter{Device parallelism}
+\label{chapter:parallelism}
+
+\begin{itemize}
+  \item So far learnt how to transfer execution to the device.
+  \item Also know how to get some memory to the device.
+  \item But not expressed any parallelism on the device yet.
+  \item This is the focus here: running in parallel on a target device.
+  \item OpenMP has a hierarchial view of parallelism, with three levels.
+  \item This chapter will go through them in detail.
+  \item Crucial to remain strictly in OpenMP terminology: the target is still an abstract device (GPU).
+  \item We {\bf do not} talk about how OpenMP teams/threads/simd map to GPU specific things like work-items/work-groups/compute units etc. That will come in Chapter~\ref{chapter:portable}.
+\end{itemize}
+
 \section{Teams}
+\begin{itemize}
+  \item We know about teams from the host.
+  \item Threads are launched in a team.
+  \item Allowed to synchronize threads in a team with barrier.
+  \item Explain barrier if not already done in Chapter~\ref{chapter:overview}.
+  \item May have multiple teams, a league of teams.
+  \item num\_teams clause to target directive.
+  \item num\_threads clause for threads in a team. Multiplicative factor.
+  \item Disclaimer: clauses specifying numbers not good style. See Chapter~\ref{chapter:portable}.
+  \item But need to know about multiple teams having one or more threads.
+  \item Execution so far is master thread in each team executes the code in the target region.
+\end{itemize}
+
 \subsection{teams distribute}
+\begin{itemize}
+  \item Workshare loop iterations between teams.
+  \item Only master thread in each time executes.
+  \item dist\_schedule clause.
+\end{itemize}
 
 \section{parallel}
+\begin{itemize}
+  \item Parallelism for threads in each team.
+  \item Will apply to all teams.
+\end{itemize}
+
 \subsection{parallel for}
-\subsection{simd}
+\begin{itemize}
+  \item Workshare loop iterations between threads in a team.
+  \item Interaction with the teams distribute: iterations distributed in chunks by teams, then iterations of chunk workshared between threads.
+  \item Combined directive: teams distribute parallel for
+\end{itemize}
+
+\section{simd}
+\begin{itemize}
+  \item Each thread executes SIMD instructions.
+  \item Must be applied to a loop.
+  \item Compiler will vectorise it.
+  \item Be careful, because this doesn't behave the same as worksharing depending on the nesting.
+  \item See the Beyond OpenMP book for more details.
+\end{itemize}
 
 \section{teams distribute parallel for simd}
+\begin{itemize}
+  \item Use the combined directive to show parallelism of a big loop.
+  \item Compiler and runtime will deal with mapping and distribution of work.
+\end{itemize}
 
 \section{The loop directive}
+\begin{itemize}
+  \item Question: talk about loop here or in Chapter~\ref{chapter:portable}?
+\end{itemize}
 
-Walking through what each means.
-
-Keep the data on the stack so don’t have to do the data movement? Means we can do all the data movement together later.
-\section{Example: Parallel vector add: arrays on stack. No need for map clauses yet.}
+\section{Example: Parallel vector add}
+\begin{itemize}
+  \item Take vector add from previous chapter.
+  \item Arrays still on stack (no map clauses).
+  \item Keep the data on the stack so don’t have to do the data movement? Means we can do all the data movement together later.
+  \item Example shows adding parallelism using teams distribute parallel for simd.
+\end{itemize}
 
