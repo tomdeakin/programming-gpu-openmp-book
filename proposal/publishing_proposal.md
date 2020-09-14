@@ -14,7 +14,7 @@ We are writing a book that takes the reader through the steps necessary to write
 
 
 # Outstanding Features
-Our book embraces an approach we call *active learning*. The text explains the concepts in distinct, modestly sizes components follows by clear examples the students can code to reinforce the material. Real learning comes from trying out the examples. We have developed this approach for teaching various aspects of OpenMP over the last 15 years in tutorials offered at various supercomputing conferences and other venues. We have also used this approach for teaching OpenCL at similar events, focussing primarily on the fundamentals of programming GPUs. This experience has shown us which examples are best suited for mastering the elements of OpenMP for GPUs.
+Our book embraces an approach we call *active learning*. The text explains the concepts in distinct, modestly sizes components follows by clear examples the students can code to reinforce the material. Real learning comes from trying out the examples. We have developed this approach for teaching various aspects of OpenMP over the last 15 years in tutorials offered at various supercomputing conferences and other venues. We have also used this approach for teaching OpenCL at similar events, focusing primarily on the fundamentals of programming GPUs. This experience has shown us which examples are best suited for mastering the elements of OpenMP for GPUs.
 
 A noteworthy feature of this project is the variety of supplementary materials to support the book. We will provide an online repository containing source codes for the example programs from the book.These examples will be in provided in all languages currently supported by OpenMP: C, C++ and Fortran. In addition, we will create a Fortran Supplement to enable programmers using that language to follow along and translate the examples in the book. We also have a complete set of PowerPoint slides covering the content of the book. This will support instructors who use our book as a text book. 
 
@@ -28,7 +28,7 @@ We have extensive experience both using and teaching OpenMP starting back in 199
 For further details about us, we provide brief CVs appended to the end of this prospectus.
 
 # Related Titles
-Our book is complimentary to the recently published books "Using OpenMP - the Next Step" and "OpenMP Common Core: Making OpenMP Simple Again". Our goal is to provide a book for programmers who want to program their GPU, and the student can then backfill their knowledge of OpenMP using the "OpenMP Common Core" book and then explore other features of OpenMP with the "Next Step" book.
+Our book is complimentary to the recently published books "Using OpenMP - the Next Step" and "OpenMP Common Core: Making OpenMP Simple Again". Our goal is to provide a book for programmers who want to program their GPU, and the student can then back fill their knowledge of OpenMP using the "OpenMP Common Core" book and then explore other features of OpenMP with the "Next Step" book.
 
 To our knowledge, there is currently no book aimed at programming GPUs with OpenMP. GPUs are the prevailing architecture used in parallel computing. Using GPUs to accelerate applications occurs at all scales, from consumer mobile devices and workstations through to high-end data center and high-performance computing (HPC) supercomputers. There is a dire need for a book teaching how to program GPUs using OpenMP.
 
@@ -59,7 +59,7 @@ University of Bristol, 1/2019 - present
 - Senior Research Associate, 3/2020-present
 - Research Associate, 1/2018 - 3/2020
 
-Post-doctoral research focussed on performance portability and characterising performance of key particle transport algorithms on a wide range of many-core architectures.
+Post-doctoral research focused on performance portability and characterising performance of key particle transport algorithms on a wide range of many-core architectures.
 
 ## Education
 Ph.D. Computer Science, University of Bristol, 2018
@@ -88,7 +88,7 @@ Many-core Acceleration of a Discrete Ordinates Transport Mini-app at Extreme Sca
 ## Tutorial Experience
 OpenMP for Computational Scientists tutorial, developed and delivered for training at Government Defence Contractor in 2018.
 
-Programming you GPU with OpenMP tutorial at SC’16-19 (assitant) and co-lead SC'20.
+Programming you GPU with OpenMP tutorial at SC’16-19 (assistant) and co-lead SC'20.
 
 Lecturer on COMS10015: Computer Architecture, University of Bristol, 2020.
 
