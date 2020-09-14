@@ -41,7 +41,7 @@ OpenMP, however, is largely restricted to the high-performance computing (HPC) c
 # Status of the Book
 The book will be modeled closely after the popular "Programming your GPU with OpenMP" tutorials we have been teaching over the last several years. All of the supplementary materials mentioned earlier have been produced and, in some form, released to the public. Hence, the flow for the book’s contents, exercises, and figures have been developed and tested on our target audience. 
 
-We have produced a detailed outline for the book and provide it with this prospectus. We are actively writing the book now, though none of the chapters exist at this time. Given the maturity of the outline and our supporting materials, we believe the writing will progress rapidly. Our hope is to have the book written by the end of 2021; an aggressive schedule but doable given the firm foundation we are starting from in this project.
+We have produced a detailed outline for the book and provide it with this prospectus. We are actively writing the book now, though none of the chapters exist at this time. Given the maturity of the outline and our supporting materials, we believe the writing will progress rapidly. Our hope is to have the book written by the end of 2021/mid 2022 **(??)**; an aggressive schedule but doable given the firm foundation we are starting from in this project.
 
 # Reviewers
 The authors of "Using OpenMP - the Next Step" would be excellent reviewers for our book. In particular, we recommend Ruud van der Pas and Christian Terboven.
