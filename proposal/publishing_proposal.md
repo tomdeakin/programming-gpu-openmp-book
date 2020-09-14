@@ -68,6 +68,16 @@ MSci. Computer Science and Mathematics, University of Bristol, 2012
 
 PGDip. Trumpet Performance, Trinity Laban Conservatoire of Music and Dance, 2014 
 
+## Awards
+
+* Highest rated paper at the 2nd International Workshop on Performance, Portability and Productivity in HPC (P3HPC), 2019.
+* Best paper award at Cray User Group, 2019.
+* University of Bristol Faculty of Engineering Commendation, 2018.
+* Best graduating student in Computer Science and Mathematics sponsored by Bank of America Merrill Lynch, 2012.
+* Letter of Approbation from Bristol University Science Faculty for second-year marks, 2010.
+* Letter of Approbation from Bristol University Science Faculty for first-year marks, 2009.
+
+
 ## Selected Papers
 
 Performance Portability across Diverse Computer Architectures, T. Deakin, S. McIntosh-Smith, J. Price, A. Poenaru, P. Atkinson, C. Popa, J. Salmon. P3HPC international Workshop on Performance, Portability and Productivity in HPC, Supercomputing 2019.
