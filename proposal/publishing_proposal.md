@@ -52,7 +52,7 @@ Simon McIntosh-Smith, a member of the OpenMP Architecture Review Board and colla
 \clearpage
 # CV Tom Deakin
 
-## Experiance
+## Experience
 University of Bristol, 1/2019 - present
 
 - Lecturer in Computer Architecture, 9/2020-1/2021 (fixed term)
