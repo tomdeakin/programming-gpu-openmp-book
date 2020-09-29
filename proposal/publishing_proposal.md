@@ -49,6 +49,8 @@ Likewise, we would recommend authors of "OpenMP Common Core: Making OpenMP Simpl
 
 Simon McIntosh-Smith, a member of the OpenMP Architecture Review Board and collaborator on our OpenMP tutorials would be a good reviewer. He knows about and fully supports our project.
 
+Johannes Doerfert from Argonne National Laboratory works on compiler and runtime implementations of OpenMP in LLVM targeting GPUs, and so would be a great reviewer for our book.
+
 \clearpage
 # CV Tom Deakin
 
