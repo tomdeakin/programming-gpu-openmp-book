@@ -28,7 +28,7 @@
   \item List notation of things to map.
   \item to, from and tofrom.
   \item Recall the scoped behaviour: from transfer happens on the closing curly brace.
-  \item allocate and delete and release.
+  \item alloc and delete and release.
   \item Some mention of reference counting. Things only transfer based on that. Read the spec for the details.
 \end{itemize}
 
@@ -58,8 +58,11 @@
 \section{Data regions}
 \begin{itemize}
   \item Motivation: so far expressed data movement for each target region.
-  \item Wasteful as can often just leave it there.
-  \item Wasteful as only want to write it down once.
+  \item Wasteful as can often just leave it there between target regions.
+  \item Multiple target regions, leaving data resident.
+  \item Motivating example: multiple subsequent transformations to data, and/or iterative solve.
+  \item Wasteful as only want to do the mapping: both writing and in terms of optimal data movement.
+  \item Idea of target data region. Inherited by target regions. Data already exists on the device.
 \end{itemize}
 
 \subsection{Target data directive}
@@ -69,14 +72,7 @@
   \item Show an example of this.
   \item No need to map on the target regions themselves.
   \item Downsides are the structured block requirements.
-\end{itemize}
-
-\subsection{Target update directive}
-\begin{itemize}
-  \item Need to get data back in the middle of target data region.
-  \item target update directive.
-  \item Uses same map clauses as before.
-  \item Example: convergence, or halo exchange.
+  \item From destination determined at start of region.
 \end{itemize}
 
 \subsection{Target enter/exit data}
@@ -89,10 +85,20 @@
   \item Example: Show the same target data example with the target enter/exit data.
 \end{itemize}
 
+\subsection{Target update directive}
+\begin{itemize}
+  \item Need to get data back in the middle of target data region.
+  \item target update directive.
+  \item Uses same map clauses as before.
+  \item Example: convergence, or halo exchange.
+\end{itemize}
+
 \subsection{Pointer swapping}
 \begin{itemize}
-  \item Pointers are mapped firstprivate.
-  \item Will be remapped on each target region.
+  \item Pointers are mapped firstprivate and zero-length arrays.
+  \item Updates reference count.
+  \item Doesn't need to copy any data, and don't need to specify length as already mapped.
+  \item Will be remapped/reevaluated on each target region.
   \item How do you do pointer swapping in a target data region.
   \item How do you do pointer swapping when you use target enter/exit.
 \end{itemize}

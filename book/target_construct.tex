@@ -13,29 +13,31 @@
   \item Target directive.
   \item Defines movement of execution to the target device.
   \item Host waits for the region to finish.
-  \item Don't want too much detail here because will go into it in Chapter~\ref{chapter:async}.
+  \item Don't want too much detail on the tasking model here because will go into it in Chapter~\ref{chapter:async}. It's not relevant for getting starting this early on.
 \end{itemize}
 
 \section{The target memory environment and implicit mapping rules.}
 \begin{itemize}
-  \item target directive also triggers data movement
+  \item target directive also triggers data movement as well as execution.
+  \item first place where data movement is allowed, and will introduce the others at appropriate points.
+  \item Different kinds of data we want to move: scalars, (stack) arrays, heap data/pointers, structures.
 \end{itemize}
 
 \subsection{Scalar variables}
 \begin{itemize}
   \item Mapped as firstprivate.
   \item Example: {\tt int N; double x;}
-  \item What happens to a struct?
+  \item a scalar struct, as long as it is a complete type
   \item {\bf Not} copied back to the host at end of target region.
 \end{itemize}
 
 \subsection{Stack arrays}
 \begin{itemize}
   \item Fixed sized stack arrays.
-  \item Complete types. Question: what about arrays of structs?
   \item Example: {\tt double arr[1024];}
+  \item Complete types. Arrays of structs if complete type.
   \item Copied to device at start of target region, copied back at the end.
-  \item Host not allowed to use copy in the meantime (might be a rule for Chapter~\ref{chapter:async}\dots).
+  \item Host not allowed to use copy in the meantime (with further details on this in Chapter~\ref{chapter:async}\dots).
   \item Data shared between {\bf all threads} on a device.
 \end{itemize}
 
