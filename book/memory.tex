@@ -29,6 +29,7 @@
   \item to, from and tofrom.
   \item Recall the scoped behaviour: from transfer happens on the closing curly brace.
   \item alloc and delete and release.
+  \item Pointer attatchment from OpenMP 5.0
   \item Some mention of reference counting. Things only transfer based on that. Read the spec for the details.
 \end{itemize}
 
@@ -37,6 +38,14 @@
   \item Similar to vector add example so far.
   \item Arrays now allocated on the heap.
   \item Show use of map(tofrom) clauses to copy the data to the device, run in parallel, then copy back at end.
+\end{itemize}
+
+\section{User-defined mappers}
+\begin{itemize}
+  \item From OpenMP 5.0
+  \item Allow user to define how structures are mapped.
+  \item Useful for complex structures
+  \item Example: struct with a pointer variable. Declare mapper of struct which also maps the pointer.
 \end{itemize}
 
 \section{Reductions and mapping back result.}
@@ -113,3 +122,14 @@
   \item Uses parallelism, with/without reduction clause.
 \end{itemize}
 
+\section{Unified shared memory}
+\begin{itemize}
+  \item OpenMP 5 add requires directive
+  \item Which unified shared memory is.
+  \item Data moves back and from at will (page fault).
+  \item Requires hardware support.
+  \item Pros: each to get started, as don't have to map.
+  \item Cons: parallelism is the easy bit, it's the data movement which is important.
+  \item In 5.0, limited performance tuning opportunities.
+  \item Mapping gives you the control for optimal performance.
+\end{itemize}

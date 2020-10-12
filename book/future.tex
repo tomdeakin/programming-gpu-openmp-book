@@ -2,10 +2,26 @@
 \chapter{OpenMP 5.0 and beyond}
 \label{chapter:future}
 
-\section{Pointer attachment and mappers. Useful for mapping structures/classes containing pointers.}
-\section{Requires and unified shared memory.}
-\section{Memory allocators? Might not be relevant to target in current form.}
-\section{Function variants.}
-\section{Reverse offload.}
-\section{Declare target changes.}
 
+\section{Reverse offload.}
+\begin{itemize}
+    \item Offload certain parts back to the host.
+    \item Example: print, or file IO, or what about MPI?
+\end{itemize}
+
+\section{Declare target changes.}
+\begin{itemize}
+    \item Compilers are now allowed to be smarter about figuring out if functions need a device version.
+\end{itemize}
+
+\section{Memory allocators}
+\begin{itemize}
+    \item APIs for allocating Memory
+    \item On the host, useful for allocating in specific regions
+    \item Can allocate on the device.
+    \item Alternative to map(alloc)
+\end{itemize}
+
+
+% Tom: not sure these are that relevant to GPU programming.
+% \section{Function Variants}
