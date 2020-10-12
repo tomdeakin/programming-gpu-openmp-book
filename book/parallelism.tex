@@ -7,10 +7,25 @@
   \item Also know how to get some memory to the device.
   \item But not expressed any parallelism on the device yet.
   \item This is the focus here: running in parallel on a target device.
-  \item OpenMP has a hierarchial view of parallelism, with three levels.
+  \item Firstly, we introduce the loop directive, then the hierarchical view of parallelism, with three levels.
   \item This chapter will go through them in detail.
   \item Crucial to remain strictly in OpenMP terminology: the target is still an abstract device (GPU).
   \item We {\bf do not} talk about how OpenMP teams/threads/simd map to GPU specific things like work-items/work-groups/compute units etc. That will come in Chapter~\ref{chapter:portable}.
+\end{itemize}
+
+\section{The loop directive}
+\begin{itemize}
+  \item Introduce the loop directive.
+  \item First way of parallelising on the device.
+  \item Good for one big parallel loop.
+  \item Challenges of the semantics of nested loop directives - suggest to avoid doing it on the target.
+  \item The spectrum of prescriptive vs descriptive.
+  \item What if you need more control? What happens underneath in OpenMP? Lead into next sections.
+\end{itemize}
+
+\section{The goal: teams distribute parallel for simd}
+\begin{itemize}
+  \item Remind the readers we're heading towards the full directive.
 \end{itemize}
 
 \section{Teams}
@@ -60,11 +75,7 @@
 \begin{itemize}
   \item Use the combined directive to show parallelism of a big loop.
   \item Compiler and runtime will deal with mapping and distribution of work.
-\end{itemize}
-
-\section{The loop directive}
-\begin{itemize}
-  \item Question: talk about loop here or in Chapter~\ref{chapter:portable} or Chapter~\ref{chapter:future}?
+  \item Very similar to loop if you let compiler choose the distribution which you should.
 \end{itemize}
 
 \section{Example: Parallel vector add}
