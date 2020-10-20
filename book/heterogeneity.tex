@@ -4,11 +4,23 @@
 \section{What is Heterogeneous computing and why everyone will be doing it}
 
 \section{The basic building blocks of modern computing}
+
 \begin{itemize}
+\item Introduce a set of standard processors.
 \item  the CPU: the multiprocessor and cache coherent memory
 \item  the SIMD or Vector Unit: lock-step execution across vector lanes
 \item  the GPU:  Index space, kernels, work-items and work-groups
 \end{itemize}
+
+\subsection{Introduce Cache coherent shared memory machine. SMP model.}
+Introduce what a standard CPU looks like. This is the host processor.
+
+\subsection{Introduce GPU model}
+Describe an abstract vendor-neutral GPU.
+Using terms/definitions from OpenCL make this convenient.
+In the book we will describe programming this GPU in OpenMP.
+Later, we include case studies of how this applies to real hardware.
+
 
 \section{Why you need OpenMP: a single code-base for heterogenous hardware}
 
