@@ -4,8 +4,20 @@
 % Tom: Let's use American.
 %
 \chapter{Optimizing GPU code}
+\label{chapter:optimizing}
 
-\section{GPU architecture overview}
+Taught you able general concepts of GPUs and OpenMP.
+Now putting it together, with series of case studies.
+Goes the next level in writing performant code.
+Discuss some specific architectural details of GPUs, and how to write fast code for them.
+
+? Case studies
+
+? Optimizing for memory
+
+? Do we want this?
+
+\section{GPU architecture review}
 \subsection{Case studies. Pick a specific GPU. Map high level abstraction of GPU device model to different real GPU hardware}
 \subsection{Mapping of OpenMP constructs to GPUs}
 
@@ -15,8 +27,6 @@
 % His book on CUDA was hugely impactful.  I sugesst we follow the same 
 % approach.  I'll write up notes later
 %
-
-\section{Branching/simd optimisations}
 
 \section{Coalesced memory access}
 \subsection{AoS vs SoA}
@@ -29,3 +39,6 @@
 \subsection{omp\_pteam\_mem\_alloc}
 (OpenCL) Local memory with OpenMP 5.0 allocate allocator
 \subsection{Example: Matrix multiply: column-major vs row-major.}
+
+%\section{Branching/simd optimisations}
+%Predicates
