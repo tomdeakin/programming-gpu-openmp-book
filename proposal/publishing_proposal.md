@@ -4,13 +4,13 @@ title: Programming your GPU with OpenMP
 author: Tom Deakin, Tim Mattson and Eric Stotzer
 ---
 
-OpenMP is a widely used language for programming the nodes in a parallel computer. Those nodes are now heterogeneous, including a GPU alongside the traditional CPU. We are writing a book to introduce OpenMP to programmers wanting to write parallel programs on their GPU. We want to publish our book with the MIT Press.
+OpenMP is a widely used language for programming the nodes in a parallel computer. Those nodes are now heterogeneous, including a GPU alongside the traditional CPU. We are writing a book to help programmers write parallel programs on their GPU using OpenMP. We want to publish our book with the MIT Press.
 
 
 # Our book
 With the addition of controls to program accelerators such as GPUs, the OpenMP specification has grown in scope and complexity. The OpenMP model of memory and concurrency has been expanded to take into account the massive levels of parallelism available on GPUs.
 
-We are writing a book that takes the reader through the steps necessary to write portable and performant parallel programs targeting GPU architectures with OpenMP. We focus only on those items from OpenMP that are required for programming GPUs.
+We are writing a book that takes the reader through the steps necessary to write portable and performant parallel programs targeting GPU architectures with OpenMP. We focus only on those items from OpenMP that are required for programming GPUs. The knowledge of OpenMP gained from the books on the subject you have recently published at MIT Press are ideal prerequisites for our book.  We will direct readers at these books, and provide some background for those entirely unfamiliar with OpenMP.
 
 
 # Outstanding Features
@@ -21,14 +21,14 @@ A noteworthy feature of this project is the variety of supplementary materials t
 Many of these supplementary materials already exist and can be used to market the book.
 
 # The Authors
-The Authors are experienced OpenMP programmers actively involved in the ongoing evolution of the OpenMP programming language. One of us has been involved from the very beginning; way back in 1996 when a small team came together to define OpenMP. We are all members of the OpenMP Architectural Review Board (ARB).
+The Authors are experienced OpenMP programmers actively involved in the ongoing evolution of the OpenMP programming language. One of us has been involved from the very beginning; way back in 1996 when a small team came together to define OpenMP. We are all members of the OpenMP Architectural Review Board (ARB). One of us was co-chair of the OpenMP ARB Subcommittee that designed the OpenMP support for heterogeneous programming.
 
 We have extensive experience both using and teaching OpenMP starting back in 1998 with the very first OpenMP tutorial offered at SC98. We have developed performance portable parallel programs in OpenMP targeting the latest CPU and GPU architectures. There is no better team to provide an introductory text on programming GPUs with OpenMP.
 
 For further details about us, we provide brief CVs appended to the end of this prospectus.
 
 # Related Titles
-Our book is complimentary to the recently published books "Using OpenMP - the Next Step" and "OpenMP Common Core: Making OpenMP Simple Again". Our goal is to provide a book for programmers who want to program their GPU, and the student can then back fill their knowledge of OpenMP using the "OpenMP Common Core" book and then explore other features of OpenMP with the "Next Step" book.
+Our book is complimentary to the recently published books "Using OpenMP - the Next Step" and "OpenMP Common Core: Making OpenMP Simple Again". Our goal is to provide a book for programmers who want to program their GPU, and the student can then back fill their knowledge of OpenMP using the "OpenMP Common Core" book and then explore other features of OpenMP with the "Next Step" book. We will strongly encourage readers of our book to study these books.
 
 To our knowledge, there is currently no book aimed at programming GPUs with OpenMP. GPUs are the prevailing architecture used in parallel computing. Using GPUs to accelerate applications occurs at all scales, from consumer mobile devices and workstations through to high-end data center and high-performance computing (HPC) supercomputers. There is a dire need for a book teaching how to program GPUs using OpenMP.
 
@@ -36,16 +36,20 @@ To our knowledge, there is currently no book aimed at programming GPUs with Open
 # Audience
 Our book is primarily aimed at developers familiar with parallel programming who wish to program their GPUs. Given the prevalence of generally programmable GPUs, the need for OpenMP programmers is growing and strong. We plan to include sufficient background and context for those readers unfamiliar with OpenMP so that the book may be read in isolation without prerequisites; however we will recommend the MIT Press "OpenMP Common Core: Making OpenMP Simple Again" book for a broader introduction to OpenMP. A key audience are those developers with a new and pressing need to program GPUs for the first time.
 
+Our book will introduce general concepts for writing performance portable parallel programs on GPUs. We will use OpenMP, but many of the general principals we will explain the book are transferable, and so the book can be used as a resource for programming GPUs in general.
+
 OpenMP, however, is largely restricted to the high-performance computing (HPC) community. This does restrict the population of potential readers. We are confident, however, that over time communities outside HPC with interest in performance-computing will migrate to OpenMP; thereby growing the market considerably.  
 
 # Status of the Book
 The book will be modeled closely after the popular "Programming your GPU with OpenMP" tutorials we have been teaching over the last several years. All of the supplementary materials mentioned earlier have been produced and, in some form, released to the public. Hence, the flow for the book’s contents, exercises, and figures have been developed and tested on our target audience. 
 
-We have produced a detailed outline for the book and provide it with this prospectus. We are actively writing the book now, though none of the chapters exist at this time. Given the maturity of the outline and our supporting materials, we believe the writing will progress rapidly. Our hope is to have the book written by the end of 2021/mid 2022 **(??)**; an aggressive schedule but doable given the firm foundation we are starting from in this project.
+We have produced a detailed outline for the book and provide it with this prospectus. We are actively writing the book now, though none of the chapters exist at this time. Given the maturity of the outline and our supporting materials, we believe the writing will progress rapidly. Our hope is to have the book written by mid 2022 in time for key conferences; an aggressive schedule but doable given the firm foundation we are starting from in this project.
 
 # Reviewers
 The authors of "Using OpenMP - the Next Step" would be excellent reviewers for our book. In particular, we recommend Ruud van der Pas and Christian Terboven.
 Likewise, we would recommend authors of "OpenMP Common Core: Making OpenMP Simple Again", in particular Alice Koniges and Yun (Helen) He.
+
+Bill Gropp ...
 
 Simon McIntosh-Smith, a member of the OpenMP Architecture Review Board and collaborator on our OpenMP tutorials would be a good reviewer. He knows about and fully supports our project.
 
@@ -219,10 +223,12 @@ UC Berkeley:  Architecting parallel applications (CS194) 2010, 2011, 2012., 2013
 ## Experience
 Mythic Inc, 2019-present.
 
+- Fellow and Director, Compiler Research.
+
 Texas Instruments, 1989-2019.
 
 - Distinguished Member Technical Staff
-- Developing compilers and related tools for microcontrollers and digital signal processors
+- Developing compilers and related tools for microcontrollers and digital signal processors.
 - Working with silicon design teams to define new processor architectures.
 - Named on 12 US Patents in the areas of processor architecture and compiler technologies. 
 - TI representative on the OpenMP ARB, language committee and co-chair of the accelerator sub-committee.
@@ -231,6 +237,7 @@ Adjunct Associate Professor of Computer Science, University of Houston, 2011-pre
 
 Teaching:
 
+- Fall 2019: 4331 Real-time Systems and Embedded Programming.
 - Spring 2015: 6327 Shared Memory Programming
 - Spring 2012-14: 6327 Shared Memory Programming, with Dr. Barbara Chapman
 - Spring 2011: 4331 Real-time Systems and Embedded Programming.
@@ -274,6 +281,8 @@ OpenMP Accelerator Model.  Eric Stotzer.  IWOMP 2014 and IWOMP 2015.
 The Latest Development of OpenMP 4.0 and 4.5, including the OpenMP offload model.  Alexandre Eichenberger (IBM) and Eric Stotzer. Half-day at PPoPP 2017, Austin, TX, USA.
 
 ## Selected Talks
+Programming Models for a Mixed-Signal AI Inference Accelerator. Keynote talk, IWOMP 2020 (TACC, Austin, Texas).
+
 Towards Using OpenMP in Embedded Systems. Keynote talk, OpenMPCon 2015 (RWTH Aachen University, Germany).
 
 OpenMP Memory Model on Embedded Heterogeneous Multicore Systems. Invited talk, 2nd Annual Workshop on PGAS and Shared Memory Extensions for Heterogeneous Architectures, PGAS-X 2012.
