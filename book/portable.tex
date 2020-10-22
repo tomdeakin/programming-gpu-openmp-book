@@ -1,7 +1,40 @@
 
 
-\chapter{Writing portable code}
+\chapter{Writing performant and portable code}
 \label{chapter:portable}
+
+The book so far as taught general concepts of GPUs and the parts of OpenMP needed to program GPUs.
+This chapter puts everything together, with a series of case studies.
+This takes things to the next level in writing performant code on GPUs.
+We'll discuss specific architectural details of GPUs and how to optimize and write fast code for them.
+
+We'll focus on:
+\begin{itemize}
+  \item Case studies.
+  \item Optimizing for fast memory access.
+  \item Demonstrate the parts of OpenMP needed to obtain this good performance.
+  \item Combine multiple OpenMP directive shown in the previous chapters to show more complex use cases.
+\end{itemize}
+
+\section{Approaches to optimization}
+\begin{itemize}
+  \item Discuss Wen Mei Hwu's approach to optmization as it is extremely powerful.
+\end{itemize}
+
+\subsection{Coalesced memory access patterns}
+\subsection{Column-major vs Row-major memory access}
+\subsection{Example: Jacobi solver or 5-point stencil}
+
+\subsection{Array-of-Structure vs Structure-of-Arrays}
+\subsection{Example: multi-channel image convolution}
+
+\subsection{Team only memory}
+\begin{itemize}
+  \item Equivalent of OpenCL local memory (CUDA shared memory).
+  \item Memory shared between threads in a team.
+  \item Uses OpenMP 5.0 allocaters: omp\_pteam\_mem\_alloc
+\end{itemize}
+\subsection{Example: Matrix multplication}
 
 \section{Performance portability motivation}
 \begin{itemize}
@@ -10,7 +43,31 @@
   \item Want to write code that can run well, and equally well, on all platforms.
 \end{itemize}
 
-\section{Case studies of OpenMP doing well, and not so well}
+
+\section{Directive recommendations use target teams distribute parallel for simd}
+\begin{itemize}
+  \item Already recommended the combined directive in Chapter~\ref{chapter:parallelism}.
+  \item Explain the dangers here.
+  \item Part of the picture is the hierarchy of parallelism in OpenMP.
+\end{itemize}
+
+\subsection{GPU architecture review}
+Quickly summarize the model explained in Chapter~\ref{chapter:heterogeneity}.
+
+\subsection{Mapping OpenMP constructs to GPUs}
+\begin{itemize}
+  \item Three levels of parallelism in OpenMP vs two in hardware.
+  \item Pick a specific GPU. Map high level abstraction of GPU device model to different real GPU hardware.
+  \item Two levels of parallelism exposed in GPU hardware.
+  \item Show there is a choice of mapping teams, threads and SIMD onto two levels.
+  \item This is why specifying the number of teams and threads is not portable.
+  \item Case study: Older Cray compilers vs LLVM compilers.
+  \item Cray used to map teams to compute units, and simd to processing elements. Threads are ignored.
+  \item LLVM maps teams to compute units, threads to processing elements. SIMD is ignore.
+  \item Modern cray (9 and 10) follow LLVM approach.
+\end{itemize}
+
+\section{Case studies of OpenMP doing well}
 \begin{itemize}
   \item Some case studies from experience.
   \item Use P3HPC studies.
@@ -29,24 +86,7 @@
 \end{itemize}
 
 
-\section{Directive recommendations use target teams distribute parallel for simd}
-\begin{itemize}
-  \item Already recomended the combined directive in Chapter~\ref{chapter:parallelism}.
-  \item Explain the dangers here.
-  \item Part of the picture is the hierarcy of parallelism in OpenMP.
-\end{itemize}
 
-\subsection{three levels of parallelism in OpenMP vs two in hardware}
-\begin{itemize}
-  \item Two levels of parallelism exposed in GPU hardware.
-  \item Ideally use OpenCL terminology of processing elements and compute units.
-  \item Show there is a choice of mapping teams, threads and SIMD onto two levels.
-  \item This is why specifying the number of teams and threads is not portable.
-  \item Case study: Older Cray compilers vs LLVM compilers.
-  \item Cray used to map teams to compute units, and simd to processing elements. Threads are ignored.
-  \item LLVM maps teams to compute units, threads to processing elements. SIMD is ignore.
-  \item Modern cray (9 and 10) follow LLVM approach.
-\end{itemize}
 
 \section{Metadirectives}
 \begin{itemize}
