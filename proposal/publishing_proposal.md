@@ -49,7 +49,7 @@ We have produced a detailed outline for the book and provide it with this prospe
 The authors of "Using OpenMP - the Next Step" would be excellent reviewers for our book. In particular, we recommend Ruud van der Pas and Christian Terboven.
 Likewise, we would recommend authors of "OpenMP Common Core: Making OpenMP Simple Again", in particular Alice Koniges and Yun (Helen) He.
 
-Bill Gropp ...
+William (Bill) Gropp, University of Illinois Urbana-Champaign, would be a great reviewer of our book due to his wealth of experience in parallel programming models.
 
 Simon McIntosh-Smith, a member of the OpenMP Architecture Review Board and collaborator on our OpenMP tutorials would be a good reviewer. He knows about and fully supports our project.
 
