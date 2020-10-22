@@ -50,11 +50,11 @@
 
 \section{Reductions and mapping back result.}
 \begin{itemize}
-  \item Need to know the map clause in OpenMP 4.5 in order to do a reduction on the device.
+  \item In OpenMP 5, the reduction result is brought back automatically.
+  \item Need to add a note that in OpenMP 4.5, need to use the map clause to do a reduction on the device.
   \item map(tofrom: scalar)
   \item Explain that without this it is firstprivate and not copied back.
-  \item OpenMP 5.0 changes this.
-  \item Explain interation of reduction clause with teams and threads and simd in the OpenMP hierarchy of parallelism.
+  \item Explain interaction of reduction clause with teams and threads and simd in the OpenMP hierarchy of parallelism.
 \end{itemize}
 
 \subsection{Example: Pi}
