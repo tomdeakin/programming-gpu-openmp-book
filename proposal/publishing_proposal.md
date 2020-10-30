@@ -58,6 +58,8 @@ Johannes Doerfert from Argonne National Laboratory works on compiler and runtime
 \clearpage
 # CV Tom Deakin
 
+[https://hpc.tomdeakin.com](https://hpc.tomdeakin.com)
+
 ## Experience
 University of Bristol, 1/2019 - present
 
