@@ -23,9 +23,6 @@ If the hardware supports it, OpenMP can also operate with a unified view of memo
 
 In figure~\ref{fig:host_device} we show a host with three connected target devices.
 
-We can query the OpenMP runtime for the number of available target devices in the system using the \texttt{omp\_get\_num\_devices()} API call.
-
-
 \begin{figure}[t]
 \label{fig:host_device}
 \centerline{\includegraphics[width=200pt]{figures/host_device.pdf}}
@@ -36,6 +33,8 @@ The memory spaces are distinct.]
 Data and execution can be offloaded from the host to the target device.
 The memory spaces are distinct.}
 \end{figure}
+
+We can query the OpenMP runtime for the number of available target devices in the system using the \texttt{omp\_get\_num\_devices()} API call.
 
 \begin{verbatim}
 #include <stdio.h>
