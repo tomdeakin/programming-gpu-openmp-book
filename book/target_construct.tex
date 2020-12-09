@@ -10,6 +10,16 @@
   \item Data moved between host and device by implicit rules and explicit directives.
 \end{itemize}
 
+\begin{figure}[t]
+\centerline{\includegraphics[width=200pt]{figures/host_device.pdf}}
+\caption[OpenMP host/device model consits of a host processor (typically a CPU) with zero or more attached target devices.
+Data and execution can be offloaded from the host to the target device.
+The memory spaces are distinct.]
+{OpenMP host/device model consits of a host processor (typically a CPU) with zero or more attached target devices.
+Data and execution can be offloaded from the host to the target device.
+The memory spaces are distinct.}
+\end{figure}
+
 \subsection{Target construct offloading execution}
 \begin{itemize}
   \item Target directive.
