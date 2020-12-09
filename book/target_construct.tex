@@ -10,15 +10,42 @@
   \item Data moved between host and device by implicit rules and explicit directives.
 \end{itemize}
 
+When an OpenMP program begins running, it starts executing on the host processor.
+This host processor is usually a CPU.
+This initial thread is essentially the serial program that is running before any OpenMP directives are encountered.
+The host processor has a memory space, which is shared between all threads running on the host processor.
+
+Connected to this host are zero or more target devices. These target devices could be GPUs or other accelerators.
+They each have their own memory space, which is distinct from the memory space of the host processor or any other device.
+This means that data in our programs will be stored either in host memory or device memory.
+OpenMP provides us with implicit rules for automatic data transfer along with explicit controls for the transfer of data between these memory spaces.
+If the hardware supports it, OpenMP can also operate with a unified view of memory where the whole system sees a single memory space available to all; a topic we discuss in chapter~\ref{chapter:memory}.
+
+In figure~\ref{fig:host_device} we show a host with three connected target devices.
+
+We can query the OpenMP runtime for the number of available target devices in the system using the \texttt{omp\_get\_num\_devices()} API call.
+
+
 \begin{figure}[t]
+\label{fig:host_device}
 \centerline{\includegraphics[width=200pt]{figures/host_device.pdf}}
-\caption[OpenMP host/device model consits of a host processor (typically a CPU) with zero or more attached target devices.
+\caption[The OpenMP host/device model consits of a host processor (typically a CPU) where execution begins, with zero or more attached target devices.
 Data and execution can be offloaded from the host to the target device.
 The memory spaces are distinct.]
-{OpenMP host/device model consits of a host processor (typically a CPU) with zero or more attached target devices.
+{The OpenMP host/device model consists of a host processor (typically a CPU) where execution begins, with zero or more attached target devices.
 Data and execution can be offloaded from the host to the target device.
 The memory spaces are distinct.}
 \end{figure}
+
+\begin{verbatim}
+#include <stdio.h>
+#include <omp.h>
+
+int main() {
+  printf("There are %d devices\n",
+    omp_get_num_devices());
+}
+\end{verbatim}
 
 \subsection{Target construct offloading execution}
 \begin{itemize}
