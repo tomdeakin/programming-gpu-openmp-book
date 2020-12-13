@@ -1,0 +1,1122 @@
+\begin{figure*}[!tb]
+\begin{verbatim}
+1 #pragma omp target map(a,b,c,d)
+2 {
+3   for (i=0; i<N; i++) {
+4     a[i] =  b[i] * c + d;
+5   }
+6 } // End of target
+\end{verbatim}
+\caption{ \textbf {Code fragment with one target region} -- \small
+          The target region is executed by a thread running on
+          an accelerator.
+         }
+\label{figure:chapter6-device-v1}
+\end{figure*}
+
+
+\begin{figure*}[!tbhp]
+\begin{verbatim}
+1 omp target map(a,b,c,d)
+2 {
+3   #pragma parallel for
+4   for (i=0; i<N; i++) {
+5     a[i] =  b[i] * c + d;
+6   }
+7 } // End of target
+\end{verbatim}
+\caption{ \textbf {Augmented code fragment with a parallel region} -- \small
+          The parallel region is executed by a team of threads running
+          on an accelerator.
+        }
+\label{figure:chapter6-device-v2}
+\end{figure*}
+
+
+\begin{figure*}[!tbh]
+\begin{verbatim}
+ 1 #pragma omp target map(a,b,c,d) nowait // Generate target task
+ 2 {
+ 3   #pragma parallel for
+ 4   for (i=0; i<N; i++) {
+ 5     a[i] =  b[i] * c + d;
+ 6   }
+ 7 } // End of target
+ 8 
+ 9 F(b); // Execute in parallel with target task
+10
+11 #pragma omp taskwait // Wait for target task to finish
+\end{verbatim}
+\caption{ \textbf {Code fragment with a target nowait region} -- \small
+          The encountering thread generates a target task 
+          and then continues past the target construct
+          to execute the function \emph{F()}.
+         }
+\label{figure:chapter6-nowait}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+1   char *hptr = malloc(N);
+2
+3   // Error - Accessing a host address on accelerator
+4   #pragma omp target map(hptr)
+5   for (int i=0; i<N; i++)
+6     *hptr++ = 0;
+\end{verbatim}
+\caption{ \textbf {Illegal access of a host memory address } -- \small
+          A pointer variable containing a host memory address cannot be
+          de-referenced by an accelerator thread.
+         }
+\label{figure:chapter6-devptr1}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+1   char *dptr;
+2   #pragma omp target map(dptr)
+3   dptr = malloc(N);
+4
+5   // Error - Accessing a device address on host
+6   for (int i=0; i<N; i++)
+7     *dptr++ = 0;
+\end{verbatim}
+\caption{ \textbf {Illegal access of an accelerator memory address} -- \small
+          A pointer variable containing an accelerator memory address 
+          cannot be de-referenced by a host thread.
+         }
+\label{figure:chapter6-devptr2}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+1   int dev = omp_get_default_device();
+2   char *dptr = omp_target_alloc(dev, n);
+3 
+4   #pragma omp target is_device_ptr(dptr)
+5   for (int i=0; i<n; i++)
+6     *dptr++ = 0;
+\end{verbatim}
+\caption{ \textbf {Legal access of an accelerator memory address using a device pointer} -- \small
+          A device pointer variable that appears in an \texttt{is\_device\_ptr} clause 
+          may be de-referenced in a target region.
+        }
+\label{figure:chapter6-devptr3}
+\end{figure*}
+
+
+\begin{figure*}[!tbhp]
+\begin{verbatim}
+1   char *hptr;
+2
+3   hptr = malloc(1024);
+4
+5   // Map an array section.
+6   #pragma omp target map(hptr[0:1024])
+7   for (int i=0; i<N; i++)
+8     hptr[i] = 0;
+9   
+\end{verbatim}
+\caption{ \textbf {Map a pointer-based array section} -- \small
+          Use an array section to map pointed-to memory.
+         }
+\label{figure:chapter6-array-sections1}
+\end{figure*}
+
+
+\begin{figure*}[!tbhp]
+\begin{verbatim}
+ 1 float *p = malloc(N);
+ 2 float a[N];
+ 3
+ 4 // Map pointer based array section
+ 5 map(p[0:N:1]) 
+ 6 map(p[0:N])
+ 7 map(p[:N])
+ 8
+ 9 // Map array based array section
+10 map(A[0:N:1])
+11 map(A[0:N])
+12 map(A[:N])
+13 map(A[:]) // Size is N
+14 
+15 // Map array section with offset
+16 map(p[32:N-32]
+17 map(A[N/2:N/4]
+18
+\end{verbatim}
+\caption{ \textbf {Array section syntax examples} -- \small
+          Various usage of array section syntax in C and C++.
+         }
+\label{figure:chapter6-map-ptr1}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 #define BIG 256
+ 2 #define N (1024*1024)
+ 3 int a[N*BIG];
+ 4 
+ 5 void F(const int c, const int d)
+ 6 {
+ 7   for (int k=0; k<N*BIG; k+=N) {
+ 8     #pragma omp target map(from:a[k:N]) firstprivate(c,d) 
+ 9     for (int i=0; i<N; i++) {
+10       a[k+i] =  k+i * (c + d);
+11     } // End of target
+12   }
+13 }
+\end{verbatim}
+\caption{ \textbf {Use array section to map a subset of an array} -- \small
+          Map a slice of the array \texttt{a} each time through the loop.
+         }
+\label{figure:chapter6-mapslice}
+\end{figure*}
+
+
+\begin{figure*}[!tbhp]
+\begin{verbatim}
+ 1 #include <stdio.h>
+ 2 #include <omp.h>
+ 3 void hello(void)
+ 4 {
+ 5   #pragma omp target 
+ 6   {
+ 7     if (!omp_is_initial_device())
+ 8       printf("Hello World from accelerator\n");
+ 9     else
+10       printf("Hello World from host\n");
+11   }
+12 }
+\end{verbatim}
+\caption{ \textbf {Example of a target construct } -- \small
+          If the initial thread is running on an accelerator, it executes the
+          first \texttt{printf()}.
+          Otherwise, it is running on the host device and
+          executes the second \texttt{printf()}.
+          Note that some implementations may not support calling \texttt{printf()} on an accelerator. 
+         }
+\label{figure:chapter6-hello}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 void mxv(int m, int n, double * restrict a,
+ 2          double * restrict b, double * restrict c)
+ 3 {
+ 4 
+ 5   #pragma omp target map(a[:n],b[:n],c[:n]) firstprivate(m,n)
+ 6   {
+ 7     int i, j;
+ 8     #pragma omp parallel for default(none) \
+ 9             shared(m,n,a,b,c) private(i,j)
+10     for (i=0; i<m; i++)
+11     {
+12       a[i] = b[i*n]*c[0];
+13       for (j=1; j<n; j++)
+14         a[i] += b[i*n+j]*c[j];
+15     } // End of parallel for
+16   } // End of target
+17 }
+\end{verbatim}
+\caption{ \textbf {Example using the target construct to execute the matrix 
+                   times vector on an accelerator} -- \small
+          The host thread waits for the execution of the target region to
+          finish before it continues after the construct.
+         }
+\label{figure:chapter6-target-mxv}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 #include <omp.h>
+ 2 extern void do_team_work(int, int, int, int);
+ 3 #pragma omp declare target(do_team_work)
+ 4 void f()
+ 5 {
+ 6   #pragma omp target teams
+ 7   {
+ 8     int team = omp_get_team_num();
+ 9     int nteams = omp_get_num_teams();
+10     int tid = omp_get_thread_num(); // Always 0
+11     int nthreads = omp_get_num_threads(); // Always 1
+12     do_team_work(team, nteams, tid, nthreads);
+13   } // End of target teams
+14 }
+\end{verbatim}
+\caption{ \textbf {Example of the target teams construct } -- \small
+          Multiple initial threads execute the function \texttt{do\_team\_work()}.     
+         }
+\label{figure:chapter6-teams-v1}
+\end{figure*}
+
+
+\begin{figure*}[!tbh]
+\begin{verbatim}
+ 1 #include <omp.h>
+ 2 extern void do_team_work(int, int, int, int);
+ 3 #pragma omp declare target(do_team_work)
+ 4 void f()
+ 5 {
+ 6   #pragma omp target teams num_teams(4)
+ 7   #pragma omp parallel num_threads(5)
+ 8   {
+ 9     int team = omp_get_team_num();
+10     int nteams = omp_get_num_teams();
+11     int tid = omp_get_thread_num();
+12     int nthreads = omp_get_num_threads();
+13     do_team_work(team, nteams, tid, nthreads);
+14   } // End of target teams
+15 }
+\end{verbatim}
+\caption{ \textbf {Example of a parallel construct nested in a 
+                   target teams construct} -- \small
+          Multiple teams of threads execute the function \texttt{do\_team\_work()}.     
+         }
+\label{figure:chapter6-teams-v2}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+1 void saxpy(float *restrict y, float *restrict x, float a, int n)
+2 {
+3   #pragma omp target teams map(y[:n]) map(to:x[:n]) 
+4   #pragma omp distribute
+5   for (int i=0; i<n; i+=n)
+6   {
+7       y[i] =  y[i] + a*x[i];
+8   }
+9 }
+\end{verbatim}
+\caption{ \textbf {Example of the distribute worksharing construct} -- \small
+          Each initial thread created by the target teams construct 
+          executes a subset of the iterations in the loop's iteration space.
+         }
+\label{figure:chapter6-distribute-v1}
+\end{figure*}
+
+
+\begin{figure*}[!tbh]
+\begin{verbatim}
+ 1 void saxpy(float *restrict y, float *restrict x, float a, int n)
+ 2 {
+ 3   // Assume n is even
+ 4   #pragma omp target teams map(y[:n]) map(to:x[:n]) num_teams(2) 
+ 5   #pragma omp distribute
+ 6   for (int j=0; j<n; j+=n/2)
+ 7   {
+ 8     #pragma omp parallel num_threads(4)
+ 9     #pragma omp for
+10     for (int i=j; i<n/2; i++)
+11       y[i] = y[i] + a*x[i];
+12   }
+13 }
+\end{verbatim}
+\caption{ \textbf {Example of worksharing a loop across two levels of
+                   parallelism} -- \small
+          Use team level parallelism on the outer loop and thread level
+          parallelism on the inner loop.  Distribute the loop iterations to two
+          teams.  Each team then uses four threads to execute the iterations
+          that are assigned to it.  
+         }
+\label{figure:chapter6-distribute-v2}
+\end{figure*}
+
+
+\begin{figure*}[!tbh]
+\begin{verbatim}
+1 void saxpy(float *restrict y, float *restrict x, float a, int n)
+2 {
+3   #pragma omp target teams map(y[:n]) map(to:x[:n]) 
+4   #pragma omp distribute parallel for
+5   for (int i=0; i<n; i++)
+6     y[i] = y[i] + a*x[i];
+7 }
+\end{verbatim}
+\caption{ \textbf {Example of the distribute parallel loop accelerated 
+                   worksharing construct} -- \small
+          Create multiple thread teams executing in parallel.
+          Distribute loop iterations to the teams and then
+          to the threads in each team.
+         }
+\label{figure:chapter6-distribute-v3}
+\end{figure*}
+
+
+\begin{figure*}[!tbh]
+\begin{verbatim}
+ 1 int dotp(int *restrict a, int *restrict b, int n)
+ 2 {
+ 3   int sum = 0;
+ 4 
+ 5   #pragma omp target teams distribute map(to:a[:n],b[:n]) \
+ 6                                       reduction(+:sum)
+ 7   for (int i=0; i<n; i++)
+ 8     sum += a[i] * b[i];
+ 9 
+10   return sum;  // Sum is always 0
+11 }
+\end{verbatim}
+\caption{ \textbf {A variable cannot appear in both map and reduction clauses on the same construct} -- \small
+          The \texttt{reduction} clause is associated with the
+          \texttt{teams} directive.
+          The variable \texttt{sum} is not mapped, and therefore,
+          the reduced value of \texttt{sum} is lost after the region.
+        }
+\label{figure:chapter6-targetteams-reduction}
+\end{figure*}
+
+
+\begin{figure*}[!tbh]
+\begin{verbatim}
+ 1 int dotp(int *restrict a, int *restrict b, int n)
+ 2 {
+ 3   int sum = 0;
+ 4 
+ 5   #pragma omp target map(sum) map(to:a[:n],b[:n])
+ 6   #pragma omp teams distribute reduction(+:sum)
+ 7   for (int i=0; i<n; i++)
+ 8     sum += a[i] * b[i];
+ 9 
+10   return sum;
+11 }
+\end{verbatim}
+\caption{ \textbf {Use a separate target construct to map reduction variables} -- \small
+          The variable \texttt{sum} is private in the teams region, but now mapped
+          in the target region.
+        }
+\label{figure:chapter6-targetteams-reduction-v2}
+\end{figure*}
+
+
+\begin{figure*}[!b]
+\begin{verbatim}
+ 1 #include <stdlib.h>
+ 2 void func(float a[1024], float b[1024], int t[1024])
+ 3 {
+ 4   #pragma omp target map(a, b, t) // Map-enter
+ 5   {
+ 6     int i;
+ 7 
+ 8     for (i=0; i<1024; i++)
+ 9       t[i] = rand()%1024;
+10 
+11     for (i=0; i<1024; i++)
+12       a[i] =  b[t[i]];
+13 
+14   } // End of target, map-exit
+15 }
+\end{verbatim}
+\caption{ \textbf {Example of the map clause} -- \small
+          Copies occur for the arrays \texttt{a}, \texttt{b}, and 
+          \texttt{t} at the entry to and exit from the target region.
+         }
+\label{figure:chapter6-map-v1}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 #include <stdlib.h>
+ 2 void func(float a[1024], float b[1024], int t[1024])
+ 3 {
+ 4   #pragma omp target map(from:a) map(to:b) \
+ 5                      map(alloc:t) // Map-enter
+ 6   {
+ 7     int i;
+ 8 
+ 9     for (i=0; i<1024; i++)
+10       t[i] = rand()%1024;
+11 
+12     for (i=0; i<1024; i++)
+13       a[i] =  b[t[i]];
+14 
+15   } // End of target, map-exit
+16 }
+\end{verbatim}
+\caption{ \textbf {Example of the map clause with map-types} -- \small
+          Eliminate superfluous copies by using map-types.
+         }
+\label{figure:chapter6-map-v2}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 #include <stdlib.h>
+ 2 #include <stdio.h>
+ 3 void func(float a[1024], float b[1024], int t[1024])
+ 4 {
+ 5   #pragma omp target data map(from:a) map(to:b) \
+ 6                           map(alloc:t) // Map-enter
+ 7   {
+ 8     #pragma omp target map(always,from:t) // Map-enter
+ 9     for (int i=0; i<1024; i++) {
+10       t[i] = rand()%1024;
+11     } // Map-exit
+12 
+13     for (int i=0; i<1024; i++)
+14        printf("t[%d]=%d\n", i, t[i]);
+15 
+16     #pragma omp target map(a,b,t) // Map-enter
+17     for (int i=0; i<1024; i++) {
+18       a[i] =  b[t[i]];
+19     } // Map-exit
+20 
+21   } // End of target data, map-exit
+22 }
+\end{verbatim}
+\caption{ \textbf {Example of a variable appearing in nested map clauses} -- \small
+          There is only one instance of a variable in an accelerator's
+          address space.
+         }
+\label{figure:chapter6-map-v3}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 typedef struct { int x, y, size, *p; } Stype;
+ 2 extern Stype S;
+ 3 extern int f1(int,int), f2(int*,int), f3(Stype *);
+ 4 #pragma omp declare target to(f1, f2, f3) 
+ 5 
+ 6 void foo1(Stype S)
+ 7 {
+ 8    #pragma omp target
+ 9    f1(S.x, S.y);
+10 
+11    #pragma omp target map(S.x, S.y)
+12    f1(S.x, S.y);
+13 
+14    #pragma omp target map(S, S.p[:S.size])
+15    f2(S.p, S.size);
+16 
+17    #pragma omp target map(S.x)
+18    f3(&S);
+19 
+20    #pragma omp target data map(S.x)
+21    {
+22       #pragma omp target map(S.y) // Error
+23       f1(S.x, S.y);
+24    }
+25 }
+\end{verbatim}
+\caption{ \textbf {Example of mapping structure members} -- \small
+          Structure members may appear in map clauses and array sections with some
+          restrictions.
+         }
+\label{figure:chapter6-mapstruct}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 void saxpy(float *restrict y, float *restrict x, float a, int n)
+ 2 {
+ 3   #pragma omp target teams map(y[:n]) map(to:x[:n]) 
+ 4   {
+ 6     #pragma omp distribute 
+ 7     for (int i=0; i<n; i++) {
+ 8         y[i] =  y[i] + a*x[i];
+ 9     } // End of distribute
+10   } // End of target teams
+11 }
+\end{verbatim}
+\caption{ \textbf {Example of default data-mapping attribute rules} -- \small
+          The pointer variables \texttt{x} and \texttt{y} are \texttt{private}. The 
+          scalar variables \texttt{a} and \texttt{n} are \texttt{firstprivate}.
+         }
+\label{figure:chapter6-defaultmap-v1}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 float dotp(float *restrict y, float *restrict x, int n)
+ 2 {
+ 3   float sum = 0.0;
+ 4   #pragma omp target map(y[:n]) map(to:x[:n])
+ 5   {
+ 6     for (int i=0; i<n; i++)
+ 7       sum += y[i] * x[i];
+ 8   } // End of target
+ 9
+10   return sum;
+11 }
+\end{verbatim}
+\caption{ \textbf {Example of problems with implicit firstprivate variables} -- \small
+          Because the variable \texttt{sum} is \texttt{firstprivate}, the computed value
+          of \texttt{sum} is lost at the end of the target region.
+         }
+\label{figure:chapter6-defaultmap-v2}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 #include <stdlib.h>
+ 2 void f()
+ 3 {
+ 4    char *p, *q, A[128];
+ 5    extern void f1(char *);
+ 6    #pragma omp declare target to(f1) 
+ 7 
+ 8    p = malloc(1024);
+ 9    q = A;
+10 
+11    #pragma omp target data map(p[:1024], A)
+12    {
+13      #pragma omp target map(p[:0])
+14      f1(p);
+15 
+16      #pragma omp target // Implicit map(q[:0])
+17      f1(q);
+18 
+19      #pragma omp target map(p)
+20      f1(p); // Error 
+21    }
+22    free(p);
+23 }
+\end{verbatim}
+\caption{ \textbf {Example of C/C++ pointers as zero-length array sections} -- \small
+          Pointer variables are implicitly treated as pointer-based zero-length array
+          sections in target regions.
+         }
+\label{figure:chapter6-zerolength}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 int Lastpos = 0;
+ 2 extern char Buf[128];
+ 3 #pragma omp declare target(Lastpos, Buf)
+ 4 
+ 5 extern int F(int, int);
+ 6 #pragma omp declare target to(F)
+ 7 
+ 8 #pragma omp declare target
+ 9 int State = -1;
+10 extern int search(char *);
+11 
+12 void find_state(char c)
+13 {
+14   int pos;
+15   Buf[Lastpos] = c;
+16   pos = search(Buf);
+17   Lastpos = pos;
+18   State = F(Lastpos, pos);
+19 }
+20 #pragma omp end declare target
+21 
+22 void process_input(char c)
+23 {
+24   #pragma omp target firstprivate(c)
+25   find_state(c);
+26 }
+\end{verbatim}
+\caption{ \textbf {Example of the declare target directive} -- \small
+          Various forms of the directive all have the same effect.
+         }
+\label{figure:chapter6-decltarg}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 float Vector[1024];
+ 2 #pragma omp declare target link(Vector)
+ 3 
+ 4 #pragma omp declare target
+ 5 extern float F(float , float);
+ 6 int compute(float a)
+ 7 {
+ 8    for (int i=0; i<1024; i++)
+ 9       Vector[i] = F(Vector[i], a);
+10 }
+11 #pragma omp end declare target
+12 
+13 int update_vector(float a)
+14 {
+15   #pragma omp target map(Vector) firstprivate(a)
+16   compute(a);
+17 }
+\end{verbatim}
+\caption{ \textbf {Example of the link clause on a declare target directive} -- \small
+          Variables appearing in the \texttt{link} clause are \emph{globally linked}.  
+          They must be mapped before they are referenced in a mapped function.
+         }
+\label{figure:chapter6-link}
+\end{figure*}
+
+
+\begin{figure*}[!tbhp]
+\begin{verbatim}
+ 1 #define N (1024*1024)
+ 2 double A[N], B[N];
+ 3 extern double F(double * restrict);
+ 4 
+ 5 void G(double c, double d)
+ 6 {
+ 7   double e;
+ 8   #pragma omp target data map(B)
+ 9   {
+10     #pragma omp target map(B) map(always,from:A) \
+11                        firstprivate(c,d)
+12     for (int i=0; i<N; i++)
+13       A[i] =  B[i] * c + d;
+14 
+15     e = F(A);
+16 
+17     #pragma omp target map(B) firstprivate(e)
+18     for (int i=0; i<N; i++)
+19       B[i] =  B[i] / e;
+20 
+21   } // End of target data
+22 }
+\end{verbatim}
+\caption{ \textbf {Example of a target data construct} -- \small
+          The array variable \texttt{B} is mapped once to an accelerator
+          across two target regions.
+         }
+\label{figure:chapter6-target-data-v1}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 #define N (1024*1024)
+ 2 extern void update_boundary(double *, int, int);
+ 3 double B[N];
+ 4 #pragma omp declare target(B)
+ 5 
+ 6 void G(double *restrict B, double e, int n, int l)
+ 7 {
+ 8   #pragma omp target update from(B[0:l],B[n-1-l:l])
+ 9   update_boundary(B, n, l);
+10   #pragma omp target update to(B[0:1],B[n-1-l:l])
+11 
+12   #pragma omp target
+13   for (int i=0; i<n; i++)
+14     B[i] =  B[i] / e;
+15 }
+\end{verbatim}
+\caption{ \textbf {Example of the target update construct} -- \small
+          The array variable \texttt{B} is globally mapped.  The target update
+          construct is used make elements at the start and the end the
+          array \texttt{B} consistent between the host and the accelerator.
+         }
+\label{figure:chapter6-target-update-v1}
+\end{figure*}
+
+
+%\begin{figure*}[!tbh]
+%\begin{verbatim}
+% 1 #pragma omp target data map(b)
+% 2 {
+% 3   #pragma omp target map(to:c,d,a)
+% 4   for (i=0; i<count; count++)
+% 5   {
+% 6     a[i] =  b[i] * c + d;
+% 7   }
+% 8
+% 9   e = F(a);
+%10   for (i=0; i<count; i+=step)
+%11      b[i] = G(b[i], step);
+%12
+%13   #pragma omp target update to(b)
+%11
+%12   #pragma omp target map(to:e)
+%13   for (i=0; i<count; count++)
+%14   {
+%15     b[i] =  b[i] + e;
+%16   }
+%17 } // End of target data
+%}
+%\end{verbatim}
+%\caption{ \textbf {Code fragment with a target update directive} -- \small
+%          The variable b is mapped to a device data environment once
+%          across two target regions and updated with the host value
+%          between the target regions.
+%         }
+%\label{figure:chapter6-target-update}
+%\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 class myArray {
+ 2   int length;
+ 3   double *ptr;
+ 4 
+ 5   void allocate(int l) {
+ 6     double *p = new double[l];
+ 7     ptr = p;
+ 8     length = l;
+ 9     #pragma omp target enter data map(alloc:p[0:length])
+10   }
+11 
+12   void release() {
+13     double *p = ptr;
+14     #pragma omp target exit data map(release:p[0:length])
+15     delete[] p;
+16     ptr = 0;
+17     length = 0;
+18   }
+19 };
+\end{verbatim}
+\caption{ \textbf {C++ Example of the target enter and exit data constructs} -- \small
+          The \texttt{allocate()} method will execute a map-enter phase for the
+          dynamically allocated memory pointed to by \texttt{p}.  The \texttt{release()}
+          method will execute the corresponding map-exit phase.
+         }
+\label{figure:chapter6-target-enter-exit-data}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+1 void G(char S[128], int v)
+2 {
+3   extern int mutate(char *s, int);
+4   while (!v) {
+5     #pragma omp target enter data map(to:S)
+6     v = mutate(S, v);
+7   }
+8   #pragma omp target exit data map(delete:S)
+9 }
+\end{verbatim}
+\caption{ \textbf {Example of the delete map-type} -- \small
+          Regardless of its reference count, remove \texttt{S} from an     
+          accelerator's device data environment.
+         }
+\label{figure:chapter6-delete-maptype}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 extern int max(int,int);
+ 2 #pragma omp declare target(max)
+ 3 void F(char *v, short *restrict s, int n)
+ 4 {
+ 5   int i;
+ 6 
+ 7   #pragma omp target nowait map(v[0:n])
+ 8   for (i=0; i<n; i++)
+ 9     v[i] = max(v[i],0);
+10 
+11   for (i=0; i<n; i++)
+12     s[i] = max(s[i],0);
+13   #pragma omp taskwait
+14 
+15   for (i=0; i<n; i++)
+16     s[i] = s[i] - v[i];
+17 }
+\end{verbatim}
+\caption{ \textbf {Example using the nowait clause } -- \small
+          Execute the target region on an accelerator in 
+          parallel with the code executing on the host.
+         }
+\label{figure:chapter6-nowait-v2}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 extern void h0(int*, int);
+ 2 extern void h1(int*, int);
+ 3 extern void t1(int*, int*, int);
+ 4 #pragma omp declare target(t1)
+ 5 void F(int *a, int *b, int n)
+ 6 {
+ 7   #pragma omp parallel num_threads(2)
+ 8   #pragma omp single
+ 9   {
+10   #pragma omp target enter data map(to:a[:n]) \
+11               nowait depend(out:a[:n]) // t0
+12 
+13   #pragma omp task depend(out:b[:n])
+14   h0(b, n);
+15 
+16   #pragma omp target map(to:b[:n]) \
+17               nowait depend(in:b[:n]) depend(inout:a[:n])
+18   t1(a, b, n);
+19 
+20   #pragma omp task depend(in:b[:n])
+21   h1(b,n);
+22 
+23   #pragma omp target exit data map(from:a[:n]) \
+24               depend(in:a[:n]) // t2
+25   }
+26 }
+\end{verbatim}
+\caption{ \textbf {Example using the nowait and depend clauses } -- \small
+          Use the \texttt{depend} and \texttt{nowait} clauses to execute target
+          tasks in parallel with other host tasks.
+         }
+\label{figure:chapter6-nowait-depend}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 #include <omp.h>
+ 2 extern int a[1024]; int Work(int *, int, int);
+ 3 #pragma omp declare target to(a, Work)
+ 4 
+ 5 void F()
+ 6 {
+ 7   int defdev = omp_get_default_device();
+ 8   int numdev = omp_get_num_devices();
+ 9 
+10   for (int i=0; i<numdev; i++) {
+11     omp_set_default_device(i);
+12     #pragma omp target update to(a) nowait
+13   }
+14   omp_set_default_device(defdev);
+15   #pragma omp taskwait
+16 
+17   for (int i=0; i<numdev; i++) {
+18     #pragma omp target device(i) nowait
+19     Work(a,i,numdev);
+20   }
+21 
+22   if (numdev == 0) Work(a,0,1);
+23   #pragma omp taskwait
+24 }
+\end{verbatim}
+\caption{ \textbf {Example of the device clause and related runtime functions} -- \small
+          The variable \texttt{a} is updated with the host's value on all devices
+          and then the function \texttt{Work()} is executed by all devices.
+         }
+\label{figure:chapter6-device}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+1 #define MB (1024*1024)
+2 extern void Work(float*, int);
+3 #pragma omp declare target(Work)
+4 void F(float * restrict a, int n)
+5 {
+6    #pragma omp target if(n > MB) map(a[:n])
+7    Work(a,n);
+8 }
+\end{verbatim}
+\caption{ \textbf {Example of an if clause on the target construct} -- \small
+          If \texttt{n} is greater than a threshold, execute the target region on the
+          default accelerator.  Otherwise, execute the region on the host device.
+         }
+\label{figure:chapter6-if}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 #include <omp.h>
+ 2 void *init(int n, int dev)
+ 3 {
+ 4   char *dptr = omp_target_alloc(dev, n);
+ 5 
+ 6   #pragma omp target is_device_ptr(dptr) device(dev) 
+ 7   for (int i=0; i<n; i++)
+ 8     dptr[i] = i;
+ 9 
+10   return (void*)dptr;
+11 }
+\end{verbatim}
+\caption{ \textbf {Example of the is\_device\_ptr clause} -- \small
+          The device pointer variable \texttt{dptr} must appear in
+          the \texttt{is\_device\_ptr} clause to 
+          de-reference it in the target region.
+        }
+\label{figure:chapter6-isptr}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 int A[1024];
+ 2 #pragma omp declare target to(A)
+ 3 extern int AccelFunc(void *);
+ 4 
+ 5 int Func()
+ 6 {
+ 7   int err;
+ 8   #pragma omp target data map(err) use_device_ptr(A)
+ 9   err = AccelFunc(A); // Requires device address of A
+10   return err;
+11 }
+\end{verbatim}
+\caption{ \textbf {Example of the use\_device\_ptr clause} -- \small
+          Replace the reference to the host address of \texttt{A} in the lexical
+          scope of the \texttt{target data} construct with
+          the device address of \texttt{A}.
+        }
+\label{figure:chapter6-useptr}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 #include <omp.h>
+ 2 #include <stdlib.h>
+ 3 typedef struct item {struct item *next; int v; } item_t;
+ 4 void *copy_list2dev(item_t *list)
+ 5 {
+ 6   int i, count=0;
+ 7   int dev  = omp_get_default_device();
+ 8   int host = omp_get_initial_device();
+ 9   item_t *src = NULL, *dst = NULL;
+10 
+11   if (list == NULL) return NULL;
+12   for (src=list; src; src=src->next)
+13     count++;
+14   dst = omp_target_alloc(count*sizeof(item_t), dev);
+15   
+16   for (src=list, i=0; src; src=src->next, i++)
+17     omp_target_memcpy(dst, src, sizeof(item_t),
+18                       i*sizeof(item_t), 0,
+19                       dev, host);
+20                       
+21   #pragma omp target is_device_ptr(dst)
+22   {
+23     for (i=0; i<count-1; i++)
+24       dst[i].next = &dst[i+1];
+25     dst[i].next = NULL;
+26   } 
+27   return (void*)dst;
+28 } 
+\end{verbatim}
+\caption{ \textbf {Copy a linked list to device memory} -- \small
+          Copy a linked list from the host to dynamically allocated
+          device memory.
+         }
+\label{figure:chapter6-alloc}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 #include <omp.h>
+ 2 void stream(float *restrict a, int n, int chunk, int dev)
+ 3 {
+ 4   int size = sizeof(float)*chunk;
+ 5   float *devptr = omp_target_alloc(size, dev);
+ 6 
+ 7   for (int i=0; i<n; i+=chunk)
+ 8   {
+ 9      omp_target_associate_ptr(&a[i], devptr, size, 0, dev);
+10 
+11      #pragma omp target map(always,tofrom:a[i:chunk]) device(dev)
+12      for (int j=i; j<i+chunk; j++)
+13         a[j] = 1/(1+a[j]);
+14 
+15      omp_target_disassociate_ptr(&a[i], dev);
+16   }
+17   omp_target_free(devptr, dev);
+18 }
+\end{verbatim}
+\caption{ \textbf {Map host memory to dynamically allocated device memory} -- \small
+          Iteratively associate a smaller device memory buffer with a section
+          of a larger \texttt{a} buffer.
+         }
+\label{figure:chapter6-assoc}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 #include <stdio.h>
+ 2 #include <omp.h>
+ 3 int copy_2d(void *dst, void *src, int dst_dev, int src_dev,
+ 4             int sz, int vol_sz, int offset)
+ 5 {
+ 6    const int num_dims = 2;
+ 7    const int vol_dims[2] = {vol_sz, vol_sz};
+ 8    const int dst_dims[2] = {sz, sz};
+ 9    const int src_dims[2] = {sz, sz};
+10    const int dst_offset[2] = {offset, offset};
+11    const int src_offset[2] = {0, 0};
+12 
+13    return omp_target_memcpy_rect(dst, src, sizeof(char),
+14          num_dims,
+15          vol_dims,
+16          dst_offset, src_offset,
+17          dst_dims, src_dims,
+18          dst_dev, src_dev);
+19 }
+\end{verbatim}
+\caption{ \textbf {Copy a sub-matrix from a source matrix to a destination matrix - part 1} -- \small
+          Two-dimensional square matrices are assumed.
+          Copy a sub-matrix from \texttt{src[0][0]} to \texttt{dst[offset][offset]}.
+         }
+\label{figure:chapter6-copy-volume}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+21 #define N 8
+22 void main()
+23 {
+24   int dst_dev = omp_get_initial_device();
+25   int src_dev = omp_get_default_device();
+26   unsigned char DST[N][N];
+27   unsigned char (*SRC)[N] = omp_target_alloc(N*N, src_dev);
+28 
+29   #pragma omp target is_device_ptr(SRC) nowait
+30   for (int i=0; i<N; i++)
+31     for (int j=0; j<N; j++) SRC[i][j] = 1;
+32 
+33   for (int i=0; i<N; i++)
+34     for (int j=0; j<N; j++) DST[i][j] = 0;
+35 
+36   #pragma taskwait
+37   copy_2d(DST, SRC, dst_dev, src_dev, N, 4, 2);
+38 
+39   omp_target_free(SRC, src_dev);
+40 
+41   for (int i=0; i<N; i++) {
+42     for (int j=0; j<N; j++) printf("%d" , DST[i][j]);
+43     printf("\n");
+44   }
+45 }
+\end{verbatim}
+\caption{ \textbf {Copy a sub-matrix from a source matrix to a destination matrix - part 2} -- \small
+          Allocate and initialize an $8x8$ \texttt{SRC} matrix on an accelerator and fill it with $1$.
+          Initialize an $8x8$ \texttt{DST} matrix on the host and fill it with $0$.
+          Copy a $4x4$ sub-matrix from \texttt{SRC[0][0]} to \texttt{DST[2][2]}.
+         }
+\label{figure:chapter6-copy-volume-p2}
+\end{figure*}
+
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+00000000
+00000000
+00111100
+00111100
+00111100
+00111100
+00000000
+00000000
+\end{verbatim}
+\caption{ \textbf {Example output from the sub-matrix copy program } -- \small
+          This is the output from the program in Figure~\ref{figure:chapter6-copy-volume}
+          and Figure~\ref{figure:chapter6-copy-volume-p2}.
+          A $4x4$ sub-matrix from the \texttt{SRC} matrix was copied into the center of the \texttt{DST} matrix.
+         }
+\label{figure:chapter6-copy-volume-output}
+\end{figure*}
