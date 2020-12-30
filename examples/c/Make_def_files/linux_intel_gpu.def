@@ -1,4 +1,5 @@
-# for intel compiler on linux (most exercises work with icc as well)
+# for intel compiler on linux 
+# https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-cpp-fortran-compiler-openmp/top.html
 # copy to make.def
 CC         = icx
 CPP         = $(CC)
