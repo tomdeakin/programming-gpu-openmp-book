@@ -1,0 +1,16 @@
+# for AMD AOMP compiler on linux
+# copy to make.def
+# AOMP v11.12-0 does not like .o files, so we just build as .c
+CC         = aompcc
+CPP         = $(CC)
+OPTFLAGS   = -O3 -fopenmp
+
+CLINKER     = $(CC)
+LIBS        = 
+
+CFLAGS    = $(OPTFLAGS)
+PRE= ./
+OBJ=c
+EXE=
+RM=rm
+
