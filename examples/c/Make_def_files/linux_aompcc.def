@@ -12,5 +12,5 @@ CFLAGS    = $(OPTFLAGS)
 PRE= ./
 OBJ=c
 EXE=
-RM=rm
+RM=
 
