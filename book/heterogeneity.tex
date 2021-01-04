@@ -2,6 +2,52 @@
 \chapter{Heterogeneity and the future of computing}
 \label{chapter:heterogeneity}
 
+\section{From The Next Step Chapter 6}
+
+Specialized accelerator processors, which dramatically improve the performance
+of some computations, are proliferating, and general-purpose processors are
+now very often connected to some type of accelerator.  
+The popularity of these heterogeneous architectures across all types of
+computing has had a noticeable impact on the development of software.  
+
+To exploit these systems, developers must write software that executes various
+regions of code on different types of devices.  There are many reasons for
+wanting to do this but very often the motivation is to accelerate
+computationally intensive loop nests.  
+
+However, the programming models for these systems are difficult to use.
+Often code modules are written twice, once for the general-purpose
+processor and then again for the accelerator.  The accelerator version is often
+written in a lower-level, accelerator-specific language.  The result is the
+undesirable software maintenance problem of keeping two versions of code, which
+implement the same algorithm, synchronized.
+
+The \OMP\ Language Committee recognized the need to make it easier to program
+heterogeneous architectures and set about to extend \OMP\ to support these types
+of systems \cite{Beyer2011}.  The results of this work were initially released
+in \OMPfourzero\ and updated in \OMPfourfive.
+
+Software developers can use \OMP\ to program accelerators in a higher-level
+language and maintain one version of their code, which can run on either an
+accelerator or a general-purpose processor.  In this chapter, we present the
+syntax for and describe how to use the \OMP\ \emph{device constructs} and
+related runtime functions that were added to support heterogeneous
+architectures. 
+
+%What was needed is a programming model that could...
+%Given the popularity of heterogeneous systems across all types of computing,
+
+%There is a place here for \OMP\ to make these software packages more
+%maintainable and portable.  We hope that in the future, as the latest versions
+%of \OMP\ are implemented in more compilers, software developers will leverage
+%the \OMP\ device constructs and develop one version of their code that can run
+%anywhere, including on accelerators.
+
+%There is a place here for \OMP\ to make these software packages more
+%maintainable and portable.  We hope that in the future, as the latest versions
+%of \OMP\ are implemented in more compilers, 
+
+
 \section{What is Heterogeneous computing and why everyone will be doing it}
 
 \section{The basic building blocks of modern computing}
