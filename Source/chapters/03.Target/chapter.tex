@@ -207,9 +207,9 @@ running on the host device.  Prior to \OMPfourzero\, there was only one initial 
 \begin{figure*}[!tb]
 \centering
 \pdfimageresolution 400
-\fbox{\includegraphics[clip=true,scale=1.00]
-         {./TheNextStepCh6/figures/chapter-6-device-exec-model.pdf}
-     }
+%\fbox{\includegraphics[clip=true,scale=1.00]
+%         {./TheNextStepCh6/figures/chapter-6-device-exec-model.pdf}
+%     }
 \caption{ \textbf{The heterogeneous programming model supported by OpenMP} -- \small
         Program execution begins on the host device.  When a host device
         thread encounters a \texttt{target} construct, a new initial thread 
@@ -361,9 +361,9 @@ all of the asynchronous execution features from \OMP\ tasking.
 \begin{figure*}[!tb]
 \centering
 \pdfimageresolution 400
-\fbox{\includegraphics[clip=true,scale=1.00]
-         {./TheNextStepCh6/figures/chapter-6-device-task-model1.pdf}
-     }
+%\fbox{\includegraphics[clip=true,scale=1.00]
+%         {./TheNextStepCh6/figures/chapter-6-device-task-model1.pdf}
+%     }
 \caption{ \textbf{The target task as an included task} -- \small
         By default, the target task is an included task.  The
         generating task cannot resume until the included target
@@ -389,9 +389,9 @@ our purposes, the effect is that execution cannot continue after a
 \begin{figure*}[!tb]
 \centering
 \pdfimageresolution 400
-\fbox{\includegraphics[clip=true,scale=1.00]
-         {./TheNextStepCh6/figures/chapter-6-device-task-model2.pdf}
-     }
+%\fbox{\includegraphics[clip=true,scale=1.00]
+%         {./TheNextStepCh6/figures/chapter-6-device-task-model2.pdf}
+%     }
 \caption{ \textbf{The target task as a deferrable task} -- \small
         The nowait clause makes the target task a deferrable task.  The
         generating task may now be scheduled to execute before the target
