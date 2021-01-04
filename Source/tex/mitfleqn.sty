@@ -1,0 +1,65 @@
+%%%%% This file is called mitfleqn.sty
+% Variation on:
+% FLEQN DOCUMENT-STYLE OPTION - released 6 February 85
+%    for LaTeX version 2.08
+% Copyright (C) 1985 by Leslie Lamport
+ 
+% Variations by TeXnology, Inc.
+\typeout{[[mitfleqn.sty: Last Revision: February 13, 1989]]}
+ 
+% The following commands make the displayed math environments
+% flush left, with an indentation of \mathindent from the
+% prevailing left margin.
+ 
+\newdimen\mathindent
+\mathindent=0pt
+ 
+\def\[{\relax\ifmmode\@badmath
+\else\begingroup\trivlist \item[]\leavevmode
+\hbox to\hsize\bgroup\let\leftline\hbox$ % $ FOR DOLLAR NESTING
+\displaystyle\hskip\mathindent\bgroup
+\fi}
+ 
+\def\]{\relax\ifmmode \egroup $\hfil % $ FOR DOLLAR NESTING
+\egroup \endtrivlist\endgroup
+\else \@badmath \fi
+\noindent\ignorespaces}
+ 
+\def\equation{\refstepcounter{equation}%
+\trivlist \item[]\leavevmode
+\hbox to\linewidth\bgroup $ % $ FOR DOLLAR NESTING
+\displaystyle
+\hskip\mathindent}
+ 
+\def\endequation{$\hfil % $ FOR DOLLAR NESTING
+\displaywidth\linewidth\@eqnnum\egroup \endtrivlist
+\vskip1sp\global\@ignoretrue}
+ 
+\def\eqnarray{\stepcounter{equation}%
+\let\@currentlabel=\theequation
+\global\@eqnswtrue
+\global\@eqcnt\z@\tabskip\mathindent\let\\=\@eqncr
+\abovedisplayskip\topsep
+\ifvmode\advance\abovedisplayskip\partopsep\fi
+\belowdisplayskip\abovedisplayskip
+\belowdisplayshortskip\abovedisplayskip
+\abovedisplayshortskip\abovedisplayskip
+$$\halign % $$ DOLLAR MATCHING
+to \linewidth\bgroup
+\@eqnsel\hskip\@centering$\displaystyle\tabskip\z@{##}$&
+\global\@eqcnt\@ne \hskip 2\arraycolsep \hfil${##}$\hfil&
+\global\@eqcnt\tw@ \hskip 2\arraycolsep $\displaystyle{##}$\hfil
+\tabskip\@centering&
+\llap{##}\tabskip\z@\cr}
+ 
+\def\endeqnarray{\@@eqncr\egroup
+\global\advance\c@equation
+\m@ne$$\global\@ignoretrue % $$ MATCHING
+}
+ 
+\def\eqnrunover{\nonumber \\ & &}
+ 
+%%%%% END OF FILE
+
+
+

@@ -1,0 +1,86 @@
+%%% -*- Mode: LaTeX -*-
+
+%%%
+%%% Copyright 1992, Patrick A. O'Donnell
+%%% Written at the MIT Artificial Intelligence Laboratory
+%%% All rights reserved.
+%%%
+%%% This software may be freely copied and distributed subject to the
+%%% following restrictions.  Any distribution of this software must return
+%%% no profit, must be for educational or scientific use, and must include
+%%% these copyright and distribution notices without modification.  The
+%%% author also grants to individuals the license to modify or enhance this
+%%% software, however distribution of these derivative works is prohibited.
+%%% Such enhancements or modifications may be returned to the author to be
+%%% included in future versions.  Distribution of this sofware contrary to
+%%% the terms of this notice may be subject to penalties under applicable
+%%% law.
+%%% 
+%%% Permission to copy or distribute this software other than under
+%%% these conditions may be granted by the author in writing.
+%%%
+
+
+%%% Definition of a `theindex' environment for the mitpress book style.
+%%% This includes definitions for the \newindexletter and \indexsee
+%%% commands that are emitted by the make-index.pl program.
+
+%% MIT Press wants no skip on first use
+%% WDG
+\newif\iffirstindexline
+\firstindexlinetrue
+%
+% \twocolumn[\endmatter{index name}]
+% both switches to twocolumn mode and begins a section in the endmatter
+% with the heading ``index name''.  The macro \DefaultIndex
+\newif\if@restonecol
+\def\theindex{%
+\ifodd\count0
+\else\thispagestyle{empty}\hbox to\textwidth{\hfill}\newpage\fi
+\@restonecoltrue\if@twocolumn\@restonecolfalse\fi
+\begingroup
+\columnsep 35pt
+\columnseprule\z@
+% ORIG \twocolumn[\endmatter{Index}]
+% ORIG \markboth{Index}{Index}
+\twocolumn[\endmatter{Subject Index}]
+\markboth{Subject Index}{Subject Index}
+\thispagestyle{empty}
+\hfuzz=.5pc
+\parskip=\z@ plus.8pt
+\eightpoint
+\parindent\z@
+\def\item{\par\hangindent 1pc}
+\def\subitem{\par\hangindent 1pc \hspace*{.4pc}}
+\def\subsubitem{\par\hangindent 1pc \hspace*{.6pc}}
+\def\indexspace{\par \vskip 10pt plus 5pt minus 3pt\relax}
+\firstindexlinetrue
+}
+
+\def\endtheindex{\endgroup\if@restonecol\onecolumn\else\clearpage\fi}
+
+
+%% WDG - Reduced spacing after letter to tighten up the index list
+%% (was .9 baselineskip, changed to .8)
+\def\newindexletter#1{%
+ \iffirstindexline
+ \firstindexlinefalse
+ \hbox{}
+ \vskip -\baselineskip
+ \else
+ % Good break adds a par
+ \ifvmode\else\par\fi
+ \nobreak\vskip .5\baselineskip\penalty-500 
+ % Problem: in double column mode, we might not pop space from the top of the
+ % column???
+ \fi
+ \hrule
+ \nobreak
+ \vspace{2.5pt}%
+ \nobreak
+ {\bf #1\par}%
+ \nobreak
+ \vskip.8\baselineskip}
+
+\def\indexsee#1{\nobreak\hfil\penalty50\hfilneg\nobreak{\it see #1}}
+\def\see#1#2{\indexsee{#1}}

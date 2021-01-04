@@ -1,0 +1,111 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%  
+%% Chapter 1: Parallel computing
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\def\ArtDir{01.HeteroComp/figures}%
+
+\chapter{Heterogeneity and the future of computing}
+\label{chapter:heterogeneity}
+
+\section{What is Heterogeneous computing and why everyone will be doing it}
+
+\section{The basic building blocks of modern computing}
+
+\begin{itemize}
+\item Introduce a set of standard processors.
+\item  the CPU: the multiprocessor and cache coherent memory
+\item  the SIMD or Vector Unit: lock-step execution across vector lanes
+\item  the GPU:  Index space, kernels, work-items and work-groups
+\end{itemize}
+
+\subsection{Introduce Cache coherent shared memory machine. SMP model.}
+Introduce what a standard CPU looks like. This is the host processor.
+
+\subsection{Introduce GPU model}
+Describe an abstract vendor-neutral GPU.
+Using terms/definitions from OpenCL make this convenient.
+Local memory, will use in Chapter~\ref{chapter:portable}.
+
+In the book we will describe programming this GPU in OpenMP.
+Later, we include case studies of how this applies to real hardware.
+
+
+\section{Why you need OpenMP: a single code-base for heterogeneous hardware}
+
+\section{Templates for use in formatting the rest of the book.}
+
+Here is how we handle a code fragment embedded in text.
+Consider a simple program that adds two vectors, \code{a} and \code{b}.
+\begin{verbatim}
+      for (i = 0; i < N; i++) { 
+         a[i] = a[i] + b[i];
+      }
+\end{verbatim}  
+
+For longer code fragments, we put the code in a proper figure.  For example, consider figure~\ref{code:vaddSPMD}
+
+\begin{CodeExample}%
+{\textbf{SPMD parallel vector add program} -- \small
+Create a team of threads and assign one chunk of loop iterations
+to each thread.
+}%
+{code:vaddSPMD}
+\begin{lstlisting}
+// OpenMP parallel region and SPMD pattern
+#pragma omp parallel
+{
+   int id, i, Nthrds, istart, iend;
+   id = omp_get_thread_num();
+   Nthrds = omp_get_num_threads(); 
+   istart = id * N / Nthrds;
+   iend = (id + 1) * N / Nthrds;
+   if (id == Nthrds - 1) iend = N; 
+   for (i = istart; i < iend; i++) {
+      a[i] = a[i] + b[i];
+   }
+}
+\end{lstlisting}
+\end{CodeExample} 
+
+
+
+When we have specific constructs to introduce, we use a table with marcros for the constructs themselves.  This way we can make 
+sure that we use consistent fonts and styles across the entire book.  Take a look at table~\ref{tab:omp_for} for a good example.
+
+\begin{table}[!htbp]
+\centering
+\caption{\textbf{A basic worksharing-loop construct in C/C++ and Fortran} 
+-- \small
+The worksharing-loop construct shares the iterations of a loop among
+a team of threads.  The loop is called \texttt{for} in C and \texttt{DO} in Fortran.
+Fortran is not block structured, so we need an \texttt{END DO} directive.
+Optional clauses give the programmer more control
+over the loop construct and include \texttt{schedule}, \texttt{reduction}, and 
+\texttt{nowait}. We will discuss these clauses later in this chapter.  Additional clauses define storage attributes 
+of the variables used in the worksharing-loop.  We will cover those in 
+Chapter~\ref{ch:dataEnv}.  
+}
+\label{tab:omp_for}
+\begin{tabular}{|l|} \hline
+\ompbcfor \ompclauses \\ 
+%\hspace{5mm} \{   \\
+\hspace{5mm} for-loop \\      
+%\hspace{5mm} \}    \\           
+\hline
+\ompbfdo \ompclauses  \\ 
+%\hspace{5mm} \{   \\
+\hspace{5mm} do-loop   \\
+%\hspace{5mm} \}   \\ 
+\ompbfdoend \textit{ [nowait] } \\   
+                  
+\hline
+
+\end{tabular}
+\end{table}
+
+Here is an index entry:  Moore's law\index{Moore's law} and a citation Dennard scaling\index{Dennard scaling}~\cite{Dennard}, 
+
+
+

@@ -1,0 +1,141 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%  
+%% Chapter 5: Memory Movement
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\def\ArtDir{05.ParLoops/figures}%
+
+\chapter{Memory movement}
+\label{chapter:memory}
+
+\section{Recap implicit data movement}
+\begin{itemize}
+  \item So far only could work with scalars and stack arrays.
+  \item Now we explain heap arrays.
+  \item Recall firstprivate clause.
+  \item The pointer itself will be mapped firstprivate.
+  \item But the data needs to be mapped\dots
+\end{itemize}
+
+\section{Explicit data sharing with the map clause}
+\subsection{Array syntax: important as non-intuitive in C}
+\begin{itemize}
+  \item Introduce OpenMP array notation.
+  \item array[start:length].
+  \item It is not array[start:end] in C.
+  \item Follows pointer size rules, so don't have to worry about sizeof(T).
+  \item Array notation in Fortran.
+\end{itemize}
+
+\subsection{The map clause}
+\begin{itemize}
+  \item Map clause on a target directive.
+  \item List notation of things to map.
+  \item to, from and tofrom.
+  \item Recall the scoped behaviour: from transfer happens on the closing curly brace.
+  \item alloc and delete and release.
+  \item Pointer attachment from OpenMP 5.0
+  \item Some mention of reference counting. Things only transfer based on that. Read the spec for the details.
+\end{itemize}
+
+\subsection{Example: Vector add on the heap}
+\begin{itemize}
+  \item Similar to vector add example so far.
+  \item Arrays now allocated on the heap.
+  \item Show use of map(tofrom) clauses to copy the data to the device, run in parallel, then copy back at end.
+\end{itemize}
+
+\section{User-defined mappers}
+\begin{itemize}
+  \item From OpenMP 5.0
+  \item Allow user to define how structures are mapped.
+  \item Useful for complex structures
+  \item Example: struct with a pointer variable. Declare mapper of struct which also maps the pointer.
+\end{itemize}
+
+\section{Reductions and mapping back result.}
+\begin{itemize}
+  \item In OpenMP 5, the reduction result is brought back automatically.
+  \item Need to add a note that in OpenMP 4.5, need to use the map clause to do a reduction on the device.
+  \item map(tofrom: scalar)
+  \item Explain that without this it is firstprivate and not copied back.
+  \item Explain interaction of reduction clause with teams and threads and simd in the OpenMP hierarchy of parallelism.
+\end{itemize}
+
+\subsection{Example: Pi}
+\begin{itemize}
+  \item Show pi reduction example.
+  \item Has no data arrays to map.
+  \item But need to map the reduction result.
+\end{itemize}
+
+\section{Data regions}
+\begin{itemize}
+  \item Motivation: so far expressed data movement for each target region.
+  \item Wasteful as can often just leave it there between target regions.
+  \item Multiple target regions, leaving data resident.
+  \item Motivating example: multiple subsequent transformations to data, and/or iterative solve.
+  \item Wasteful as only want to do the mapping: both writing and in terms of optimal data movement.
+  \item Idea of target data region. Inherited by target regions. Data already exists on the device.
+\end{itemize}
+
+\subsection{Target data directive}
+\begin{itemize}
+  \item Scoped target data region.
+  \item Useful for lots of kernels running after each other.
+  \item Show an example of this.
+  \item No need to map on the target regions themselves.
+  \item Downsides are the structured block requirements.
+  \item From destination determined at start of region.
+\end{itemize}
+
+\subsection{Target enter/exit data}
+\begin{itemize}
+  \item Change target data environment in unstructured way.
+  \item Expect will need to talk about reference counting again.
+  \item Useful because don't need scoped. But behaves similarly.
+  \item Example use just after every allocation.
+  \item Means this helps with C++ class data in constructors.
+  \item Example: Show the same target data example with the target enter/exit data.
+\end{itemize}
+
+\subsection{Target update directive}
+\begin{itemize}
+  \item Need to get data back in the middle of target data region.
+  \item target update directive.
+  \item Uses same map clauses as before.
+  \item Example: convergence, or halo exchange.
+\end{itemize}
+
+\subsection{Pointer swapping}
+\begin{itemize}
+  \item Pointers are mapped firstprivate and zero-length arrays.
+  \item Updates reference count.
+  \item Doesn't need to copy any data, and don't need to specify length as already mapped.
+  \item Will be remapped/reevaluated on each target region.
+  \item How do you do pointer swapping in a target data region.
+  \item How do you do pointer swapping when you use target enter/exit.
+\end{itemize}
+
+\section{Example: Jacobi or CG or simple linear solver.}
+\begin{itemize}
+  \item Biggest example, showing off everything so far.
+  \item Key requirements: iterative and pointer swap to motivate cutting down memory movement
+  \item Use target enter/exit data regions.
+  \item Use pointer swapping.
+  \item Use target update.
+  \item Uses parallelism, with/without reduction clause.
+\end{itemize}
+
+\section{Unified shared memory}
+\begin{itemize}
+  \item OpenMP 5 add requires directive
+  \item Which unified shared memory is.
+  \item Data moves back and from at will (page fault).
+  \item Requires hardware support.
+  \item Pros: each to get started, as don't have to map.
+  \item Cons: parallelism is the easy bit, it's the data movement which is important.
+  \item In 5.0, limited performance tuning opportunities.
+  \item Mapping gives you the control for optimal performance.
+\end{itemize}

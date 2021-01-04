@@ -1,0 +1,61 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%  
+%% The table containing the common core with one line summaries
+%%
+%% This is the second version of the table used in the recap of
+%% the common core.
+%%
+%% To use this in one of our chapters, use the latex command
+%%         \begin{table}[h!]
+%%          \centering
+%%          \caption{Your caption}
+%%           \label{YourLabel}
+%%           \input{\SubDir/CommonCoreTab.tex}
+%%           \end{table}
+%%
+%%  where the macro \SubDir is defined at the top of each chapter and 
+%%  specifies where the source for the book resides.   
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{tabular}{l|l}
+\hline
+\emph{OpenMP pragma, function or clause}  & \emph{Description}\\
+\hline
+\Code{#pragma omp parallel}                & Creates a team of threads that execute code in the      \\ 
+                                                               & parallel region.                      \\
+\hline 
+\Code{int omp\_get\_thread\_num()}     & Function that returns the thread rank or ID \\
+\Code{int omp\_get\_num\_threads()}    & Function that returns the number of threads in the current team \\
+\Code{void omp\_set\_num\_threads()}    & Function to change the default number of threads             \\
+\hline
+\Code{double omp\_get\_wtime()}          & Function that returns elapsed time since some point in the past \\
+\hline
+\Code{setenv OMP\_NUM\_THREADS  N}  &  Environment variable setting the default number of threads\\
+\hline
+\Code{#pragma omp barrier}          & All threads wait at the barrier until all threads arrive  \\ 
+\Code{#pragma omp critical}          & mutual exclusion synchronization  \\
+\hline
+\Code{#pragma omp for}                 &  divide loop iterations between threads\\
+\Code{#pragma omp parallel for}     &   combined parallel worksharing-loop construct \\
+\hline
+\Code{reduction(op:list)}                   &  Reduction of values across a team of threads \\
+\hline
+\Code{schedule(dynamic [,chunk])}  &  Dynamically schedule chunks of loop iterations  \\
+\Code{schedule (static [,chunk])}      &  Statically (at compiler time) distribute iterations \\
+\hline
+\Code{private(list)}                           & Create copies of variables for each thread \\
+\Code{firstprivate(list)}                     & Create private copies and initialize them \\
+\Code{shared(list)}                          &  List the variables shared between threads.  \\
+\hline
+\Code{nowait}                                  &  Disable the implied barrier on workshare constructs,\\
+\hline
+\Code{#pragma omp single}          &  One thread executes the region, while others wait. \\
+\hline
+\Code{#pragma omp task}             &  Generate an explicit task \\
+\Code{#pragma omp taskwait}       &  Wait for tasks generated within the construct \\
+\hline
+\end{tabular}
+
+
+

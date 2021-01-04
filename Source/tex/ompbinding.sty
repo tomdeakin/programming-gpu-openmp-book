@@ -1,0 +1,465 @@
+%-----------------------------------------------------------------------
+% This file contains all the OpenMP related commands as used in
+% "Using OpenMP - Volume II"
+%
+% All the constructs and clauses are supported. For each language
+% a typewriter and bold font version is available. The naming
+% convention is straightforward
+%
+% \omp[c|f]<name_of_construct_without_spaces>  - typewriter
+% \ompb[c|f]<name_of_construct_without_spaces> - bold font
+% 
+% For example:
+%
+% \ompccritical     -> #pragma omp critical (typewriter font)
+%
+% \ompbfcritical    -> !$omp critical       (bold font)
+% \ompbfcriticalend -> !$omp end critical   (bold font)
+%
+% Ruud van der Pas
+%-----------------------------------------------------------------------
+
+%-----------------------------------------------------------------------
+% Three general macros
+%-----------------------------------------------------------------------
+\newcommand \OMP {OpenMP}
+\newcommand \OMPonezero   {OpenMP 1.0}
+\newcommand \OMPoneone    {OpenMP 1.1}
+\newcommand \OMPtwofive   {OpenMP 2.5}
+\newcommand \OMPthreezero {OpenMP 3.0}
+\newcommand \OMPthreeone  {OpenMP 3.1}
+\newcommand \OMPfourzero  {OpenMP 4.0}
+\newcommand \OMPfourfive  {OpenMP 4.5}
+\newcommand \OMPfivezero  {OpenMP 5.0}
+\newcommand \newOMP {OpenMP 4.5}
+
+\newcommand \ompclauses      { \emph{[clause[[,] clause]\ldots]} }
+\newcommand \ompccancelclauses   { \emph{construct-type-clause[[,]if-clause] new-line} }
+\newcommand \ompfcancelclauses   { \emph{construct-type-clause[[,]if-clause]} }
+\newcommand \ompccancellationpclauses   { \emph{construct-type-clause new-line} }
+\newcommand \ompfcancellationpclauses   { \emph{construct-type-clause} }
+\newcommand \criticalclause  { \emph{[ (name) [ \texttt{hint} (hint-expression) ] ]} }
+%\newcommand \bindclause { \code{proc\_bind(master|close|spread)} }
+\newcommand \bindclause {\tensfb{proc\_bind(\emph{policy}) \ompclauses} }
+\font\tensfb = cmssbx10 % bold sans serif
+
+%-----------------------------------------------------------------------
+% Macros for C  - Typewriter font
+%-----------------------------------------------------------------------
+\newcommand{\ompcdir}                   {\code{\#pragma omp}}
+\newcommand{\ompcparallel}              {\code{\#pragma omp parallel}}
+\newcommand{\ompcfor}                   {\code{\#pragma omp for}}
+\newcommand{\ompcsection}               {\code{\#pragma omp section}}
+\newcommand{\ompcsections}              {\code{\#pragma omp sections}}
+\newcommand{\ompccritical}              {\code{\#pragma omp critical}}
+\newcommand{\ompcsingle}                {\code{\#pragma omp single}}
+\newcommand{\ompcmaster}                {\code{\#pragma omp master}}
+\newcommand{\ompccancel}                {\code{\#pragma omp cancel}}
+\newcommand{\ompccancellationpoint}     {\code{\#pragma omp cancellation point}}
+\newcommand{\ompcparallelfor}           {\code{\#pragma omp parallel for}}
+\newcommand{\ompcparallelsections}      {\code{\#pragma omp parallel sections}}
+\newcommand{\ompcbarrier}               {\code{\#pragma omp barrier}}
+\newcommand{\ompcordered}               {\code{\#pragma omp ordered}}
+\newcommand{\ompcthreadprivate}         {\code{\#pragma omp threadprivate}}
+\newcommand{\ompcatomic}                {\code{\#pragma omp atomic}}
+\newcommand{\ompcflush}                 {\code{\#pragma omp flush}}
+\newcommand{\ompctarget}                {\code{\#pragma omp target}}
+\newcommand{\ompcdeclaretarget}         {\code{\#pragma omp declare target}}
+\newcommand{\ompcdeclaretargetend}      {\code{\#pragma omp end declare target}}
+\newcommand{\ompctargetdata}            {\code{\#pragma omp target data}}
+\newcommand{\ompctargetenterdata}       {\code{\#pragma omp target enter data}}
+\newcommand{\ompctargetexitdata}        {\code{\#pragma omp target exit data}}
+\newcommand{\ompctargetupdate}          {\code{\#pragma omp target update}}
+\newcommand{\ompcteams}                 {\code{\#pragma omp teams}}
+\newcommand{\ompcdistribute}            {\code{\#pragma omp distribute}}
+\newcommand{\ompcdistributeparallelfor} {\code{\#pragma omp distribute parallel for}}
+\newcommand{\ompcdistributesimd}        {\code{\#pragma omp distribute simd}}
+\newcommand{\ompcdistributeparallelforsimd} {\code{\#pragma omp distribute parallel for simd}}
+\newcommand{\ompcsimd}                  {\code{\#pragma omp simd}}
+\newcommand{\ompcdeclaresimd}           {\code{\#pragma omp declare simd}}
+\newcommand{\ompcdeclarereduction}      {\code{\#pragma omp declare reduction}}
+\newcommand{\ompcsimdloop}              {\code{\#pragma omp for simd}}
+\newcommand{\ompctask}                  {\code{\#pragma omp task}}
+\newcommand{\ompctaskloop}              {\code{\#pragma omp taskloop}}
+\newcommand{\ompctaskloopsimd}          {\code{\#pragma omp taskloop simd}}
+\newcommand{\ompctaskgroup}             {\code{\#pragma omp taskgroup}}
+\newcommand{\ompctaskyield}             {\code{\#pragma omp taskyield}}
+% 4.x combined constructs
+\newcommand{\ompcparallelforsimd}       {\code{\#pragma omp parallel for simd}}
+\newcommand{\ompctargetparallel}        {\code{\#pragma omp target parallel}}
+\newcommand{\ompctargetparallelfor}     {\code{\#pragma omp target parallel for}}
+\newcommand{\ompctargetparallelforsimd} {\code{\#pragma omp target parallel for simd}}
+\newcommand{\ompctargetsimd}            {\code{\#pragma omp target simd}}
+\newcommand{\ompctargetteams}           {\code{\#pragma omp target teams}}
+\newcommand{\ompcteamsdistributesimd}   {\code{\#pragma omp teams distribute simd}}
+\newcommand{\ompctargetteamsdistributesimd}{\code{\#pragma omp target teams distribute simd}}
+\newcommand{\ompcteamsdistribute}       {\code{\#pragma omp teams distribute}}
+\newcommand{\ompctargetteamsdistribute} {\code{\#pragma omp target teams distribute}}
+\newcommand{\ompcteamsdistributeparallelfor}{\code{\#pragma omp teams distribute parallel for}}
+\newcommand{\ompctargetteamsdistributeparallelfor}{\code{\#pragma omp target teams distribute parallel for}}
+\newcommand{\ompcteamsdistributeparallelforsimd}{\code{\#pragma omp teams distribute parallel for simd}}
+\newcommand{\ompctargetteamsdistributeparallelforsimd}{\code{\#pragma omp target teams distribute parallel for simd}}
+
+%-----------------------------------------------------------------------
+% Macros for C and Fortran - Clauses are in bold
+%-----------------------------------------------------------------------
+\newcommand{\binitializer}  {\tensfb{initializer}}
+\newcommand{\bomppriv}      {\tensfb{omp\_priv}}
+\newcommand{\bompin}        {\tensfb{omp\_in}}
+\newcommand{\bompout}       {\tensfb{omp\_out}}
+
+%\newcommand{\bcollapse}     { {\tensfb collapse} {\textmd{\code{(n)}}}}
+% Change to \emph for consistency:
+\newcommand{\bcollapse}     { {\tensfb collapse} {\textmd{\emph{(n)}}}}
+
+\newcommand{\bciftarget}    {\tensfb{if} \emph{([\code{target}:] scalar-expression)}} 
+\newcommand{\bfiftarget}    {\tensfb{if} \emph{([\code{target}:] scalar-logical-expression)}} 
+\newcommand{\bciftargetdata}{\tensfb{if} \emph{([\code{target data}:] scalar-expression)}} 
+\newcommand{\bfiftargetdata}{\tensfb{if} \emph{([\code{target data}:] scalar-logical-expression)}} 
+\newcommand{\bciftargetupdate}{\tensfb{if} \emph{([\code{target update}:] scalar-expression)}} 
+\newcommand{\bfiftargetupdate}{\tensfb{if} \emph{([\code{target update}:] scalar-logical-expression)}} 
+\newcommand{\bciftargetenterdata}{\tensfb{if} \emph{([\code{target enter data}:] scalar-expression)}} 
+\newcommand{\bfiftargetenterdata}{\tensfb{if} \emph{([\code{target enter data}:] scalar-logical-expression)}} 
+\newcommand{\bciftargetexitdata}{\tensfb{if} \emph{([\code{target exit data}:] scalar-expression)}} 
+\newcommand{\bfiftargetexitdata}{\tensfb{if} \emph{([\code{target exit data}:] scalar-logical-expression)}} 
+\newcommand{\bcif}          {\tensfb{if} \emph{(scalar-expression)}} 
+\newcommand{\bfif}          {\tensfb{if} \emph{(scalar-logical-expression)}} 
+\newcommand{\bmap}          {\tensfb{map} \emph{([[map-type-modifier[,]] map-type:] list]}}
+\newcommand{\bcdevice}      {\tensfb{device} \emph{(integer-expression)}}
+\newcommand{\bfdevice}      {\tensfb{device} \emph{(scalar-integer-expression)}}
+\newcommand{\bprivate}      {\tensfb{private} \emph{(list)}}
+\newcommand{\bfirstprivate} {\tensfb{firstprivate} \emph{(list)}}
+\newcommand{\blastprivate}  {\tensfb{lastprivate} \emph{(list)}}
+\newcommand{\bshared}       {\tensfb{shared} \emph{(list)}}
+\newcommand{\breduction}    {\tensfb{reduction} \emph{(reduction-identifier : list)}}
+\newcommand{\bisdeviceptr}  {\tensfb{is\_device\_ptr} \emph{(list)}}
+\newcommand{\busedeviceptr} {\tensfb{use\_device\_ptr} \emph{(list)}}
+\newcommand{\bdefaultmap}   {\tensfb{defaultmap(tofrom:scalar)}} 
+\newcommand{\bnowait}       {\tensfb{nowait}}
+\newcommand{\bordered}      {\tensfb{ordered} \emph{[(n)]}}
+\newcommand{\bdepend}       {\tensfb{depend} \emph{(dependence-type: list)}}
+\newcommand{\bdeclto}       {\tensfb{to} \emph{(extended-list)}}
+\newcommand{\bfrom}         {\tensfb{from} \emph{(list)}}
+\newcommand{\bto}           {\tensfb{to} \emph{(list)}}
+\newcommand{\blink}         {\tensfb{link} \emph{(list)}}
+\newcommand{\bcnumteams}    {\tensfb{num\_teams} \emph{(integer-expression)}}
+\newcommand{\bcthreadlimit} {\tensfb{thread\_limit} \emph{(integer-expression)}}
+\newcommand{\bcnumthreads} {\tensfb{num\_threads} \emph{(integer-expression)}}
+\newcommand{\bfnumthreads}    {\tensfb{num\_threads} \emph{(scalar-integer-expression)}}
+\newcommand{\bfnumteams}    {\tensfb{num\_teams} \emph{(scalar-integer-expression)}}
+\newcommand{\bfthreadlimit} {\tensfb{thread\_limit} \emph{(scalar-integer-expression)}}
+\newcommand{\bdistschedule} {\tensfb{dist\_schedule} \emph{(kind[, chunk\_size])}}
+\newcommand{\bcdefault}     {\tensfb{default(shared $|$ none)}}
+\newcommand{\bffdefault}    {\tensfb{default(shared $|$ firstprivate $|$ private $|$ none)}}
+
+\newcommand{\bsafelen}      {\tensfb{safelen} \emph{(length)}}
+\newcommand{\bsimdlen}      {\tensfb{simdlen} \emph{(length)}}
+\newcommand{\blinear}       {\tensfb{linear} \emph{(list[:linear-step])}}
+\newcommand{\baligned}      {\tensfb{aligned} \emph{(list[:alignment])}}
+
+\newcommand{\buniform}      {\tensfb{uniform} \emph{(argument-list)}}
+\newcommand{\binbranch}     {\tensfb{inbranch}}
+\newcommand{\bnotinbranch}  {\tensfb{notinbranch}}
+
+\newcommand{\biftask}             {\tensfb{if}    \emph{([\code{ task }:] scalar-logical-expression)}} 
+\newcommand{\biftaskloop}         {\tensfb{if}    \emph{([\code{ taskloop }:] scalar-logical-expression)}} 
+\newcommand{\bfinaltask}          {\tensfb{final} \emph{(scalar-logical-expression)}} 
+\newcommand{\buntiedtask}         {\tensfb{untied}}
+%\newcommand{\bdefaulttask}       {\tensfb{default(private $|$ firstprivate $|$ shared $|$ none)}}
+%\newcommand{\bdefaulttaskloop}   {\tensfb{default(shared $|$ none)}}
+\newcommand{\bmergeabletask}      {\tensfb{mergeable}}
+\newcommand{\bdependtask}         {\tensfb{depend}  \emph{(dependence-type : list)}}
+\newcommand{\bdependdoacross}     {\tensfb{depend} \emph{(dependence-type)}}
+\newcommand{\bdependdoacrossvec}  {\tensfb{depend} \emph{(dependence-type: iteration-vector)}}
+\newcommand{\bprioritytask}       {\tensfb{priority} \emph{(priority-value)}}
+\newcommand{\bgrainsize}          {\tensfb{grainsize} \emph{(grain-size)}}
+\newcommand{\bnumtasks}           {\tensfb{num\_tasks} \emph{(num-tasks)}}
+\newcommand{\bnogrouptask}        {\tensfb{nogroup}}
+
+\newcommand{\bscheduleclause}  {\tensfb{schedule} \emph{([ modifier [, modifier]:] kind [, chunk\_size])}} 
+%-----------------------------------------------------------------------
+% Macros for C  - Bold font
+%-----------------------------------------------------------------------
+\newcommand{\ompbcdir}                  {\tensfb{\#pragma omp}}
+\newcommand{\ompbcparallel}             {\tensfb{\#pragma omp parallel}}
+\newcommand{\ompbcfor}                  {\tensfb{\#pragma omp for}}
+\newcommand{\ompbcsection}              {\tensfb{\#pragma omp section}}
+\newcommand{\ompbcsections}             {\tensfb{\#pragma omp sections}}
+\newcommand{\ompbccritical}             {\tensfb{\#pragma omp critical}}
+\newcommand{\ompbcsingle}               {\tensfb{\#pragma omp single}}
+\newcommand{\ompbcmaster}               {\tensfb{\#pragma omp master}}
+\newcommand{\ompbccancel}               {\tensfb{\#pragma omp cancel}}
+\newcommand{\ompbccancellationpoint}    {\tensfb{\#pragma omp cancellation point}}
+\newcommand{\ompbcparallelfor}          {\tensfb{\#pragma omp parallel for}}
+\newcommand{\ompbcparallelsections}     {\tensfb{\#pragma omp parallel sections}}
+\newcommand{\ompbcbarrier}              {\tensfb{\#pragma omp barrier}}
+\newcommand{\ompbcordered}              {\tensfb{\#pragma omp ordered}}
+\newcommand{\ompbcthreadprivate}        {\tensfb{\#pragma omp threadprivate}}
+\newcommand{\ompbcatomic}               {\tensfb{\#pragma omp atomic}}
+\newcommand{\ompbcflush}                {\tensfb{\#pragma omp flush}}
+\newcommand{\ompbctarget}               {\tensfb{\#pragma omp target}}
+\newcommand{\ompbcdeclaretarget}        {\tensfb{\#pragma omp declare target}}
+\newcommand{\ompbcdeclaretargetend}     {\tensfb{\#pragma omp end declare target}}
+\newcommand{\ompbctargetdata}           {\tensfb{\#pragma omp target data}}
+\newcommand{\ompbctargetenterdata}      {\tensfb{\#pragma omp target enter data}}
+\newcommand{\ompbctargetexitdata}       {\tensfb{\#pragma omp target exit data}}
+\newcommand{\ompbctargetupdate}         {\tensfb{\#pragma omp target update}}
+\newcommand{\ompbcteams}                {\tensfb{\#pragma omp teams}}
+\newcommand{\ompbcdistribute}           {\tensfb{\#pragma omp distribute}}
+\newcommand{\ompbcdistributesimd}       {\tensfb{\#pragma omp distribute simd}}
+\newcommand{\ompbcdistributeparallelfor}{\tensfb{\#pragma omp distribute parallel for}}
+\newcommand{\ompbcdistributeparallelforsimd}{\tensfb{\#pragma omp distribute parallel for simd}}
+\newcommand{\ompbcsimd}                 {\tensfb{\#pragma omp simd}}
+\newcommand{\ompbcdeclaresimd}          {\tensfb{\#pragma omp declare simd}}
+\newcommand{\ompbcdeclarereduction}     {\tensfb{\#pragma omp declare reduction}}
+\newcommand{\ompbcsimdloop}             {\tensfb{\#pragma omp for simd}}
+\newcommand{\ompbctask}                 {\tensfb{\#pragma omp task}}
+\newcommand{\ompbctaskloop}             {\tensfb{\#pragma omp taskloop}}
+\newcommand{\ompbctaskloopsimd}         {\tensfb{\#pragma omp taskloop simd}}
+\newcommand{\ompbctaskgroup}            {\tensfb{\#pragma omp taskgroup}}
+\newcommand{\ompbctaskyield}            {\tensfb{\#pragma omp taskyield}}
+% 4.x combined constructs
+\newcommand{\ompbcparallelforsimd}      {\tensfb{\#pragma omp parallel for simd}}
+\newcommand{\ompbctargetparallel}       {\tensfb{\#pragma omp target parallel}}
+\newcommand{\ompbctargetparallelfor}    {\tensfb{\#pragma omp target parallel for}}
+\newcommand{\ompbctargetparallelforsimd}{\tensfb{\#pragma omp target parallel for simd}}
+\newcommand{\ompbctargetsimd}           {\tensfb{\#pragma omp target simd}}
+\newcommand{\ompbctargetteams}          {\tensfb{\#pragma omp target teams}}
+\newcommand{\ompbcteamsdistributesimd}  {\tensfb{\#pragma omp teams distribute simd}}
+\newcommand{\ompbctargetteamsdistributesimd}{\tensfb{\#pragma omp target teams distribute simd}}
+\newcommand{\ompbcteamsdistribute}      {\tensfb{\#pragma omp teams distribute}}
+\newcommand{\ompbctargetteamsdistribute}{\tensfb{\#pragma omp target teams distribute}}
+\newcommand{\ompbcteamsdistributeparallelfor}{\tensfb{\#pragma omp teams distribute parallel for}}
+\newcommand{\ompbctargetteamsdistributeparallelfor}{\tensfb{\#pragma omp target teams distribute parallel for}}
+\newcommand{\ompbcteamsdistributeparallelforsimd}{\tensfb{\#pragma omp teams distribute parallel for simd}}
+\newcommand{\ompbctargetteamsdistributeparallelforsimd}{\tensfb{\#pragma omp target teams distribute parallel for simd}}
+
+%-----------------------------------------------------------------------
+% Macros for Fortran  - Typewriter font
+%-----------------------------------------------------------------------
+\newcommand{\ompffixe}                  {\code{!\$omp}}
+\newcommand{\ompffixc}                  {\code{c\$omp}}
+\newcommand{\ompffixs}                  {\code{*\$omp}}
+\newcommand{\ompfdir}                   {\ompffixe}
+\newcommand{\ompfparallel}              {\code{!\$omp parallel}}
+\newcommand{\ompfparallelend}           {\code{!\$omp end parallel}}
+\newcommand{\ompfdo}                    {\code{!\$omp do}}
+\newcommand{\ompfdoend}                 {\code{!\$omp end do}}
+\newcommand{\ompfsection}               {\code{!\$omp section}}
+\newcommand{\ompfsections}              {\code{!\$omp sections}}
+\newcommand{\ompfsectionsend}           {\code{!\$omp end sections}}
+\newcommand{\ompfcritical}              {\code{!\$omp critical}}
+\newcommand{\ompfcriticalend}           {\code{!\$omp end critical}}
+\newcommand{\ompfsingle}                {\code{!\$omp single}}
+\newcommand{\ompfsingleend}             {\code{!\$omp end single}}
+\newcommand{\ompfmaster}                {\code{!\$omp master}}
+\newcommand{\ompfmasterend}             {\code{!\$omp end master}}
+\newcommand{\ompfcancel}                {\code{!\$omp cancel}}
+\newcommand{\ompfcancellationpoint}     {\code{!\$omp cancellation point}}
+\newcommand{\ompfworkshare}             {\code{!\$omp workshare}}
+\newcommand{\ompfworkshareend}          {\code{!\$omp end workshare}}
+\newcommand{\ompfparalleldo}            {\code{!\$omp parallel do}}
+\newcommand{\ompfparalleldoend}         {\code{!\$omp end parallel do}}
+\newcommand{\ompfparallelsections}      {\code{!\$omp parallel sections}}
+\newcommand{\ompfparallelsectionsend}   {\code{!\$omp end parallel sections}}
+\newcommand{\ompfparallelworkshare}     {\code{!\$omp parallel workshare}}
+\newcommand{\ompfparallelworkshareend}  {\code{!\$omp end parallel workshare}}
+\newcommand{\ompfbarrier}               {\code{!\$omp barrier}}
+\newcommand{\ompfordered}               {\code{!\$omp ordered}}
+\newcommand{\ompforderedend}            {\code{!\$omp end ordered}}
+\newcommand{\ompfthreadprivate}         {\code{!\$omp threadprivate}}
+\newcommand{\ompfatomic}                {\code{!\$omp atomic}}
+\newcommand{\ompfatomicend}             {\code{!\$omp end atomic}}
+\newcommand{\ompfflush}                 {\code{!\$omp flush}}
+\newcommand{\ompftarget}                {\code{!\$omp target}}
+\newcommand{\ompftargetend}             {\code{!\$omp end target}}
+\newcommand{\ompfdeclaretarget}         {\code{!\$omp declare target}}
+\newcommand{\ompftargetdata}            {\code{!\$omp target data}}
+\newcommand{\ompftargetdataend}         {\code{!\$omp end target data}}
+\newcommand{\ompftargetenterdata}       {\code{!\$omp target enter data}}
+\newcommand{\ompftargetexitdata}        {\code{!\$omp target exit data}}
+\newcommand{\ompftargetupdate}          {\code{!\$omp target update}}
+\newcommand{\ompfteams}                 {\code{!\$omp teams}}
+\newcommand{\ompfteamsend}              {\code{!\$omp end teams}}
+\newcommand{\ompfdistribute}            {\code{!\$omp distribute}}
+\newcommand{\ompfdistributeend}         {\code{!\$omp end distribute}}
+\newcommand{\ompfdistributesimd}        {\code{!\$omp distribute simd}}
+\newcommand{\ompfdistributesimdend}     {\code{!\$omp end distribute simd}}
+\newcommand{\ompfdistributeparalleldo}  {\code{!\$omp distribute parallel do}}
+\newcommand{\ompfdistributeparalleldoend}{\code{!\$omp end distribute parallel do}}
+\newcommand{\ompfdistributeparalleldosimd}{\code{!\$omp distribute parallel do simd }}
+\newcommand{\ompfdistributeparalleldosimdend}{\code{!\$omp end distribute parallel do simd}}
+\newcommand{\ompfsimd}                  {\code{!\$omp simd}}
+\newcommand{\ompfsimdend}               {\code{!\$omp end simd}}
+\newcommand{\ompfdeclaresimd}           {\code{!\$omp declare simd}}
+\newcommand{\ompfdeclarereduction}      {\code{!\$omp declare reduction}}
+\newcommand{\ompfsimdloop}              {\code{!\$omp doi simd}}
+\newcommand{\ompfsimdendloop}           {\code{!\$omp end do simd}}
+\newcommand{\ompftask}                  {\code{!\$omp task}}
+\newcommand{\ompfendtask}               {\code{!\$omp end task}}
+\newcommand{\ompftaskloop}              {\code{!\$omp taskloop}}
+\newcommand{\ompftaskloopsimd}          {\code{!\$omp taskloop simd}}
+\newcommand{\ompfendtaskloop}           {\code{!\$omp end taskloop}}
+\newcommand{\ompfendtaskloopsimd}       {\code{!\$omp end taskloopsimd}}
+\newcommand{\ompftaskgroup}             {\code{!\$omp taskgroup}}
+\newcommand{\ompfendtaskgroup}          {\code{!\$omp end taskgroup}}
+\newcommand{\ompftaskyield}             {\code{!\$omp taskyield}}
+% 4.x combined constructs
+\newcommand{\ompfparalleldosimd}        {\code{!\$omp parallel do simd}}
+\newcommand{\ompfparalleldosimdend}     {\code{!\$omp end parallel do simd}}
+\newcommand{\ompftargetparallel}        {\code{!\$omp target parallel}}
+\newcommand{\ompftargetparallelend}     {\code{!\$omp end target parallel}}
+\newcommand{\ompftargetparalleldo}      {\code{!\$omp target parallel do}}
+\newcommand{\ompftargetparalleldoend}   {\code{!\$omp end target parallel do}}
+\newcommand{\ompftargetparalleldosimd}  {\code{!\$omp target parallel do simd}}
+\newcommand{\ompftargetparalleldosimdend}{\code{!\$omp end target parallel do simd}}
+\newcommand{\ompftargetsimd}            {\code{!\$omp target simd}}
+\newcommand{\ompftargetsimdend}         {\code{!\$omp end target simd}}
+\newcommand{\ompftargetteams}           {\code{!\$omp target teams}}
+\newcommand{\ompftargetteamsend}        {\code{!\$omp end target teams}}
+\newcommand{\ompfteamsdistributesimd}   {\code{!\$omp teams distribute simd}}
+\newcommand{\ompfteamsdistributesimdend}{\code{!\$omp end teams distribute simd}}
+\newcommand{\ompftargetteamsdistributesimd}{\code{!\$omp target teams distribute simd}}
+\newcommand{\ompftargetteamsdistributesimdend}{\code{!\$omp end target teams distribute simd}}
+\newcommand{\ompfteamsdistribute}       {\code{!\$omp teams distribute}}
+\newcommand{\ompfteamsdistributeend}    {\code{!\$omp end teams distribute}}
+\newcommand{\ompftargetteamsdistribute}{\code{!\$omp target teams distribute}}
+\newcommand{\ompftargetteamsdistributeend}{\code{!\$omp end target teams distribute}}
+\newcommand{\ompfteamsdistributeparalleldo}{\code{!\$omp teams distribute parallel do}}
+\newcommand{\ompfteamsdistributeparalleldoend}{\code{!\$omp end teams distribute parallel do}}
+\newcommand{\ompftargetteamsdistributeparalleldo}{\code{!\$omp target teams distribute parallel do}}
+\newcommand{\ompftargetteamsdistributeparalleldoend}{\code{!\$omp target end teams distribute parallel do}}
+\newcommand{\ompfteamsdistributeparalleldosimd}{\code{!\$omp teams distribute parallel do simd}}
+\newcommand{\ompfteamsdistributeparalleldosimdend}{\code{!\$omp end teams distribute parallel do simd}}
+\newcommand{\ompftargetteamsdistributeparalleldosimd}{\code{!\$omp target teams distribute parallel do simd}}
+\newcommand{\ompftargetteamsdistributeparalleldosimdend}{\code{!\$omp end target teams distribute parallel do simd}}
+
+%-----------------------------------------------------------------------
+% Macros for Fortran  - Bold font
+%-----------------------------------------------------------------------
+\newcommand{\ompbffixe}                 {\tensfb{!\$omp}}
+\newcommand{\ompbffixc}                 {\tensfb{c\$omp}}
+\newcommand{\ompbffixs}                 {\tensfb{*\$omp}}
+\newcommand{\ompbfdir}                  {\ompbffixe}
+\newcommand{\ompbfparallel}             {\tensfb{!\$omp parallel}}
+\newcommand{\ompbfparallelend}          {\tensfb{!\$omp end parallel}}
+\newcommand{\ompbfdo}                   {\tensfb{!\$omp do}}
+\newcommand{\ompbfdoend}                {\tensfb{!\$omp end do}}
+\newcommand{\ompbfsection}              {\tensfb{!\$omp section}}
+\newcommand{\ompbfsections}             {\tensfb{!\$omp sections}}
+\newcommand{\ompbfsectionsend}          {\tensfb{!\$omp end sections}}
+\newcommand{\ompbfcritical}             {\tensfb{!\$omp critical}}
+\newcommand{\ompbfcriticalend}          {\tensfb{!\$omp end critical}}
+\newcommand{\ompbfsingle}               {\tensfb{!\$omp single}}
+\newcommand{\ompbfsingleend}            {\tensfb{!\$omp end single}}
+\newcommand{\ompbfmaster}               {\tensfb{!\$omp master}}
+\newcommand{\ompbfmasterend}            {\tensfb{!\$omp end master}}
+\newcommand{\ompbfcancel}               {\tensfb{!\$omp cancel}}
+\newcommand{\ompbfcancellationpoint}    {\tensfb{!\$omp cancellation point}}
+\newcommand{\ompbfworkshare}            {\tensfb{!\$omp workshare}}
+\newcommand{\ompbfworkshareend}         {\tensfb{!\$omp end workshare}}
+\newcommand{\ompbfparalleldo}           {\tensfb{!\$omp parallel do}}
+\newcommand{\ompbfparalleldoend}        {\tensfb{!\$omp end parallel do}}
+\newcommand{\ompbfparallelsections}     {\tensfb{!\$omp parallel sections}}
+\newcommand{\ompbfparallelsectionsend}  {\tensfb{!\$omp end parallel sections}}
+\newcommand{\ompbfparallelworkshare}    {\tensfb{!\$omp parallel workshare}}
+\newcommand{\ompbfparallelworkshareend} {\tensfb{!\$omp end parallel workshare}}
+\newcommand{\ompbfbarrier}              {\tensfb{!\$omp barrier}}
+\newcommand{\ompbfordered}              {\tensfb{!\$omp ordered}}
+\newcommand{\ompbforderedend}           {\tensfb{!\$omp end ordered}}
+\newcommand{\ompbfthreadprivate}        {\tensfb{!\$omp threadprivate}}
+\newcommand{\ompbfatomic}               {\tensfb{!\$omp atomic}}
+\newcommand{\ompbfatomicend}            {\tensfb{!\$omp end atomic}}
+\newcommand{\ompbfflush}                {\tensfb{!\$omp flush}}
+\newcommand{\ompbftarget}               {\tensfb{!\$omp target}}
+\newcommand{\ompbftargetend}            {\tensfb{!\$omp end target}}
+\newcommand{\ompbfdeclaretarget}        {\tensfb{!\$omp declare target}}
+\newcommand{\ompbftargetdata}           {\tensfb{!\$omp target data}}
+\newcommand{\ompbftargetdataend}        {\tensfb{!\$omp end target data}}
+\newcommand{\ompbftargetenterdata}      {\tensfb{!\$omp target enter data}}
+\newcommand{\ompbftargetexitdata}       {\tensfb{!\$omp target exit data}}
+\newcommand{\ompbftargetupdate}         {\tensfb{!\$omp target update}}
+\newcommand{\ompbfteams}                {\tensfb{!\$omp teams}}
+\newcommand{\ompbfteamsend}             {\tensfb{!\$omp end teams}}
+\newcommand{\ompbfdistribute}           {\tensfb{!\$omp distribute}}
+\newcommand{\ompbfdistributeend}        {\tensfb{!\$omp end distribute}}
+\newcommand{\ompbfdistributesimd}       {\tensfb{!\$omp distribute simd}}
+\newcommand{\ompbfdistributesimdend}    {\tensfb{!\$omp end distribute simd}}
+\newcommand{\ompbfdistributeparalleldo} {\tensfb{!\$omp distribute parallel do}}
+\newcommand{\ompbfdistributeparalleldoend} {\tensfb{!\$omp end distribute parallel do}}
+\newcommand{\ompbfdistributeparalleldosimd} {\tensfb{!\$omp distribute parallel do simd}}
+\newcommand{\ompbfdistributeparalleldosimdend} {\tensfb{!\$omp end distribute parallel do simd}}
+\newcommand{\ompbfsimd}                 {\tensfb{!\$omp simd}}
+\newcommand{\ompbfsimdend}              {\tensfb{!\$omp end simd}}
+\newcommand{\ompbfdeclaresimd}          {\tensfb{!\$omp declare simd}}
+\newcommand{\ompbfdeclarereduction}     {\tensfb{!\$omp declare reduction}}
+\newcommand{\ompbfsimdloop}             {\tensfb{!\$omp do simd}}
+\newcommand{\ompbfsimdendloop}          {\tensfb{!\$omp end do simd}}
+\newcommand{\ompbftask}                 {\tensfb{!\$omp task}}
+\newcommand{\ompbfendtask}              {\tensfb{!\$omp end task}}
+\newcommand{\ompbftaskloop}             {\tensfb{!\$omp taskloop}}
+\newcommand{\ompbftaskloopsimd}         {\tensfb{!\$omp taskloop simd}}
+\newcommand{\ompbfendtaskloop}          {\tensfb{!\$omp end taskloop}}
+\newcommand{\ompbfendtaskloopsimd}      {\tensfb{!\$omp end taskloop simd}}
+\newcommand{\ompbftaskgroup}            {\tensfb{!\$omp taskgroup}}
+\newcommand{\ompbfendtaskgroup}         {\tensfb{!\$omp end taskgroup}}
+\newcommand{\ompbftaskyield}            {\tensfb{!\$omp taskyield}}
+% 4.x combined constructs
+\newcommand{\ompbfparalleldosimd}       {\tensfb{!\$omp parallel do simd}}
+\newcommand{\ompbfparalleldosimdend}    {\tensfb{!\$omp end parallel do simd}}
+\newcommand{\ompbftargetparallel}       {\tensfb{!\$omp target parallel}}
+\newcommand{\ompbftargetparallelend}    {\tensfb{!\$omp end target parallel}}
+\newcommand{\ompbftargetparalleldo}     {\tensfb{!\$omp target parallel do}}
+\newcommand{\ompbftargetparalleldoend}  {\tensfb{!\$omp end target parallel do}}
+\newcommand{\ompbftargetparalleldosimd} {\tensfb{!\$omp target parallel do simd}}
+\newcommand{\ompbftargetparalleldosimdend}{\tensfb{!\$omp end target parallel do simd}}
+\newcommand{\ompbftargetsimd}           {\tensfb{!\$omp target simd}}
+\newcommand{\ompbftargetsimdend}        {\tensfb{!\$omp end target simd}}
+\newcommand{\ompbftargetteams}          {\tensfb{!\$omp target teams}}
+\newcommand{\ompbftargetteamsend}       {\tensfb{!\$omp end target teams}}
+\newcommand{\ompbfteamsdistributesimd}  {\tensfb{!\$omp teams distribute simd}}
+\newcommand{\ompbfteamsdistributesimdend}{\tensfb{!\$omp end teams distribute simd}}
+\newcommand{\ompbftargetteamsdistributesimd}{\tensfb{!\$omp target teams distribute simd}}
+\newcommand{\ompbftargetteamsdistributesimdend}{\tensfb{!\$omp end target teams distribute simd}}
+\newcommand{\ompbfteamsdistribute}      {\tensfb{!\$omp teams distribute}}
+\newcommand{\ompbfteamsdistributeend}   {\tensfb{!\$omp end teams distribute}}
+\newcommand{\ompbftargetteamsdistribute}{\tensfb{!\$omp target teams distribute}}
+\newcommand{\ompbftargetteamsdistributeend}{\tensfb{!\$omp end target teams distribute}}
+\newcommand{\ompbfteamsdistributeparalleldo}{\tensfb{!\$omp teams distribute parallel do}}
+\newcommand{\ompbfteamsdistributeparalleldoend}{\tensfb{!\$omp end teams distribute parallel do}}
+\newcommand{\ompbftargetteamsdistributeparalleldo}{\tensfb{!\$omp target teams distribute parallel do}}
+\newcommand{\ompbftargetteamsdistributeparalleldoend}{\tensfb{!\$omp end target teams distribute parallel do}}
+\newcommand{\ompbfteamsdistributeparalleldosimd}{\tensfb{!\$omp teams distribute parallel do simd}}
+\newcommand{\ompbfteamsdistributeparalleldosimdend}{\tensfb{!\$omp end teams distribute parallel do simd}}
+\newcommand{\ompbftargetteamsdistributeparalleldosimd}{\tensfb{!\$omp target teams distribute parallel do simd}}
+\newcommand{\ompbftargetteamsdistributeparalleldosimdend}{\tensfb{!\$omp end target teams distribute parallel do simd}}
+
+%-----------------------------------------------------------------------
+% Two additional macros
+%-----------------------------------------------------------------------
+\newsavebox{\omptabcaption}
+\newenvironment{omptable}[2]
+{\sbox{\omptabcaption}{#1}
+\def\omplabel{#2}
+\begin{table}[!htbp]\centering
+\begin{tabular}{|l l|}\hline}
+{\hline
+\end{tabular}
+\caption{\usebox{\omptabcaption}}
+\label{\omplabel}
+\end{table}}
+
+\newsavebox{\ompfigcaption}
+\newenvironment{ompfigure}[2]
+{\sbox{\ompfigcaption}{#1}
+\def\omplabel{#2}
+\begin{figure}[!htbp]\centering
+\begin{tabular}{|l l|}\hline}
+{\hline
+\end{tabular}
+\caption{\usebox{\ompfigcaption}}
+\label{\omplabel}
+\end{figure}}
+
+\newcommand{\anonheader}[1]
+{\smallskip{\bf {#1} }\smallskip}

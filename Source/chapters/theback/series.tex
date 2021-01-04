@@ -1,0 +1,126 @@
+%-----------------------------------------------------------------------
+% Modified the list according to the document sent to use Feb 3, 2017
+% 
+% Ruud
+%-----------------------------------------------------------------------
+
+% Ruud - Brute force to remove the header from the index carries over:
+
+\clearpage\pagestyle{empty}
+
+\seriespage{Scientific and Engineering Computation}%
+{William Gropp and Ewing Lusk, editors;
+Janusz Kowalik, founding editor}
+%% ===>       Always include either "Editor" or "Editors" !!
+
+\newif\iffulllist
+\fulllisttrue
+\iffulllist
+\begin{small}
+\raggedright
+% Redefine entry for a smaller size; don't break after title
+\def\entry#1#2{%
+\vskip3pt\vtop{\noindent
+\vrule width 0pt height7.5pt depth 2.5pt
+\normalfont\footnotesize\emph{#1,}
+#2\vrule width 0pt height7.5pt depth 2.5pt}
+}
+
+\vskip15pt
+
+\entry{Data-Parallel Programming on MIMD Computers}%
+{Philip J.~Hatcher and Michael J.~Quinn, 1991}
+
+\entry{Enterprise Integration Modeling: Proceedings of the First
+International Conference}%
+{edited by Charles J.~Petrie, Jr., 1992}
+
+\entry{The High Performance Fortran Handbook}%
+{Charles H.~Koelbel, David B.~Loveman, Robert S.~Schreiber, Guy L.~Steele
+  Jr., and Mary E.~Zosel, 1994}
+
+\entry{PVM: Parallel Virtual Machine---A Users' Guide and Tutorial for
+Network Parallel Computing}%
+{Al Geist,  Adam Beguelin, Jack Dongarra, Weicheng Jiang, Bob Manchek,
+and Vaidy Sunderam, 1994}
+
+\entry{Practical Parallel Programming}%
+% 1997 or 1995????
+{Gregory V.~Wilson, 1995}
+
+\entry{Enabling Technologies for Petaflops Computing}%
+{Thomas Sterling, Paul Messina, and Paul H.~Smith, 1995}
+
+\entry{An Introduction to High-Performance Scientific Computing}%
+{Lloyd D.~Fosdick, Elizabeth R.~Jessup, Carolyn J.~C.~Schauble, 
+and Gitta Domik, 1995}
+
+\entry{Parallel Programming Using C++}%
+{edited by Gregory V.~Wilson and Paul Lu, 1996}
+
+\entry{Using PLAPACK: Parallel Linear Algebra Package}%
+{Robert A.~van de Geijn, 1997}
+
+\entry{Fortran 95 Handbook}%
+{Jeanne C.~Adams, Walter S.~Brainerd, Jeanne T.~Martin, Brian
+T.~Smith, and Jerrold L.~Wagener, 1997}
+
+\entry{MPI---The Complete Reference: Volume 1, The MPI Core}%
+{Marc Snir, Steve Otto, Steven Huss-Lederman, David Walker, and
+Jack Dongarra, 1998}
+
+\entry{MPI---The Complete Reference: Volume 2, The MPI-2 Extensions}%
+% Added sloppy to remove overfull box - WDG
+{\sloppy William Gropp, Steven Huss-Lederman, Andrew Lumsdaine, Ewing Lusk,
+Bill Nitzberg, William Saphir, and Marc Snir, 1998}
+
+\entry{A Programmer's Guide to ZPL}%
+{Lawrence Snyder, 1999}
+
+\entry{How to Build a Beowulf}%
+{Thomas L.~Sterling, John Salmon, Donald J.~Becker, and Daniel F.~Savarese,
+1999}
+
+\entry{Using MPI-2:  Advanced Features of the Message-Passing
+Interface}%
+{William Gropp, Ewing Lusk, and Rajeev Thakur, 1999}
+
+\entry{Beowulf Cluster Computing with Windows}{Thomas Sterling, 2001}
+
+\entry{Beowulf Cluster Computing with Linux}{Thomas Sterling, 2001}
+
+\entry{Scalable Input/Output: Achieving System Balance}{Daniel A.~Reed, 2003}
+
+\entry{Using OpenMP: Portable Shared Memory Parallel Programming}%
+{Barbara Chapman, Gabriele Jost, and Ruud van der Pas, 2008}
+
+\entry{Quantum Computing without Magic: Devices}%
+{Zdzislaw Meglicki, 2008}
+
+\entry{Quantum Computing: A Gentle Introduction}%
+{Eleanor G. Rieffel and Wolfgang H. Polak, 2011}
+
+\entry{Using MPI: Portable Parallel Programming with the Message-Passing
+Interface, third edition}%
+{William Gropp, Ewing Lusk, and Anthony Skjellum, 2015}
+
+\entry{Using Advanced MPI: Beyond the Basics}
+{Pavan Balaji, William Gropp, Torsten Hoefler, Rajeev Thakur, and Ewing Lusk, 2015}
+
+\entry{Scientific Programming and Computer Architecture}
+{Divakar Viswanath, 2017}
+
+\entry{Cloud Computing for Science and Engineering}
+{Ian Foster and Dennis B. Gannon, 2017}
+
+\entry{Using OpenMP\textemdash The Next Step : Affinity, Accelerators, Tasking and SIMD}
+{Ruud van der Pas, Eric Stotzer, and Christian Terboven, 2017}
+
+%%%%%%%%%%%%%%%%%%
+
+\fi
+
+\iffulllist
+\end{small}
+\fi
+

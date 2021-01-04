@@ -1,0 +1,673 @@
+%-----------------------------------------------------------------------
+% This is the Glossary from the book "Using OpenMP -- The Next Step".
+%-----------------------------------------------------------------------
+%
+% There are glossary entries and acronyms defined here.
+%
+% The syntax is:
+%
+% \newglossaryentry{<label>}{<settings>} with a "name" and a "description"
+% \newacronym{<label>}{<short>}{<long>} with an optional description using [...].
+%
+% In the text you can refer to an entry using \gls{} and several flavors of this.
+%
+% For example, you can reference an acronym like this: \gls{NUMA}. The way I set it up is
+% that the first time this reference occurs, both the long and short version are printed.
+% On subsequent references, only the short version is printed.
+%
+% For glossary references, I like to use the \glslink version to specify how this appears
+% in the text. For example: \glslink{AtomicRead}{atomic read}
+
+\newglossaryentry{AddressSpace}
+{
+   name={Address space},
+   description={\index{address space}
+                The memory in a computer system is accessed by address.  A variable is a name for an address
+                 in memory.  The \emph{address space} is the set of all addresses available to a process.  
+                 In the OpenMP Common Core, we assume a shared address space is available to all the threads
+                 associated with a process.}
+}
+
+\newglossaryentry{Amdahls law} 
+{
+   name={Amdahl's law},
+   description={\index{Amdahl's law}
+   Amdahl's law is a simple relation which shows that the part of a program that is not parallelized limits how 
+   much faster a program might run when executed in parallel with multiple processors.
+   If $alpha$ is the serial fraction, that is, the fraction of the program that cannot run in parallel,
+   \emph{Amdalh's} law states that at best, a program can run $1/alpha$ times faster.  
+   }
+}   
+
+\newglossaryentry{AtomicOperation}
+{
+   name={Atomic operation},
+   description={\index{atomic}
+      An atomic operation is an operation that can not be observed in a partial state.  It is either ``complete'' or it has not yet ``occurred''.
+      Only one thread at a time can execute an atomic operation and it can not be interrupted.   Atomic operations are 
+      used to establish ordering constraints between threads (i.e., for synchronizing threads).  If two or more threads 
+      use the values of shared variables to 
+      coordinate their execution (e.g., to implement a spin-lock), the only way to do so without creating a data race is to 
+      read and write those shared variables with atomic operations.       
+      }
+}
+
+\newglossaryentry{Barrier} 
+{
+   name={Barrier},
+   description={\index{barrier}
+   The \emph{barrier} is the fundamental synchronization construct in the OpenMP Common Core. A barrier defines a point
+   in the execution of a program where threads in a team wait until all of the threads in the team
+   have arrived.  Once all of the threads have arrived at the barrier, variables in shared memory 
+   are flushed (i.e., their values are made consistent with memory) and then threads execute statements
+   following the barrier. 
+   }
+}   
+
+\newglossaryentry{Cache}
+{
+   name={Cache},
+   description={\index{cache}
+          A \emph{cache} is a memory buffer that provides low latency access to a block of memory.  A cache does \emph{not}
+          define a distinct address space.  Informally, you can think of a cache as providing a window into
+          the RAM memory of a system.
+          Data is moved between memory and the
+          cache in units of a \emph{cache line}
+         which corresponds to a contiguous segment of addresses in memory.  A typical cache
+         line in a modern microprocessor is 32 or 64 bytes.  There are many ways to organize the 
+         caches in a system.  Typically, there are a pair of caches close to each core.  These are 
+         called L1D and L1I for the \emph{L1 data cache} and the \emph{L1 instruction cache}.  They are small
+         but run at or near the clock of the CPU.  A larger but slower cache is the \emph{unified L2 cache}.
+         The term ``unified'' is used to signify that it holds both data and instructions.  The hierarchy 
+         continues through multiple levels until we reach the last level cache which is a larger and slower
+         cache shared between the cores in a multiprocessor.  
+         }
+}
+
+\newglossaryentry{Cache coherence}
+{
+   name={Cache coherence},
+   description={\index{cache!coherence}
+          In a shared memory system with caches for each processor, a single variable may exist
+          in multiple locations across the memory hierarchy.  Most of these systems are said to be
+          cache coherent; that is, they guarantee that in a properly-synchronized,
+          race-free program, the system maintains a single view of the memory. This means
+          the system must keep track of the values across a cache hierarchy and update them as needed
+          when processors read or write to shared variables. 
+         }
+}
+
+\newglossaryentry{Cluster} 
+{
+   name={Cluster},
+   description={\index{cluster}
+   Shared memory, in order to be effective, requires a significant investment in hardware to support 
+   a shared address space across processors with a variation in latencies to memory that is
+   suitable for the parallel algorithms programmers write. 
+   At some point, as we scale the size
+   of a parallel computer, the cost of maintaining shared memory becomes too high and unwieldy
+   to implement.  The solution is to transition to a distributed memory system where each computer in 
+   the system has its own distinct memory.  Interaction between computers then happens as the exchange
+   of discrete messages rather than through loads and stores into a shared address space.    A cluster
+   is the dominant way to build distributed memory systems.  A cluster uses ``Commercial Off The Shelf''
+   (COTS) computers (nodes) with a COTS network to build large scale distributed memory computers.  Software
+   systems organize the nodes in the cluster so they appear as a single integrated system.  The most important
+   software in a cluster is the message passing software, typically based on the MPI standard.
+   }
+}   
+
+
+
+\newglossaryentry{Concurrency} 
+{
+   name={Concurrency},
+   description={\index{concurrency}
+   A condition of a system in which two or more execution entities are active but unordered.  By ``active'' we mean the
+   execution entities are executing a sequence of operations.  By ``unordered'' we mean that we do not have 
+   global time stamps that allow us to say when operations from different execution entities are executed with respect 
+   to each other.  When such ordering constraints are needed, we use \emph{synchronization} operations.
+      }
+}   
+
+
+
+\newglossaryentry{Construct}
+{
+   name={Construct},
+   description={\index{construct}
+An OpenMP \emph{executable directive} and the associated loop or \emph{structured block}.  It does not
+include any code in routines called from within the structured block.  It only includes the lexical extent of 
+the \emph{executable directive}.  The constructs in the common core are \code{parallel}, 
+\code{task}, \code{single}, \code{target} and the worksharing-loop.  OpenMP defines combined constructs which
+are made by merging two constructs together.  The semantics of a combined construct is the same as if 
+the two separate constructs are called successively.  OpenMP also defines \emph{composite} constructs which
+are constructed by merging constructs and directives but the resulting semantics might differ from what would follow
+from successive application of the individual constructs. }
+}
+
+\newglossaryentry{Core} 
+{
+   name={Core},
+   description={\index{core}
+   To improve aggregate performance, a processor is usually composed of smaller processors.  When these processors
+   appear at an abstract level as a distinct processing element with their own sequence of instructions, they are called a core.
+   The CPUs in most high performance computing systems generally have multiple cores.  A core often includes hardware 
+   elements to support multiple threads.  This is called Simultaneous Multi-threading (SMT) or \emph{hyperthreading}.  Each
+   hardware thread appears to the operating system as a \emph{virtual core}.  For example, a high-end CPU for a server 
+   may have 24 physical cores but SMT technology might support 2 hardware threads per core  in which case the operating
+   system would report 48 virtual cores.
+   }
+} 
+
+\newglossaryentry{CPU} 
+{
+   name={CPU},
+   description={\index{CPU}
+   A Central Processing Unit is a general purpose processor optimized for low latencies and interactive use cases.  By 
+   ``general purpose'' we mean that a CPU is expected to run any well-formed program. To support interactive use cases, a
+   CPU typically has a cache hierarchy to hopefully keep frequently updated variables in memory buffers that run fast relative
+   to the speed of the processing elements within the CPU.  As a class of devices, CPUs are extremely common appearing in everything
+   from high-end servers inside data centers to tiny chips running in a cell phone.  In high performance computing systems, we
+   informally think of a CPU as the device that occupies a \emph{socket} in a server.
+   }
+}  
+
+\newglossaryentry{Critical} 
+{
+   name={Critical},
+   description={\index{critical construct}
+   The critical directive plus its associated structured block defines a synchronization 
+   construct that provides mutual exclusion in OpenMP.  The code
+   in the structured block can only be executed by one thread at a time.  If a thread encounters the critical construct
+   and another thread is already executing code in the construct, it will wait until that thread has completed
+   the work defined by the construct, made any updates to memory visible to other threads, and exited the construct. 
+   In the computer science literature, this functionality is often referred to as a \emph{critical section}.
+   }
+}   
+ 
+
+\newglossaryentry{Data environment}
+{
+   name={Data environment},
+   description={\index{data environment}
+    The set of variables visible inside a region.  This means that each construct (i.e., a directive plus its associated
+    structured block) has its own data environment.  OpenMP provides a set of clauses that define how variables move
+    between data environments.  The most common examples of these clauses are \code{shared}, \code{private},
+    and \code{firstprivate}.
+    }
+}
+
+\newglossaryentry{Data race} 
+{
+  name={Data race},
+   description={\index{data race}
+   A data race occurs when: (1) two or more threads in a shared memory system issue loads and stores to overlapping
+   address ranges, and (2) those loads and stores are not constrained to follow a 
+   %Ruud didn't like the term
+   well-defined 
+   %TGM: I'm not sure what to use instead
+   order.  The term ``race'' is used since
+   the threads running on the different processors are ``racing'' to see which store lands in the shared variable.  Most modern
+   languages (including OpenMP) stipulate that a  program with a data race is invalid; a compiler is not required
+   to produce well-defined results in such cases.
+      }
+}
+
+\newglossaryentry{Directive}
+{
+   name={Directive},
+   description={\index{directive}\index{directive!stand-alone}\index{directive!executable}\index{directive!declarative}
+   A directive is a command issued to the compiler and expressed within the source code of a program.
+   In OpenMP, a directive is introduced with the sentinels  \code{\#pragma omp} in C/C++ and
+   a comment statement such as \code{!\$OMP} in Fortran.  OpenMP is an explicit API so the directives
+   tell the compiler to carry out a specific transformation to the code during compilation.   OpenMP 
+   defines several types of directives.  A \emph{declarative directive} occurs among the declaration statements
+   in a program and influences how variables are declared.  An example is the \code{threadprivate} directive.
+   An \emph{executable} directive appears among the executable statements of a program and typically tells
+   the program how to transform code during compilation to support threads.  The \code{parallel} directive
+   is a good example of an executable directive.  A \emph{stand-alone} directive is not associated with 
+   any declarations or blocks of code.  It defines a direct action for the compiler to insert into the
+   stream of instructions the compiler generates.  The \code{barrier} directive is a stand-alone directive.}
+}
+
+\newglossaryentry{DRAM} 
+{
+   name={DRAM},
+   description={\index{DRAM}
+   The memory in a typical computer system is exposed as Random Access Memory (RAM) which is
+   usually supported by hardware modules implemented with Dynamic Random Access Memory chips.  The term
+   DRAM is used in this book when we want to specify a hardware element that supports the memory system.
+   }
+}   
+
+
+\newglossaryentry{Environment variable} 
+{
+   name={Environment variable},
+   description={\index{environment variable}
+   An environment variable is a mechanism to modify the environment within which a process executes.
+   The details of how these variables are set and managed are not defined in OpenMP as they often vary from
+   one operating system to another.   Typically, each of the internal control variables (ICV) in OpenMP has an 
+   associated Environment Variable. This is used to set the default value of the ICV for an OpenMP execution.
+   The most commonly used OpenMP environment variable is \code{OMP\_NUM\_THREADS}.
+   }
+}   
+
+
+\newglossaryentry{Flush} 
+{
+   name={Flush},
+   description={\index{flush}
+   The \emph{flush} is an operation that makes its set of shared variables consistent with memory. 
+   Note that a flush does not define a \emph{synchronized-with} relation with other threads.  It is not
+   a synchronization operation.  Flush, however, is essential in controlling data synchronization.  The
+   flush forces variables in registers or other buffers to be written to memory and it marks cache lines as ``dirty'' so they will
+   be refreshed from memory on the next load.  The flush operation is often called a ``memory fence'' in other shared address 
+   space systems.  
+   }
+}   
+
+
+\newglossaryentry{First touch} 
+{
+   name={First touch},
+   description={\index{first touch}
+   The amount of memory that can be addressed by a system is greater than the amount of physical 
+   memory (DRAM).   In response, an operating system organizes memory into pages where a page
+   can fit into physical memory.  If the system is a NUMA system with multiple NUMA domains, the performance
+   varies widely depending on where the pages are mapped relative to the cores that access the pages.  A 
+   common strategy in such systems is called first touch; i.e., a page of memory is mapped to the NUMA domain
+   of the core that first touches the data.  In practical terms, this means an OpenMP program should initialize data 
+   with the same threads that will later process the data. 
+   }
+}   
+
+
+
+\newglossaryentry{GPU} 
+{
+   name={GPU},
+   description={\index{GPU}
+   Graphic Processing Units were initially designed for processing graphics data.  These are
+   throughput-optimized devices.  For example, if you are rendering an image, the time to 
+   compute any particular pixel is not important.  The concern is the throughput; that is,
+   the number of images per second that can be streamed through the GPU.  Over time as 
+   more sophisticated rendering algorithms were developed, GPU processing pipelines
+   became programmable.   This led to GPGPU programming or General-Purpose GPU Programming.   
+   The execution model of GPGPU is SIMT.  In OpenMP, the \code{target} and associated device
+   directives are used to program a GPU.
+  }
+}   
+
+
+\newglossaryentry{Load balancing} 
+{
+   name={Load balancing},
+   description={\index{load balancing}
+   A team of threads working together to execute code in-parallel completes their work
+   when the last thread in the team has finished.  Variation in when threads complete
+   results in a subset of the threads waiting for other threads to finish; thereby incurring
+   parallel overhead.  \emph{Load balancing} refers to techniques that adjust
+   the work done by each thread so the team of threads finishes at about the same time.  For 
+   OpenMP programmers, this often comes down to adjusting the parameters of the schedule clause
+   on a worksharing-loop construct.  
+   }
+}   
+
+
+\newglossaryentry{Internal Control Variable} 
+{
+   name={Internal Control Variable},
+   description={\index{Internal Control Variable}
+   An opaque object internal to an OpenMP implementation that manages default values, execution modes, or other behaviors for the execution 
+   of an OpenMP program.  In most cases, an internal control
+   variable (or ICV) has an associated environment variable  and runtime library routines to set the variable and to get the value
+   of the variable. 
+   }
+}   
+
+
+ \newglossaryentry{Lock} 
+{
+   name={Lock},
+   description={\index{lock}
+   A synchronization operation implemented in OpenMP through a lock data type and a
+   collection of runtime library routines.  These implement mutual exclusion execution through
+   a pair of fundamental operations: \emph{set} and \emph{unset}.  A thread sets the lock.  We
+   say that this thread \emph{holds} the lock.  If a thread tries to set a lock while another thread
+   holds the same lock, it will wait until the thread holding the lock \emph{unsets} the lock.
+   Locks support mutual exclusion synchronization but in a way that is more flexible than with
+   OpenMP directives such as \code{critical}. 
+   }
+}   
+
+\newglossaryentry{Memory} 
+{
+   name={Memory},
+   description={\index{memory}
+   A subsystem in a computer that holds the values of variables.  The memory is accessed through
+   addresses hence we can describe the memory as the subsystem in a computer that supports the
+   address space for the system.  Memory is organized into a hierarchy with faster/smaller memory units (cache) 
+   near the processors and slower/larger memory devices (usually as DRAM modules) further away from 
+   the processors. 
+   }
+}   
+
+\newglossaryentry{Memory model}
+{
+   name={Memory model},
+   description={\index{memory model}
+            The full name is ``memory consistency model'' though we typically call 
+            it a ``memory model'' for short.  The memory model is the set of rules that define 
+            the value returned by a read (or \emph{load}) operation on a variable when that 
+            variable is shared between two or more threads.   The model is used when 
+            reasoning about multiple threads that issue loads and stores to overlapping address ranges
+            to assure that a program is free of any \emph{data races}.}
+}
+
+
+\newglossaryentry{MPI} 
+{
+   name={MPI},
+   description={\index{MPI}
+  The Message Passing Interface (MPI) is the dominant standard
+   API for programming distributed memory computers.  As the name implies,
+   it defines semantics for how processes in a distributed memory system exchange messages.
+   MPI is much more than a system for passing messages, however, and more accurately is a full-fledged
+   system for coordinating the execution of processes including collective communication, 
+   one-sided communication, shared memory regions, and the basic constructs needed to 
+   build runtime systems for partitioned global address spaces.  MPI and OpenMP have 
+   grown side by side over the years and the two have become the dominant models of
+   high performance computing; with MPI between nodes and OpenMP on a node.  This is 
+   often called the MPI/OpenMP hybrid model.
+   }
+}   
+
+
+\newglossaryentry{Multicore} 
+{
+   name={Multicore},
+   description={\index{multicore CPU}
+   A CPU with multiple cores is a \emph{multicore} CPU. While technically \emph{multicore} is
+   an adjective, it is often used as a noun.   In some cases, we distinguish between multicore 
+   CPUs which connect cores through the memory hierarchy (cache coherent) as opposed to 
+   a many-core CPU which connects the cores through a scalable on-die network.
+   }
+}   
+
+
+\newglossaryentry{Multiprocessor} 
+{
+   name={Multiprocessor},
+   description={\index{multiprocessor}
+   A class of computer systems where multiple processors share a single address space
+   supported by a physical shared memory system.  
+   }
+}   
+
+
+\newglossaryentry{Multithreading} 
+{
+   name={Multithreading},
+   description={\index{multithreading}
+   An execution model in which a number of light-weight execution entities (threads) execute 
+   within a shared address space.  
+   }
+}   
+
+
+\newglossaryentry{Node} 
+{
+   name={Node},
+   description={\index{node}
+   Large scale parallel computers are built by connecting multiple independent computers together
+   over a network of some variety.   We call each computer in this system a \emph{node}.  Another way
+   to think about the term is the computer network defines a graph.  The nodes in the graph are
+   the computers in the network while the edges of the graph represent point-to-point links in the network.
+   }
+}   
+
+%Ruud disagrees with this definition.  He says that when talking about UMA or NUMA the point is the 
+% memory at the level of DRAM.  Considering a cache hierarchy as the source of NUMA doesn't work
+% with his definition.
+\newglossaryentry{NUMA} 
+{
+   name={NUMA},
+   description={\index{NUMA}
+   A NonUniform Memory Architecture is a shared memory computer for which
+   the cost to different locations in memory varies between the processors in the system.  Because of the presence of
+   caches, most computer systems available today are NUMA systems.
+   }
+}   
+
+
+\newglossaryentry{Original variable}
+{
+   name={Original variable},
+   description={\index{original variable}
+Variables appear inside the code associated with a construct.  Many of these variables are declared prior to 
+the construct and pass into the scope of the construct by default or through one of the clauses on the construct.
+For such variables, there is a variable of the same name that exists immediately prior to the construct. 
+This is called the \emph{original variable}.}
+}
+
+
+\newglossaryentry{Parallelism} 
+{
+   name={Parallelism},
+   description={\index{parallelism}
+   Multiple processors running at the same time to solve a problem are running \emph{in parallel}.
+   Multithreading is a specific type of parallelism where a collection of concurrent threads  run on multiple processors
+   to execute in parallel. 
+   }
+}   
+
+  
+\newglossaryentry{Processor} 
+{
+   name={Processor},
+   description={\index{processor}
+   A generic term to refer to any hardware element upon which threads can run.  This includes
+   CPUs, GPUs, DSPs, cores, and any other variety of processing element. 
+   }
+}   
+\newglossaryentry{Process} 
+{
+   name={Process},
+   description={\index{process}
+   Operating systems organize the execution of programs in terms of a \emph{process}.  A process 
+   includes one or more threads and handles  resources to support the threads.  This includes
+   a region of memory that is shared between the threads.
+   }
+}   
+
+\newglossaryentry{RAM}
+{
+   name={RAM},
+   description={\index{RAM}
+   When we consider memory in a computer system, we typically are referring to
+   Random Access Memory (RAM).  This is byte addressable memory that supports arbitrary 
+   streams of memory references (i.e., random access).    
+}
+}
+
+\newglossaryentry{Region}
+{
+   name={Region},
+   description={\index{region}
+All code encountered during a specific instance of the execution of a given 
+\emph{construct} or of an OpenMP library routine.  The region includes
+code from the structured block (i.e., the lexical scope of the directive) plus any 
+code called as the threads execute the code within the construct.    
+}
+}
+
+
+\newglossaryentry{Runtime library} 
+{
+   name={Runtime library},
+   description={\index{runtime library}
+   OpenMP provides a set of library routines callable at runtime to manage features of the implementation that cannot
+   be addressed at compile time.  Examples include the \code{omp\_thread\_num()} function which returns the ID 
+   of an individual member of a team of threads or the \code{omp\_num\_threads()} function which returns the number of threads
+   in a team.  
+   }
+}   
+
+
+\newglossaryentry{SIMT} 
+{
+   name={SIMT},
+   description={\index{SIMT}
+   Single Instruction Multiple Thread is an execution model commonly used to understand 
+   execution of programs on Graphics Processing Units (GPUs).  A space of indices is defined
+   often by a nested set of loops.
+   At each point in this index-space, an instance of a function called a kernel executes.  Data is
+   also organized around this index space which helps programmers reason about memory locality.  
+   The kernel instances are grouped into blocks which are queued up for execution 
+   and execute as their data is available.    The goal of SIMT execution is to optimize the throughput 
+   of the system; that is, any individual kernel instance may take a long time to compute, but the aggregate
+   collection of kernel instances complete at a high bandwidth.   
+   }
+}   
+
+\newglossaryentry{SMP} 
+{
+   name={SMP},
+   description={\index{SMP}
+   A Symmetric MultiProcessor is a shared memory computer where: (1) every processor is treated
+   the same by the operating system, and (2) the cost of accessing any location in memory is the 
+   same for all processors.
+   }
+}   
+
+\newglossaryentry{Speedup} 
+{
+   name={Speedup},
+   description={\index{speedup}
+   A ratio between some reference run time and a comparison run time.  It is important when reporting
+   speedup data to specify the reference run time.   Typically, we are interested
+   in  speedup trends as additional processors are used to execute a parallel program.  In this case, the reference
+   run time should  be the best serial algorithm running on one node.  When the speedup equals the number
+   of processors, we say that the program is displaying \emph{perfect linear speedup}.   }
+}   
+
+
+\newglossaryentry{SPMD} 
+{
+   name={SPMD},
+   description={\index{SPMD}
+   Single Program Multiple Data is a fundamental design pattern of parallel programming.  Each execution
+   entity runs the same program (Single Program) but on its own set of variables (Multiple Data).  The
+   work is managed between execution entities through the ID of each entity and the number of entities
+   running in parallel.
+   }
+} 
+
+\newglossaryentry{Structured block} 
+{
+   name={Structured block},
+   description={\index{structured block}
+  A block of one or more statements associated with certain OpenMP directives to define  a construct.
+  The statements in the structured block define a flow of execution where in normal operation of the program,
+  execution enters at the top of the block and exits at the bottom.  In the OpenMP Common Core, the only exception to
+  the ``enter at the top and exit at the bottom'' rule is an exit statement to terminate execution of the program.   For C/C++
+  the structured block is either a single statement (including a \code{for} statement) or a collection of statements
+  between curly braces (\{ and \}).  With Fortran, OpenMP defines a directive to mark the end of the structured
+  block (e.g., \code{!\$OMP parallel} and \code{!\$OMP end parallel}).  }
+} 
+
+\newglossaryentry{Synchronization} 
+{
+   name={Synchronization},
+   description={\index{synchronization}
+   Operations from concurrent threads are unordered with respect to each other.  This means
+   that in general, we cannot say which operations on one thread happen-before operations on 
+   other threads.    Synchronization refers to ways we can insert specific ordering constraints
+   into the execution of concurrent threads.  Specifically,
+   a synchronization event defines a synchronized-with relation between threads.  Operations before the
+   synchronized-with relation on one thread \emph{happen-before} operations on another thread that occur
+   after the synchronized-with relation. When the synchronization applies to the whole team of threads, such as with 
+   the barrier and the critical construct, we call it \emph{collective synchronization}.  We can also 
+   define synchronization events between pairs of threads; that is, pairwise synchronization.  When synchronization
+    refers to the order of updates to variables in memory, it is called \emph{data synchronization}.
+   We also specialize the term to refer to constraints on the order of operations from multiple threads.  This is
+   called \emph{thread synchronization}.   
+}
+}   
+
+
+\newglossaryentry{Task} 
+{
+   name={Task},
+   description={\index{task}
+   The term \emph{task} is used informally to describe a distinct unit of work.  In OpenMP, it refers 
+   specifically to a specific instance of executable code and its data environment.  A task is an
+   \emph{explicit task} if it is created by an OpenMP \code{task} construct.  A task is an \emph{implicit}
+   task if it is implied by a construct.  For example when an OpenMP program begins execution, it is run
+   by an initial thread which runs an implicit task known as the \emph{initial task}.   It may seem odd to 
+   define implicit tasks in OpenMP.  They were added to the language to provide a consistent abstraction
+   to be used when defining the detailed behavior of OpenMP for those implementing OpenMP systems.
+   }
+}   
+
+\newglossaryentry{Thread}
+{
+   name={Thread},
+   description={\index{thread} 
+An execution entity with its own private memory (organized as a stack) and associated static 
+memory, called \emph{threadprivate memory}.  In a modern operating system, a program
+executable is launched as a single process which defines an address space and a 
+collection of resources managed by the operating system on behalf of the process.
+Execution of the process occurs through one or more threads which belong to the
+process and share the address space and any other resources associated with the process.
+Threads are a general concept and the term is used widely in computer science.  Closely related
+to OpenMP threads are \emph{pthreads} which is a standard threads interface 
+included in the IEEE POSIX standard.   Unfortunately, the term thread is used by some GPGPU
+programming models, which can be confusing since a GPU thread is quite different from
+threads in OpenMP and POSIX.  This is why in the GPGPU programming model, OpenCL, the
+concept of thread was dropped and instead, the more generic term \emph{work-item} was used.
+}
+}
+
+\newglossaryentry{Thread affinity} 
+{
+   name={Thread affinity},
+   description={\index{thread affinity}
+   A multiprocessor system is optimized to maximize the performance across many simultaneous processes.
+   Given the large number of processes running on a system at any given time and the fact that they may  be
+   in various states of the activity or waiting on system resources, the most effective way to maintain good
+   aggregate performance is for the operating system to freely migrate the threads between the processors
+   in the system.  While this is an effective strategy for servicing the needs of a collection of largely independent
+   processes, this can be a terrible strategy when you are interested in the performance of a single process (as
+   is usually the case with an OpenMP program).  The solution is to enable thread affinity; that is, to tell the 
+   operating system to turn off thread migration and then bind threads to specific processors.      }
+}   
+
+
+\newglossaryentry{UMA} 
+{
+   name={UMA},
+   description={\index{UMA}
+   A Uniform Memory Architecture is a computer system where the cost function for any memory access is 
+   the same for all processors in the system.  An ideal SMP computer is an UMA system.
+   }
+}   
+
+
+\newglossaryentry{Worksharing} 
+{
+   name={Worksharing},
+   description={\index{worksharing}
+   A type of construct in OpenMP.  A worksharing construct specifies that the team of threads will work together
+   to carry out the work defined by the region associated with the construct.  The work is divided among the
+   threads in the team as opposed to having each thread redundantly execute the code in the region (as is
+   done, for example, with the parallel construct).   The worksharing-loop is the
+   most commonly used worksharing construct in OpenMP. 
+      }
+}   
+
+
+%%%%%%%%% THERE HAS TO BE A NEWLINE AT THE END OF THE FILE %%%%%%%%%%%%%%%%%%%%%
+
+

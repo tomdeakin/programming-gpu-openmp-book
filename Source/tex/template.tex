@@ -1,0 +1,53 @@
+\documentclass{../../tex/mitpress2e}
+\usepackage[dvipdfm]{hyperref}
+\usepackage{../../tex/mybook}      % Local package
+\usepackage{../../tex/make-index}
+\usepackage{../../tex/fileinclude}
+\singlechaptertrue
+% Turn on or off pictures
+%\picturesfalse
+\picturestrue
+%\pagewidth{7}
+%\renewcommand{\floatpagefraction}{0.8}
+
+\makeindex
+
+\begin{document}
+%
+% This gets set by the subtitle macros, and is *not* guarded by a
+% group.  As a result, all chapters get this setting for the baselineskip.
+%
+\baselineskip=13pt
+\bibliographystyle{plain}
+%
+
+% The following line may be replaced with the current page number (this
+% is done automatically by a sed command in Makefile.base)
+\let\thechapterauthors=\relax
+\pagenumbering{arabic}
+\pagestyle{headings}
+%setpage\relax
+
+\input{chapter.tex}
+
+\ifvmode\else\par\fi
+\vspace{10pt}
+This chapter was processed by \LaTeX\ on \today.
+
+%\addcontentsline{toc}{chapter}{Bibliography}
+\bibliography{../../bib/book}
+
+\newread\availtest
+\def\readfile#1{
+\openin\availtest #1
+\ifeof\availtest\else
+\input{#1}
+\fi\closein\availtest}
+
+\def\DefaultIndexName{Index}
+\def\acronymentry#1#2{\relax}  % This is used to eliminate acronym entries
+                               % from the index, particularly when building
+                               % the chapter under windows.
+\readfile{template.ind}
+
+\end{document}

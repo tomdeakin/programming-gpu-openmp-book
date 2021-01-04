@@ -1,0 +1,104 @@
+%
+% Examples of macros that might be defined for a book
+%
+% This book is organized with contributors rather than many authors
+% contributorstrue is for sections, not chapters
+%\contributorstrue
+\def\chapterauthors#1{\gdef\thechapterauthors{#1}}
+%
+%
+% This lets us detect a single chapter (setcounter etc)
+\newif\ifsinglechapter
+%
+% This lets us suppress pictures.  Use is
+% \ifpictures
+%    code for including picture
+% \else
+%    code for decribing picture
+% \fi
+\newif\ifpictures
+%\picturesfalse
+%
+% Principle index (bold face the page number)
+\def\pindex#1{\index{#1|textbf}}
+%
+% Acronym index (name and value).  E.g.,
+% \aindex{CPU}{Central Processing Unit}
+% Changed to generate both the acronym entry value and a regular index entry
+\def\aindex#1#2{\index{#1@\protect\acronymentry{#1}{#2}}\index{#1}}
+%
+% Opinions
+% Display opinions in italics.  This could also be a sidebar by using
+% marginnote.
+\marginparwidth=1.0in
+\newenvironment{opinion}{\setbox0=\hbox\bgroup\it\ignorespaces}{\egroup\marginpar{\unhbox0}}
+%
+% Book notes 
+\def\check#1{\marginpar{\textbf{#1}}%
+\typeout{Check: #1}}
+
+% Other packages
+% Code provides a simple set of macros for program code and handles the
+% TeX special characters
+%\usepackage{../../tex/code}
+% File include allows you to include a file in a code/verbatim mode; this 
+% is good for code examples.
+%\usepackage{../../tex/fileinclude}
+%
+% Graphics (psfig is in the book/template files)
+\usepackage{graphicx}
+% Define the landscape environment
+% Use this to rotate a page, e.g., to get a wide table into the book
+%\usepackage{lscape}
+
+%
+% Increase the section number width for the contents page to allow 5
+% digit sections (e.g., 17.3.6)
+\secnumwidth=3.0pc    %%% Was 2.0pc - WDG
+%
+% Detect pdflatex
+\usepackage{ifpdf}
+%\newif\ifpdf
+%\ifx\pdfoutput\undefined\pdffalse\else\pdfoutput=1\pdftrue\fi
+%\pdfoutput=1 caused problems under windows
+%\ifx\pdfoutput\undefined\pdffalse\else\pdftrue\fi
+
+% Use beginbox and endbox to create an unbreakable box 
+\def\beginbox{\ifvmode\noindent\fi\gb\vbox\bgroup}
+\def\endbox{\egroup}
+% Change the floatpagefraction etc. so that figures can take up most of a page
+\renewcommand{\floatpagefraction}{.90}
+\renewcommand{\topfraction}{.90}
+%
+% This is a \ that can be followed by a line break; needed for the MS software
+% chapters
+\def\newtbslash{\textbackslash\discretionary{}{}{}}
+%
+% Define commands to read a chapter, if the chapter exists
+\newread\availtest
+\def\readchapter#1{
+\openin\availtest #1/chapter.tex
+\ifeof\availtest\else
+\include{#1/chapter}
+\fi\closein\availtest}
+%
+\def\readfile#1{
+\openin\availtest #1
+\ifeof\availtest\else
+\input{#1}
+\fi\closein\availtest}
+%
+%
+% Choose 7x9 format (pagewidth{6} for 6x9 format)
+%\pagewidth{7}
+
+%
+% The following definitions are added for the OpenMP book
+%
+\newif\ifdraftbook\draftbooktrue
+\newenvironment{draft}{\ifdraftbook}{\fi}
+\newcommand{\sidenote}[1]{\ifdraftbook\marginpar{#1}\else{}\fi}
+%\newcommand{sidenote}[1]{#1}
+
+
+

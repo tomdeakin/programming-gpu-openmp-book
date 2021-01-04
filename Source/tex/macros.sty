@@ -1,0 +1,103 @@
+%---------------------------------------------------------------------
+%
+% macros used in the OpenMP Core book
+%
+%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  packages
+%
+%HH added the "caption" package to define caption setup later
+\usepackage{listings,xcolor,caption}
+
+% TGM: I need this package to support strikethrough font
+\usepackage{soul}
+
+%HH: add the lstset definition to show line numbers from using the listings packages 
+%HH: listings between \begin{lstlisting} and \end{lstlisting} will have line numbers
+\lstset{
+         numbers=left,               % Ort der Zeilennummern
+         stepnumber=1,               % Abstand zwischen den Zeilennummern       
+         numberfirstline=false
+ }
+
+%HH This is to get the same fornat as Ruud's book, with Figure number and caption on 
+%HH the same line, separated by a colon and a period.
+\captionsetup[figure]{name={Figure },labelsep=colon}
+
+%\captionsetup[figure]{name={Figure },labelsep=newline}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% 
+%% URL for our book
+%%
+
+\newcommand \ccurl {\texttt{http://www.ompcore.com}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%TGM:   Macros added to support our editing efforts
+%
+
+% Macros to show comments from each of us
+\newcommand{\tim}[1]{{{\color{teal}[Tim: #1]}}}
+\newcommand{\alice}[1]{{{\color{brown} #1}}}
+\newcommand{\helen}[1]{{{\color{violet}[Helen: #1]}}}
+
+% Uncomment the following and comment-out the above to turn off display of  comments
+%\newcommand{\tim}[1]{}
+%\newcommand{\alice}[1]{}
+%\newcommand{\helen}[1]{}
+
+% To strike out text proposed for removal (using package soul}
+\newcommand{\strike}[1]{\st{#1}}
+
+% To highlight  proposed new text
+\newcommand{\newtext}[1]{\color{red}{#1}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% 
+%  Note:  The sizes used in DisplayCode, and CodeExample must match
+%
+
+%%%%%%%%%%%%%%%%%%%%%%%
+% Code:     inline "code" -- variables, etc.
+% parameters:
+%   text to format, no need to escape underscores
+\newcommand{\Code}[1]{\lstinline+#1+}
+%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%
+% DisplayCode:  a line or two, set something like displayed math
+% within this environment, must use "lstlisting" or "verbatim" 
+% environment
+\newenvironment{DisplayCode}
+{\par\vbox\bgroup\begin{center}\begin{scriptsize}}
+{\end{scriptsize}\end{center}\egroup\par}
+%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%
+% CodeExample:  Present code set-off as a figure 
+% within this environment, must use "lstlisting" environment
+% parameters:
+%   caption
+%   symbolic name (for \label)
+\newenvironment{CodeExample}[2]
+{\newcommand{\CodeCaptionLabel}{\caption{#1}\label{#2}}
+ \begin{figure}[!htbp] 
+ \begin{center}
+% changed section
+% FIX THIS later -- figure out why changes, or just revert
+ \bgroup\fontsize{8.5}{9}\selectfont%
+ %\begin{scriptsize}
+% end of changed section
+}
+% changed section
+{\egroup%
+%\end{scriptsize}
+% end of changed section
+ \end{center}
+ \CodeCaptionLabel
+ \end{figure}
+}
+

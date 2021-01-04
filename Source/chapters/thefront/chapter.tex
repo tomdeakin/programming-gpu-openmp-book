@@ -1,0 +1,123 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Template for the frontmatter of a book (i.e., everything
+%  before chapter 1).  Uppercase words mark entries which
+%  the author must fill in.  Do not alter any spacings,
+%  carriage returns, etc.  Include this file in your main
+%  root.tex or book.tex file: \input{thefront}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{Programming your GPU with OpenMP}
+\subtitle{Portable Performance with GPUs}
+%\subtitle{Draft of \today}
+\author{Tom Deakin, Timothy G. Mattson, and Eric Stotzer}
+\booktitlepage
+ 
+%-----------------------------------------------------------
+% Series title (page ii)     info on series; get from Editor
+
+\input{thefront/series.tex}
+ 
+%-----------------------------------------------------------
+% Title page (page iii)
+ 
+\printtitlepage
+ 
+%-----------------------------------------------------------
+% Copyright (page iv)      edit the copyrght.tex file to add
+%                          the correct information, and
+ 
+\input{thefront/copyrght}
+ 
+%-----------------------------------------------------------
+% Dedication (page v)
+ 
+\newpage
+\thispagestyle{empty}
+\begin{center}
+% Dedicated to those that use OpenMP to do something good for mankind.
+Dedicated to our families and our precious kayaks.
+\end{center}
+ 
+%-----------------------------------------------------------
+% Blank (page vi)
+ 
+\newpage
+\thispagestyle{empty}
+\mbox{ }
+\newpage
+ 
+%-----------------------------------------------------------
+% Table of contents (page vii)  (or page v if no dedication)
+
+\tableofcontents
+ 
+%-----------------------------------------------------------
+% List of figures            (if you have a list of figures)
+ 
+%\listoffigures
+ 
+%-----------------------------------------------------------
+% List of tables              (if you have a list of tables)
+ 
+%\listoftables
+ 
+%-----------------------------------------------------------
+% Foreword (notice the spelling!)   (if you have a foreword)
+ 
+%\frontsection{}
+% (was frontmatter, but latex2e defines a different frontmatter)
+
+\cleardoublepage
+\seriesforward
+
+\noindent 
+The Scientific and Engineering Computation Series from MIT Press aims to
+provide practical and immediately usable information to scientists and
+engineers engaged at the leading edge of modern computing.  Aspects of
+modern computing first presented in research papers and at computer
+science conferences are presented here
+with the intention of accelerating the adoption and impact of these ideas in
+scientific and engineering applications.  Such aspects include
+parallelism, language design and implementation, systems software,
+numerical libraries, and scientific visualization.
+
+% names of series editors:
+\vspace{2pc}
+\noindent
+William Gropp and Ewing Lusk, Editors\\
+%Janusz Kowalik, Founding Editor
+
+
+%-----------------------------------------------------------
+\frontsection{Foreword}
+
+\noindent 
+\input{thefront/foreword.tex}
+ 
+%-----------------------------------------------------------
+% Preface                            (if you have a preface)
+ 
+\frontsection{Preface}
+\input{thefront/preface.tex}
+
+\section*{Acknowledgments}
+\input{thefront/acks.tex}
+%
+% MIT Press wants less skip
+%
+%\null\vskip-100pt\null
+%\null\vskip-80pt\null\noindent
+
+%RP\bigskip
+%RP\noindent
+%RPD. E. D. Tors\\
+%RPH. S. Elper
+
+% 
+%-----------------------------------------------------------
+% Second book half-title        (if you have no PART I page)
+ 
+\secondbooktitlepage
+ 
+%-----------------------------------------------------------
+%%%%% END OF FILE

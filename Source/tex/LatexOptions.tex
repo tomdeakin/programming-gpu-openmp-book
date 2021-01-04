@@ -1,0 +1,309 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%  
+%% Formatting suggestions/options to consider
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\section{Helen Experimenting Tables for C/C++ and Fortran here}
+
+If we decide on one table combined for C/C++ and Fortran, then it is choice 4 
+and choice 6.   It we do two separate tables, one for C/C++, and one for Fortran, then it is choice 3 and choice 4.  I prefer one table combined, i.e., choices 4 
+and 6.
+
+The examples here show a simple table with one row only for each language 
+(as in choices 5 and 6), or with two rows for each language (as in choices 
+3 and 4).
+
+\subsection{Choice 1}
+
+This choice uses one table, with C/C++ and Fortran side by side.  This is 
+what's currently in Chapter 4 that Tim has in Table 4.1.
+
+% Illustration 1
+\begin{table}[h!]
+\centering
+\caption{Choice 1: The form of directives in C/C++ and Fortran.  The 
+combination of a directive and a structured 
+block is called a construct.}
+\label{fig:choice1}
+\begin{tabular}{l|l}
+\hline
+\emph{C/C++}  & \emph{Fortran}\\
+\hline
+Directive format \\
+\Code{#pragma omp construct [clause[, clause ...]]}    & \Code{!\$OMP construct [clause], clause ... ]]} \\                               
+\hline 
+Examples: directive plus structured block    \\
+\Code{#pragma omp parallel private(x)}    & \Code{!\$OMP parallel private(x)} \\  
+\Code{\{}                                                    &     \\
+                                                                  &      \\
+\Code{  ...code executed by each thread}    &     \Code{  ...code executed by each thread}  \\                                                                
+                                                                  &      \\
+\Code{\}}                                                    &   \Code{!\$OMP end parallel} \\
+\hline
+\end{tabular}
+\end{table}
+
+
+\subsection{Choice 2}
+
+This choice uses one table, with C/C++ on the top and Fortran on the bottom
+
+\begin{table}[h!]
+\centering
+\caption{Choice 2: The form of directives in C/C++ and Fortran.  
+The combination of a directive and a structured 
+block is called a construct.}
+\label{fig:choice2}
+\begin{tabular}{l}
+\hline
+\emph{C/C++} \\
+\hline
+Directive format: \\
+\Code{#pragma omp construct [clause[, clause ...]]}    \\                               
+\hline 
+Examples: \\
+directive plus structured block    \\
+\Code{#pragma omp parallel private(x)}    \\  
+\Code{\{}                                                  \\
+                                                                \\
+\Code{  ...code executed by each thread}    \\                                                                
+                                                         \\
+\Code{\}}                                                    \\
+\\
+\hline
+
+\hline
+\emph{Fortran}\\
+\hline
+Directive format: \\
+\Code{!\$OMP construct [clause], clause ... ]]} \\                               
+\hline 
+Examples: \\
+directive plus structured block    \\ 
+\Code{!\$OMP parallel private(x)} \\  
+   \\       
+\Code{  ...code executed by each thread}  \\                                                                
+\\
+\Code{!\$OMP end parallel} \\
+\hline
+ 
+
+\end{tabular}
+\end{table}
+
+
+
+\subsection{Choice 3}
+
+This choice uses two tables, with C/C++ as one table and Fortran as another 
+table.  This is similar to the MPI books.
+
+\begin{table}[h!]
+\centering
+\caption{Choice 3, Table 1/2: The form of directives in C/C++.  The 
+combination of a directive and a structured 
+block is called a construct.}
+\label{fig:choice3-1}
+\begin{tabular}{|l|}
+\hline
+Directive format: \\
+\Code{#pragma omp construct [clause[, clause ...]]}    \\                               
+\hline 
+Examples: \\
+directive plus structured block    \\
+\Code{#pragma omp parallel private(x)}    \\  
+\Code{\{}                                                  \\
+                                                                \\
+\Code{  ...code executed by each thread}    \\                                                                
+                                                         \\
+\Code{\}}                                                    \\
+\\
+\hline
+
+\end{tabular}
+\end{table}
+
+
+\begin{table}[h!]
+\centering
+\caption{Choice 3, Table 2/2: The form of directives in Fortran.  The 
+combination of a directive and a structured 
+block is called a construct.}
+\label{fig:choice3-2}
+\begin{tabular}{|l|}
+
+\hline
+Directive format: \\
+\Code{!\$OMP construct [clause], clause ... ]]} \\                               
+\hline 
+Examples: \\
+directive plus structured block    \\ 
+\Code{!\$OMP parallel private(x)} \\  
+   \\       
+\Code{  ...code executed by each thread}  \\                                                                
+\\
+\Code{!\$OMP end parallel} \\
+\hline
+ 
+
+\end{tabular}
+\end{table}
+
+
+
+\subsection{Choice 4}
+
+This choice uses one table and shows directive format and example of structured block.  And this table also has vertial boundaries. 
+
+
+\begin{table}[!h]
+\centering
+\caption{Choice 4: The form of directives in C/C++ and Fortran.  The 
+combination of a directive and a structured 
+block is called a construct.}
+\begin{tabular}{|l|@{}l@{}|}\hline
+\textbf{C/C++}
+&
+\begin{tabular}{l}
+Directive format: \\
+\textbf{\#pragma omp construct} \textit{[clause[, clause ...]]} \\ 
+\hspace{6mm} structured block \\
+\hline
+Examples: \\
+directive plus structured block \\
+\#pragma omp parallel private(x) \\
+\{ \\
+\\
+\hspace{5mm} code executed by eath thread \\
+\\
+\} \\
+\end{tabular}
+\tabularnewline\hline
+\textbf{Fortran} 
+&
+\begin{tabular}{l}
+Directive format: \\
+\textbf{!\$OMP construct} \textit{ [clause], clause ... ]]} \\
+\hspace{5mm} structured block \\
+\textbf{!\$OMP end construct} \\
+\hline
+Examples: \\
+directive plus structured block: \\
+!\$OMP parallel private (x) \\
+\\
+\hspace{5mm} code executed by each thread \\
+\\
+!\$OMP end parallel \\
+
+\end{tabular}
+\tabularnewline\hline
+\end{tabular}
+\end{table}
+
+
+
+\subsection{Choice 5}
+
+This choice uses two tables, with C/C++ as one table and Fortran as 
+another table.  This is similar to the MPI books.
+
+\begin{table}[h!]
+\centering
+\caption{Choice 5, Table 1/2: The form of directives in C/C++.  The 
+combination of a directive and a structured 
+block is called a construct.}
+\label{fig:choice5-1}
+\begin{tabular}{|l|}
+\hline
+\textbf{\#pragma omp construct} \textit{[clause[, clause ...]]}    \\                               
+\hspace{5mm} structured block \\
+\hline
+
+\end{tabular}
+\end{table}
+
+
+\begin{table}[h!]
+\centering
+\caption{Choice 5, Table 2/2: The form of directives in Fortran.  The 
+combination of a directive and a structured 
+block is called a construct.}
+\label{fig:choice5-2}
+\begin{tabular}{|l|}
+\hline
+\textbf{!\$OMP construct} \textit{ [clause], clause ... ]]}   \\
+\hspace{5mm} structured block \\
+\textbf{!\$OMP end construct} \\                               
+\hline
+ 
+
+\end{tabular}
+\end{table}
+
+
+
+
+\subsection{Choice 6}
+
+This choice uses one table and only shows directive format as shown in the
+ Ref Guide. This will be the most scenarios we need in the book. (since in 
+ most cases we do not need to show examples for structures block).  This is 
+ similar to Ruud's book. 
+And the table has vertical boundaries.
+
+
+\begin{table}[h!]
+\centering
+%\caption{Choice 6: The form of directives in C/C++ and Fortran.  The 
+% combination of a directive and a structured 
+%block is called a construct.}
+\label{fig:choice6}
+\begin{tabular}{|l|l|} \hline
+\textbf{C/C++} & \textbf{\#pragma omp construct} \textit{[clause[, clause ...]]} \\ & \hspace{5mm} structured block \\                 \hline
+\textbf{Fortran} & \textbf{!\$OMP construct} \textit{ [clause], clause ... ]]}  \\ & \hspace{5mm} structured block   \\ &   \textbf{!\$OMP end construct} \\     
+                   
+\hline
+
+\end{tabular}
+\caption{Choice 6: The form of directives in C/C++ and Fortran.  The 
+combination of a directive and a structured 
+block is called a construct.}
+\end{table}
+
+
+\subsection{Choice 7}
+
+This choice uses one table and only shows directive format as shown in the 
+Ref Guide. This will be the most scenarios we need in the book. (since in 
+most cases we do not need to show examples for structures block).  This is 
+similar to Ruud's book. 
+They have only Figures, no Tables. Figure caption appears below the figure. 
+ Figure number and figure caption appears on the same line. And the table 
+ has vertical boundaries.
+
+
+
+
+\begin{figure}[h!]
+\centering
+\label{fig:choice7}
+%\caption{Choice 6: The form of directives in C/C++ and Fortran.  The 
+% combination of a directive and a structured 
+%block is called a construct.}
+\begin{tabular}{|l|} \hline
+\textbf{\#pragma omp construct} \textit{[clause[, clause ...]]} \\ 
+\hspace{5mm} structured block \\                 
+\hline
+\textbf{!\$OMP construct} \textit{ [clause], clause ... ]]}  \\ 
+\hspace{5mm} structured block   \\ 
+\textbf{!\$OMP end construct} \\     
+                  
+\hline
+
+\end{tabular}
+\caption{\textbf{The form of directives in C/C++ and Fortran} - The 
+combination of a directive and a structured 
+block is called a construct.}
+\end{figure}

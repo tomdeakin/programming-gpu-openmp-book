@@ -1,0 +1,78 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%  
+%% Chapter 2: OpenMP overview
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\def\ArtDir{02.Overview/figures}%
+
+\chapter[OpenMP overview]{OpenMP overview}
+\label{chapter:overview}
+
+Note: Use C for examples in the book. Provide Fortran supplement.
+
+\section{Set the Background/Context for the book.}
+
+Starts with the {\bf problem} of trying to program a GPU.
+Overview will shows everything a reader might need to review before the start on this book.
+
+Will teach OpenMP 5.0. There are few relevant changes from 4.5, and we will call out any differences.
+
+\section{Quick crash course in OpenMP}
+This section will give the reader a very concise introduction into enough OpenMP for us to build on to explain the target directives to program GPUs.
+\begin{itemize}
+  \item What OpenMP shared memory is: cores share memory.
+  \item Annotate code with compiler directives.
+  \item API calls.
+\end{itemize}
+
+\subsection{Fork-join parallelism}
+\begin{itemize}
+  \item Parallel: threads in a team.
+  \item Worksharing loops: parallel for.
+  \item Clauses to change effects: num\_threads, etc.
+  \item schedule(static) important to introduce as will need it later.
+  \item collapse() clause.
+  \item Keep simple enough so reader knows notation, but refer to Common Core and Using OpenMP book for more details.
+\end{itemize}
+
+\subsection{Shared memory between threads}
+\subsubsection{The OpenMP memory model}
+\begin{itemize}
+  \item What is a relaxed shared memory model
+  \item Synchronization and the need to order operations
+\end{itemize}
+\subsubsection{Data sharing clauses}
+\begin{itemize}
+  \item private and firstprivate.
+  \item shared and default(none) clauses.
+  \item Need to be careful how we explain “shared memory” given the memory sharing rules between host/target we’ll introduce later.
+\end{itemize}
+
+\subsection{Tasks in OpenMP}
+% Question do we do this now, or in the asynchronous chapter?
+\begin{itemize}
+   \item What is a task in OpenMP
+   \item Explicit tasks 
+   \item when do tasks complete and taskwait
+   \item Asynchrony with tasks (task with nowait)
+\end{itemize}
+
+\section{Example: serial to parallel vector add with stack arrays}
+\begin{itemize}
+  \item vector add.
+  \item arrays allocated on the stack instead of heap.
+  \item no reduction yet.
+  \item can reuse this as the first target example without needing map clauses.
+  \item stack arrays might also be useful for first target example to highlight data sharing clauses.
+\end{itemize}
+
+\section{Example: serial to parallel pi}
+\begin{itemize}
+  \item Pi reduction example.
+  \item Shows use of reduction clause.
+\end{itemize}
+
+\section{Our final goal}
+Show the pragmas (BUD) needed to run a parallel program on a GPU.
+This sets out the climax of the book, and excites that this book is going to explain it.

@@ -1,0 +1,38 @@
+% Sample chapter from Beowulf2/tex/chapter.sample .
+%
+\ifsinglechapter
+% Set to one less that the chapter number for this chapter
+\setcounter{chapter}{10}
+\fi
+
+% Reminders for authors
+% Use \index{...} for indexing, \pindex{...} for the principle entry.
+% For subentries, use ! as in \index{foo!subfoo}
+% For Postscript figures, use includegraphics commands, e.g.:
+%    \centerline{\includegraphics{../chap2/mesh.eps}}
+% to include as is or
+%    \centerline{\resizebox{3in}{!}{\includegraphics{../chap2/mesh.eps}}}
+% to resize to a given width (and scale the vertical proportionally)
+%
+% Do *not* use \def, \newcommand, \renewcommand, or \newenvironment (or
+% any variations).  If you need something, send mail to gropp@mcs.anl.gov
+% For URLs, use \url{urlvalue}
+% Try to avoid font changes.  Where necessary, use the LaTeX2e form:
+%     For bold, use \textbf{...}
+%     For emphasis (italics), use \emph{...}
+%     For fixedwidth, use \texttt{...}
+% For blocks of code or commands, use the verbatim environment
+% 
+% To create chapter.pdf, execute make in this directory.  Note that 
+% individual chapter builds will put both bibliographies and indexes at the
+% end of the chapter while full book builds will put them at the end of the
+% book.  Bibliography entries should be sent to the principal author in
+% bibtex format.
+%
+% In an edited book, use \chapterauthors 
+%\chapterauthors{William Gropp and Ewing Lusk}
+\chapter{REPLACE WITH THE TITLE OF THIS CHAPTER}
+\label{chap:REPLACE-WITH-LABEL-FOR-CHAPTER-NUM}
+\noindent
+REPLACE this line with the first line of your chapter.
+

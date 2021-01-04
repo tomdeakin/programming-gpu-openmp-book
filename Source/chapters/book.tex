@@ -1,0 +1,263 @@
+%------------------------------------------------------------------------
+% Local config files are assumed to be in directory ../tex
+%
+%------------------------------------------------------------------------
+%%TGM:  this didn't work
+%\documentclass{../tex/mitpress2e,monochrome}
+\documentclass{../tex/mitpress2e}
+\usepackage{../tex/mybook}  % Local package
+\usepackage{framed}  %A package I use to created text boxes (\begin{framed} .... \end{framed}
+\usepackage{../tex/code}
+\usepackage{../tex/macros}
+\usepackage{../tex/ompbinding}
+\usepackage{todonotes} % added by CT
+\usepackage[normalem]{ulem} % Added to underline symbols - Ruud
+\usepackage{alltt} %This allows symbols in a mode like verbatim, but may not be best choice
+\usepackage{lscape} %This allows to do landscape figure and tables
+\usepackage{microtype}  % MIT suggested we add this to reduce lines that overflow the margins
+
+%% TGM: my attempt to force grey scale
+%\pdfcompresslevel=0   % don't compress the PDF
+%\usepackage[monochrome]{xcolor}   <-- this confiicted with documentclass and the recommendation was to add monochrom to document class
+
+\hyphenation{spe-ci-fications}
+\hyphenation{sig-ni-fi-cant-ly}
+\hyphenation{sig-ni-fi-cant}
+\hyphenation{spe-ci-fied}
+\hyphenation{multi-threaded}
+\hyphenation{multi-processor}
+\hyphenation{Chapter}
+\hyphenation{Figure}
+\hyphenation{Table}
+
+\usepackage{float}       % Use these to control the placement of floats
+\usepackage{placeins}    % Like \FloatBarrier to flush all figures (but with a page flush)
+
+\usepackage{fancyvrb}
+
+\usepackage{xcolor}
+%------------------------------------------------------------------------
+%% In case you want to choose another color for hyperlinks,
+%% you can use any of these
+%------------------------------------------------------------------------
+\definecolor{ltgray}{cmyk}{.12,0,0,.3}
+\definecolor{veryltgray}{cmyk}{.12,0,0,.2}
+\definecolor{dkgray}{cmyk}{.12,0,0,.8}
+\definecolor{ltcyan}{cmyk}{.12,0,0,0}
+\definecolor{ltRoyalBlue}{cmyk}{.25,.12,0,0}
+\definecolor{dkRoyalBlue}{cmyk}{.8,.77,.02,.04}
+\definecolor{newdkRoyalBlue}{cmyk}{.8,.6,.02,.04}
+\definecolor{dkcyan}{cmyk}{1,0,0,.25}
+\definecolor{verydkcyan}{cmyk}{1,0,0,.7}
+\definecolor{newverydkcyan}{cmyk}{1,0,0,.4}
+\definecolor{mdcyan}{cmyk}{.16,0,0,0}
+\definecolor{notsoltcyan}{cmyk}{.2,0,0,0}
+
+\usepackage[%bookmarks=false,   % show bookmarks bar?
+%     pdfnewwindow=true,        % links in new window
+%     colorlinks=true,           % false: boxed links; true: colored links
+%     linkcolor=dkRoyalBlue,     % color of internal links
+%     citecolor=dkRoyalBlue,     % color of links to bibliography
+%     filecolor=dkRoyalBlue,     % color of file links
+%     urlcolor=dkRoyalBlue,      % color of external links
+final=true
+ ]{hyperref}
+
+\usepackage{verbatim}
+\usepackage{array}
+\usepackage{multirow} % Ruud - Activate if multirow is used in tables:
+\usepackage{enumitem} % Ruud - Use this package to control the spacing in lists:
+
+\singlechapterfalse % This lets us detect a single chapter (setcounter etc)
+
+\picturestrue
+
+
+%------------------------------------------------------------------------
+% This macro can be used to increase/decrease the spacing between the
+% words in a paragraph - Ruud
+% Usage:
+%
+% \begin{changewordspace}{0.9}
+% <original paragraph text>
+% \end{changewordspace}
+%------------------------------------------------------------------------
+% declare new dimensions
+\newdimen\origiwspc
+
+\newenvironment{changewordspace}[1]
+{\par
+ % set default value of new dimensions
+ \origiwspc=\fontdimen2\font% original inter word space
+            
+ % set dimensions to arguments given
+ \fontdimen2\font=#1\origiwspc
+}
+{\par
+ % reset original dimensions
+ \fontdimen2\font=\origiwspc
+}
+
+% Turn on or off draft text:
+%RP\draftbooktrue
+\draftbookfalse
+
+\usepackage[makeindex]{imakeidx}
+
+\usepackage{../tex/make-index}
+
+\usepackage[makeindex,nonumberlist,nopostdot]{glossaries} % Should go after hyperref
+\setacronymstyle{long-short}
+
+\input{10.appendix_glossary/glossary.omp.tex}
+
+\makeglossaries
+
+\glsaddall
+
+%%% NEW ==>>
+
+\def\glossaryheader{\vglue-4.5in
+\phantomsection
+\addcontentsline{toc}{matter}{Glossary}
+\vglue4.5in
+\thispagestyle{empty}}
+
+\makeatletter
+
+% This is what Amy made available:
+
+%\def\@makechapterhead#1{\vglue5pc\vglue4pt\noindent\hbox to0pt{\vbox to0pt{\vss%
+%\vbox to5.6pc{\noindent{\thirtysixbold\thechapter} %was 5.6 JBC
+%\hskip6pt
+%\vbox{\baselineskip=16pt\raggedright\hyphenpenalty10000
+%\hsize=.86\textwidth\chapheadfont #1}%
+%\ifx\thechapterauthors\relax\else
+%\vskip 10pt
+%\vbox{\emph{\noindent\thechapterauthors}}%
+%\fi
+%\thispagestyle{empty}
+%\vfill}}\hss}\vskip5.5pc\relax}
+
+%\def\@makechapterhead#1{\noindent\hbox to0pt{\vbox to0pt{\vss%
+%\vbox to5.6pc{\noindent{\thirtysixbold\thechapter} %was 5.6 JBC
+%\hskip6pt
+%\vbox{\baselineskip=16pt\raggedright\hyphenpenalty10000
+%\hsize=.86\textwidth\chapheadfont #1}%
+%\ifx\thechapterauthors\relax\else
+%\vskip 10pt
+%\vbox{\emph{\noindent\thechapterauthors}}%
+%\fi
+%\thispagestyle{empty}
+%\vfill}}\hss}
+%}
+
+%%% I changed this to:
+
+\def\@makechapterhead#1{\noindent\hbox to0pt{\vbox to0pt{\vss%
+\vbox to5.6pc{\noindent{\thirtysixbold\thechapter} %was 5.6 JBC
+\hskip6pt
+\vbox{\baselineskip=16pt\raggedright\hyphenpenalty10000
+\hsize=.86\textwidth\chapheadfont #1}%
+\ifx\thechapterauthors\relax\else
+\vskip 10pt
+\vbox{\emph{\noindent\thechapterauthors}}%
+\fi
+\thispagestyle{empty}
+\vfill}}\hss}\relax}
+
+
+\renewcommand\tableofcontents{%
+    \if@twocolumn
+      \@restonecoltrue\onecolumn
+    \else
+      \@restonecolfalse
+    \fi
+%    \chapter*{\contentsname
+%        \@mkboth{\contentsname}{\contentsname}}%
+    \thispagestyle{empty}
+\vglue-2.5in
+\phantomsection
+   \addcontentsline{toc}{invis}{Contents}
+\vskip2.5in
+    \vbox to0pt{\vss\vbox to 5.6pc{% was 5.6pc WYN
+    \hbox{\chapheadfont \contentsname}\vfill}}
+        \@mkboth{\contentsname}{\contentsname}%
+    % reduce the ``hsize-5pc'' variable to fit
+    \hsizeminusfive=\hsize \advance\hsizeminusfive by-5pc
+    \@starttoc{toc}%
+    \if@restonecol\twocolumn\fi
+    }
+
+\makeatother
+%% End NEW
+
+\renewcommand{\indexname}{General Index}
+
+\makeindex
+
+%% Changes to match MIT Press specs:
+\textwidth=30pc
+\textheight=39pc
+\advance\hoffset-3pc
+\advance\voffset-7.5pc
+
+\begin{document}
+
+\pdfpageheight 9in 
+\pdfpagewidth 8in
+  
+\bibliographystyle{plain}
+
+\readchapter{thefront}
+
+\mainmatter
+
+\readchapter{01.HeteroComp}
+
+\readchapter{02.Overview}
+
+\readchapter{03.Target}
+
+\readchapter{04.DevPar}
+
+\readchapter{05.MemMove}
+
+\readchapter{06.Async}
+
+\readchapter{07.Portable}
+
+\readchapter{08.Furture}
+
+\readchapter{09.Final}
+
+
+\backmatter
+
+\cleardoublepage
+
+\printglossary
+
+\let\savebibliography\bibliography
+\def\bibliography#1{\cleardoublepage
+\phantomsection
+\addcontentsline{toc}{matter}{References}
+\savebibliography{#1}}
+
+\bibliography{../bib/openmpbib}
+
+\cleardoublepage
+\let\savetheindex\theindex
+
+\def\theindex{\phantomsection
+%\addcontentsline{toc}{matter}{General Index}
+\savetheindex\thispagestyle{empty}}
+
+\readfile{book.ind}
+
+%%TGM: Added at request of MIT press to put a blank page between the index and the  series title info
+%%\blankpage   <-- this command is wrong.  I need to fine the right command to insert a blank page
+
+\readchapter{theback}
+
+\end{document}

@@ -1,0 +1,21 @@
+% Modifications to the index style
+% Anything not specified is a command
+% The new version of makeindex doesn't accept the lethead commands
+%lethead_prefix "\\newindexletter{"
+%lethead_suffix "}"
+%lethead_flag 1
+headings_flag 0
+%heading_prefix "\\newindexletter{"
+%heading_suffix "}"
+group_skip "\n"
+level '!'
+encap '|'
+preamble ""
+postamble "\n"
+item_0 "\n"
+item_1 "\n"
+item_2 "\n"
+%setpage_prefix "\\eatchar{"
+%setpage_suffic "}"
+delim_0 "\\eatchar{"
+delim_t "}"
