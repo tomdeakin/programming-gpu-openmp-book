@@ -22,6 +22,8 @@ OpenMP provides us with implicit rules for automatic data transfer along with ex
 If the hardware supports it, OpenMP can also operate with a unified view of memory where the whole system sees a single memory space available to all; a topic we discuss in chapter~\ref{chapter:memory}.
 
 In figure~\ref{fig:host_device} we show a host with three connected target devices.
+One of these devices will behave as the \emph{default} device.
+This device is the one that will be used if no others are specified.
 
 \begin{figure}[t]
 \label{fig:host_device}
