@@ -1,0 +1,81 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%  
+%% The table contains OpenMP pragmas we'll cover in the book
+%%
+%% To use this in one of our chapters, use the latex command
+%%         \begin{table}[h!]
+%%          \centering
+%%          \caption{Your caption}
+%%           \label{YourLabel}
+%%           \input{\SubDir/CommonCoreTab.tex}
+%%           \end{table}
+%%
+%%  where the macro \SubDir is defined at the top of each chapter and 
+%%  specifies where the source for the book resides.   
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{OpenMP pragma,}  & \textbf{Concepts} & Chapter \\
+\hline
+%============================================================
+\Code{#pragma omp target}                & offload onto a device  & XX \\ 
+\hline 
+\Code{#pragma omp teams}                & Create a league of teams & XX \\
+\hline
+\Code{#pragma omp distribute}            & Map loops onto a league & XX \\
+\hline
+\Code{#pragma omp target data}            & Create a device data region & XX \\
+\hline
+\Code{#pragma omp target enter data}  & Enter a device data region & XX \\
+\hline
+\Code{#pragma omp target exit data}  & Exit a device data region & XX \\
+\hline
+\Code{#pragma omp target update}  & Update data between host/device & XX \\
+\hline
+\Code{#pragma omp loop}  & Concurrent loop iterations & XX \\
+\hline
+\Code{#pragma omp requires} & OMP features required & XX \\
+\hline
+\Code{#pragma omp declare target} & declares items are mapped to a device & XX \\
+\hline
+\Code{#pragma declare mapper} & user defined mapers & XX \\
+\hline
+\Code{#pragma omp interop} & Interoperability with foreign contexts & XX \\
+\hline
+\Code{teams loop}    & combined construct & XX \\
+\hline
+\Code{teams distribute}  & combined  construct & XX \\
+\hline
+\Code{teams distribute simd}  & combined  construct & XX \\
+\hline
+\Code{teams distribute parallel for} & combined  construct & XX \\
+\hline
+\Code{teams distribute parallel for simd} & combined  construct & XX \\
+\hline
+\Code{target parallel}    & combined construct & XX \\
+\hline
+\Code{target simd}    & combined construct & XX \\
+\hline
+\Code{target parallel for}    & combined construct & XX \\
+\hline
+\Code{target parallel for simd}    & combined construct & XX \\
+\hline
+\Code{target parallel loop}    & combined construct & XX \\
+\hline
+\Code{target teams }    & combined construct & XX \\
+\hline
+\Code{target teams loop}    & combined  construct & XX \\
+\hline
+\Code{target teams distribute}  & combined  construct & XX \\
+\hline
+\Code{target teams distribute simd}  & combined  construct & XX \\
+\hline
+\Code{target teams distribute parallel for} & combined  construct & XX \\
+\hline
+\Code{target teams distribute parallel for simd} & combined  construct & XX \\
+\hline
+\end{tabular}
+
+

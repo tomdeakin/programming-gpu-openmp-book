@@ -1,0 +1,96 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%  
+%% The table contains every single runtime function we will cover from specification
+%%
+%% To use this in one of our chapters, use the latex command
+%%         \begin{table}[h!]
+%%          \centering
+%%          \caption{Your caption}
+%%           \label{YourLabel}
+%%           \input{\SubDir/CommonCoreTab.tex}
+%%           \end{table}
+%%
+%%  where the macro \SubDir is defined at the top of each chapter and 
+%%  specifies where the source for the book resides.   
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{tabular}{|l|l|}
+\hline
+\textbf{OpenMP functions,}  & Chapter \\
+\hline
+%============================================================
+\Code{int omp\_get\_team\_size()}      & XX \\
+\hline
+\Code{int omp\_get\_num\_teams()}       & XX   \\
+\hline
+\Code{int omp\_get\_team\_num()}       & XX   \\
+\hline
+\Code{void omp\_set\_num\_teams()}       & XX    \\
+\hline
+\Code{int omp\_get\_max\_teams()}      & XX    \\
+\hline
+\Code{void omp\_set\_teams\_thread\_limit()}     & XX    \\
+\hline
+\Code{int omp\_get\_teams\_thread\_limit()}      & XX    \\
+\hline
+\Code{int omp\_get\_teams\_thread\_limit()}      & XX    \\
+\hline
+\Code{int omp\_pause\_resource()}      & XX    \\
+\hline
+\Code{int omp\_pause\_resource\_all()}    & XX    \\
+\hline
+\Code{int omp\_get\_num\_procs()}     & XX    \\
+\hline
+\Code{void omp\_set\_default\_device()}    & XX    \\
+\hline
+\Code{int omp\_get\_default\_device()}          & XX    \\
+\hline
+\Code{int omp\_get\_num\_devices()}         & XX    \\
+\hline
+\Code{int omp\_get\_device\_num()}       & XX    \\
+\hline
+\Code{int omp\_is\_initial\_device()}         & XX    \\
+\hline
+\Code{int omp\_get\_initial\_device()}          & XX    \\
+\hline
+\Code{void* omp\_target\_alloc()}        & XX    \\
+\hline
+\Code{void omp\_target\_free()}        & XX    \\
+\hline
+\Code{int omp\_target\_is\_present()}           & XX    \\
+\hline
+\Code{int omp\_target\_is\_axxessible()}          & XX    \\
+\hline
+\Code{int omp\_target\_memcpy()}          & XX    \\
+\hline
+\Code{int omp\_target\_memcpy_rect()}          & XX    \\
+\hline
+\Code{int omp_target_memcpy_async()}          & XX    \\
+\hline
+\Code{int omp_target_memcpy_rect_async()}          & XX    \\
+\hline
+\Code{int omp_target_associate_ptr()}          & XX    \\
+\hline
+\Code{omp_target_disassociate_ptr()}          & XX    \\
+\hline
+\Code{void *omp_get_mapped_ptr()}          & XX    \\
+\hline
+\Code{int omp_get_num_interop_properties()}          & XX    \\
+\hline
+\Code{int omp_get_num_interop_properties()}          & XX    \\
+\hline
+\Code{void *omp_get_interop_ptr()}          & XX    \\
+\hline
+\Code{void *omp_get_interop_ptr()}          & XX    \\
+\hline
+\Code{const char* omp_get_interop_name()}          & XX    \\
+\hline
+\Code{const char* omp_get_interop_type_desc()}          & XX    \\
+\hline
+\Code{const char* omp_get_interop_rc_desc ()}          & XX    \\
+\hline
+\end{tabular}
+
+
+

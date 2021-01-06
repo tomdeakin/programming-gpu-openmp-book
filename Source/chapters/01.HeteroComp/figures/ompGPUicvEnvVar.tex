@@ -1,0 +1,35 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%  
+%% The table contains OpenMP ICVs and Env Vars we'll cover in the book
+%%
+%% To use this in one of our chapters, use the latex command
+%%         \begin{table}[h!]
+%%          \centering
+%%          \caption{Your caption}
+%%           \label{YourLabel}
+%%           \input{\SubDir/CommonCoreTab.tex}
+%%           \end{table}
+%%
+%%  where the macro \SubDir is defined at the top of each chapter and 
+%%  specifies where the source for the book resides.   
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{ICV}  & Env var & Chapter \\
+\hline
+%============================================================
+\Code{thread-limit-var}                & \Code{OMP\_THREAD\_LIMIT} & XX \\ 
+\hline 
+\Code{default-device-var}                & \Code{OMP\_DEFAULT\_DEVICE} & XX \\
+\hline
+\Code{target-offload-var}            & \Code{OMP\_TARGET\_OFFLOAD} & XX \\
+\hline
+\Code{nteams-var}            & \Code{OMP\_NUM\_TEAMS} & XX \\
+\hline
+\Code{teams-thread-limit-var}  & \Code{OMP\_TEAMS\_THREAD\_LIMIT} & XX \\
+\hline
+\end{tabular}
+
+

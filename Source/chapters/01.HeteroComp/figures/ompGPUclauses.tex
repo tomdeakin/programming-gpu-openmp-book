@@ -1,0 +1,104 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%  
+%% The table contains every single clause we will cover from specification
+%%
+%% To use this in one of our chapters, use the latex command
+%%         \begin{table}[h!]
+%%          \centering
+%%          \caption{Your caption}
+%%           \label{YourLabel}
+%%           \input{\SubDir/CommonCoreTab.tex}
+%%           \end{table}
+%%
+%%  where the macro \SubDir is defined at the top of each chapter and 
+%%  specifies where the source for the book resides.   
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{OpenMP clauses}  & \textbf{Constructs} & \textbf{Chapter} \\
+\hline
+%============================================================
+\Code{private}                   & teams, distribute, simd, loop, target & XX \\
+\hline
+\Code{firstprivate}              & teams & XX \\
+\hline
+\Code{lastprivate}              & distribute, simd, loop   & XX \\
+\hline
+\Code{shared}           & teams & XX \\
+\hline
+\Code{reduction}           & teams & XX \\
+\hline
+\Code{allocate}           & teams, distribute & XX \\
+\hline
+\Code{default}           & teams & XX \\
+\hline
+\Code{num_teams}           & teams & XX \\
+\hline
+\Code{thread_limit}           & teams & XX \\
+\hline
+\Code{reduction}    & simd, loop & XX \\
+\hline
+\Code{in\_reduction}    & target & XX \\
+\hline
+\Code{collapse}      & simd, loop & XX \\
+\hline
+\Code{dist\_schedule}    & distribute & XX \\
+\hline
+\Code{order}                   & distribute, loop & XX \\
+\hline
+\Code{bind}              & loop & XX \\
+\hline
+\Code{if}            & simd, target, target data, target enter data, target exit data & XX \\
+\hline
+\Code{safelen}   & simd & XX \\
+\hline
+\Code{simdlen}   & simd & XX \\
+\hline
+\Code{aligned}   & simd & XX \\
+\hline
+\Code{linear}      & simd & XX \\
+\hline
+\Code{nontemporal}   & simd & XX \\
+\hline
+\Code{bind}    & loop & XX \\
+\hline
+\Code{map}      & target, target data, target enter data, target exit data, declare mapper & XX \\
+\hline
+\Code{use\_device\_ptr}    & target data & XX \\
+\hline
+\Code{use\_device\_addr}     & target & XX \\
+\hline
+\Code{use\_allocaters}    & target data & XX \\
+\hline
+\Code{allocate}    & target & XX \\
+\hline
+\Code{device}           & target,target data, target enter data, target exit data, interop & XX \\
+\hline
+\Code{depend}      & target,target enter data, target exit data, interop & XX \\
+\hline
+\Code{nowait}     & target,target enter data, target exit data, interop & XX \\
+\hline
+\Code{thread\_limit} & target & XX \\
+\hline
+\Code{to}    & declare\_target & XX \\
+\hline
+\Code{device\_type}   & declare\_target & XX \\
+\hline
+\Code{indirect}     & declare\_target & XX \\
+\hline
+\Code{init}      & interop & XX \\
+\hline
+\Code{destroy}   & interop & XX \\
+\hline
+\Code{use}       & interop & XX \\
+\hline
+\end{tabular}
+
+
+
+
+
+
+
