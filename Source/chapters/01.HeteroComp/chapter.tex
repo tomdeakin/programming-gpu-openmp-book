@@ -1,6 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%  
-%% Chapter 1: Parallel computing
+%% Chapter 1: Introduction to heterogeneous computing
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -151,5 +151,46 @@ Chapter~\ref{ch:dataEnv}.
 
 Here is an index entry:  Moore's law\index{Moore's law} and a citation Dennard scaling\index{Dennard scaling}~\cite{Dennard}, 
 
+
+There are some open questions concerning what we need to cover.
+\begin{itemize}
+\item Do we need to include \code{declare simd}?  Is that enabled for a GPU?  
+\item Do we need to discuss the variant directives?  If they are 
+important for GPU programmers, then we probably need to. Likewise for assumes and assume.  
+\item Does the scan directive apply to GPUs?  
+\item Does tile and unroll apply to GPUs?  
+\item Do memory spaces apply to GPUs?
+\end{itemize}
+
+We will also need to cover a set of internal control variables and where appropriate a set of environment variables.
+
+\begin{table}[h!]
+\centering
+\caption{All the pragmas we will cover in the book and the chapters where we will cover them}
+\label{YourLabel}
+\input{\ArtDir/ompGPUpragmas.tex}
+ \end{table}
+
+\begin{table}[h!]
+\centering
+\caption{All the clauses we will cover in the book and the chapters where we will cover them}
+\label{YourLabel}
+\input{\ArtDir/ompGPUclauses.tex}
+ \end{table}
+ 
+\begin{table}[h!]
+\centering
+\caption{All the runtime functions we will cover in the book and the chapters where we will cover them}
+\label{YourLabel}
+\input{\ArtDir/ompGPUfuncs.tex}
+ \end{table}
+ 
+\begin{table}[h!]
+\centering
+\caption{All the internal control variables and associated environment variables we will 
+cover in the book and the chapters where we will cover them}
+\label{YourLabel}
+\input{\ArtDir/ompGPUicvEnvVar.tex}
+ \end{table}
 
 
