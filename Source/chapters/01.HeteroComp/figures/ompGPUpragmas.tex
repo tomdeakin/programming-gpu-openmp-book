@@ -15,67 +15,71 @@
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{tabular}{|l|l|l|}
+\begin{tabular}{|l|l|l|l|}
 \hline
-\textbf{OpenMP pragma,}  & \textbf{Concepts} & Chapter \\
+\textbf{OpenMP pragma,}  & \textbf{Concepts} & Chapter & Structure \\
 \hline
 %============================================================
-\Code{#pragma omp target}                & offload onto a device  & XX \\ 
+\Code{#pragma omp target}                & offload onto a device  & \S\ref{chapter:target} & Core \\ 
 \hline 
-\Code{#pragma omp teams}                & Create a league of teams & XX \\
+\Code{#pragma omp teams}                & Create a league of teams & \S\ref{sec:teams} & Core \\
 \hline
-\Code{#pragma omp distribute}            & Map loops onto a league & XX \\
+\Code{#pragma omp distribute}            & Map loops onto a league & \S\ref{ssec:teams_distribute} & Advanced (on its own, favor combined) \\
 \hline
-\Code{#pragma omp target data}            & Create a device data region & XX \\
+\Code{#pragma omp target data}            & Create a device data region & \S\ref{ssec:target_data} & Core \\
 \hline
-\Code{#pragma omp target enter data}  & Enter a device data region & XX \\
+\Code{#pragma omp target enter data}  & Enter a device data region & \S\ref{ssec:target_enter_exit_data} & Core \\
 \hline
-\Code{#pragma omp target exit data}  & Exit a device data region & XX \\
+\Code{#pragma omp target exit data}  & Exit a device data region & \S\ref{ssec:target_enter_exit_data} & Core \\
 \hline
-\Code{#pragma omp target update}  & Update data between host/device & XX \\
+\Code{#pragma omp target update}  & Update data between host/device & \S\ref{ssec:target_update} & Core \\
 \hline
-\Code{#pragma omp loop}  & Concurrent loop iterations & XX \\
+\Code{#pragma omp loop}  & Concurrent loop iterations & \S\ref{sec:loop} & Core \\
 \hline
-\Code{#pragma omp requires} & OMP features required & XX \\
+\Code{#pragma omp requires} & OMP features required & \S\ref{sec:usm} & Core/Advanced \\
 \hline
-\Code{#pragma omp declare target} & declares items are mapped to a device & XX \\
+\Code{#pragma omp declare target} & declares items are mapped to a device & \S\ref{ssec:declare_target} & Advanced \\
 \hline
-\Code{#pragma declare mapper} & user defined mapers & XX \\
+\Code{#pragma declare mapper} & user defined mapers & \S\ref{sec:mapper} & Advanced \\
 \hline
-\Code{#pragma omp interop} & Interoperability with foreign contexts & XX \\
+\Code{#pragma omp interop} & Interoperability with foreign contexts & XX & Advanced \\
 \hline
-\Code{teams loop}    & combined construct & XX \\
+\Code{teams loop}    & combined construct & \S\ref{sec:loop} & Core \\
 \hline
-\Code{teams distribute}  & combined  construct & XX \\
+\Code{teams distribute}  & combined  construct & \S\ref{sec:teams_distribute} & Core \\
 \hline
-\Code{teams distribute simd}  & combined  construct & XX \\
+\Code{teams distribute simd}  & combined  construct & XX & Advanced (not useful?) \\
 \hline
-\Code{teams distribute parallel for} & combined  construct & XX \\
+\Code{teams distribute parallel for} & combined  construct & XX & Advanced \\
 \hline
-\Code{teams distribute parallel for simd} & combined  construct & XX \\
+\Code{teams distribute parallel for simd} & combined  construct & \S\ref{sec:bud} & Core \\
 \hline
-\Code{target parallel}    & combined construct & XX \\
+\Code{target parallel}    & combined construct & XX & Advanced \\
 \hline
-\Code{target simd}    & combined construct & XX \\
+\Code{target simd}    & combined construct & XX & Advanced \\
 \hline
-\Code{target parallel for}    & combined construct & XX \\
+\Code{target parallel for}    & combined construct & XX & Advanced \\
 \hline
-\Code{target parallel for simd}    & combined construct & XX \\
+\Code{target parallel for simd}    & combined construct & XX & Advanced \\
 \hline
-\Code{target parallel loop}    & combined construct & XX \\
+\Code{target parallel loop}    & combined construct & XX & Advanced (N/A?) \\
 \hline
-\Code{target teams }    & combined construct & XX \\
+\Code{target teams }    & combined construct & XX & Advanced \\
 \hline
-\Code{target teams loop}    & combined  construct & XX \\
+\Code{target teams loop}    & combined  construct & \S\ref{sec:loop} & Core \\
 \hline
-\Code{target teams distribute}  & combined  construct & XX \\
+\Code{target teams distribute}  & combined  construct & XX & Advanced \\
 \hline
-\Code{target teams distribute simd}  & combined  construct & XX \\
+\Code{target teams distribute simd}  & combined  construct & XX & Advanced (N/A?) \\
 \hline
-\Code{target teams distribute parallel for} & combined  construct & XX \\
+\Code{target teams distribute parallel for} & combined  construct & XX & Advanced \\
 \hline
-\Code{target teams distribute parallel for simd} & combined  construct & XX \\
+\Code{target teams distribute parallel for simd} & combined  construct & \S\ref{sec:bud} & Core \\
 \hline
 \end{tabular}
+
+Comment: best practice often favors the combined constructs (distribute must be strictly nested).
+
+Comment: often the combined construct falls out naturally from explaining what the bits mean.
 
 

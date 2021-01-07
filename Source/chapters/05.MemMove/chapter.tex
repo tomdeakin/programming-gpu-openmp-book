@@ -4,7 +4,7 @@
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\def\ArtDir{05.ParLoops/figures}%
+\def\ArtDir{05.MemMove/figures}%
 
 \chapter{Memory movement}
 \label{chapter:memory}
@@ -45,15 +45,6 @@
   \item Arrays now allocated on the heap.
   \item Show use of map(tofrom) clauses to copy the data to the device, run in parallel, then copy back at end.
 \end{itemize}
-
-\section{User-defined mappers}
-\begin{itemize}
-  \item From OpenMP 5.0
-  \item Allow user to define how structures are mapped.
-  \item Useful for complex structures
-  \item Example: struct with a pointer variable. Declare mapper of struct which also maps the pointer.
-\end{itemize}
-
 \section{Reductions and mapping back result.}
 \begin{itemize}
   \item In OpenMP 5, the reduction result is brought back automatically.
@@ -81,6 +72,7 @@
 \end{itemize}
 
 \subsection{Target data directive}
+\label{ssec:target_data}
 \begin{itemize}
   \item Scoped target data region.
   \item Useful for lots of kernels running after each other.
@@ -91,6 +83,7 @@
 \end{itemize}
 
 \subsection{Target enter/exit data}
+\label{ssec:target_enter_exit_data}
 \begin{itemize}
   \item Change target data environment in unstructured way.
   \item Expect will need to talk about reference counting again.
@@ -101,6 +94,7 @@
 \end{itemize}
 
 \subsection{Target update directive}
+\label{ssec:target_update}
 \begin{itemize}
   \item Need to get data back in the middle of target data region.
   \item target update directive.
@@ -129,6 +123,7 @@
 \end{itemize}
 
 \section{Unified shared memory}
+\label{sec:usm}
 \begin{itemize}
   \item OpenMP 5 add requires directive
   \item Which unified shared memory is.
@@ -139,3 +134,23 @@
   \item In 5.0, limited performance tuning opportunities.
   \item Mapping gives you the control for optimal performance.
 \end{itemize}
+
+
+\section{Advanced parts}
+\subsection{Declare target}
+\label{ssec:declare_target}
+\begin{itemize}
+  \item map global variables
+\end{itemize}
+
+
+\subsection{User-defined mappers}
+\label{sec:mapper}
+\begin{itemize}
+  \item From OpenMP 5.0
+  \item Allow user to define how structures are mapped.
+  \item Useful for complex structures
+  \item Example: struct with a pointer variable. Declare mapper of struct which also maps the pointer.
+\end{itemize}
+
+

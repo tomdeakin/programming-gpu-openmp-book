@@ -15,23 +15,12 @@
   \item Also know how to get some memory to the device.
   \item But not expressed any parallelism on the device yet.
   \item This is the focus here: running in parallel on a target device.
-  \item Firstly, we introduce the loop directive, then the hierarchical view of parallelism, with three levels.
+  \item Firstly introduce the hierarchical view of parallelism, with three levels, then move onto loop which needs teams.
   \item This chapter will go through them in detail.
   \item Crucial to remain strictly in OpenMP terminology: the target is still an abstract device (GPU).
   \item We {\bf do not} talk about how OpenMP teams/threads/simd map to GPU specific things like work-items/work-groups/compute units etc. That will come in Chapter~\ref{chapter:portable}.
 \end{itemize}
 
-\section{The loop directive}
-\begin{itemize}
-  \item Introduce the loop directive.
-  \item First way of parallelising on the device.
-  \item Good for one big parallel loop.
-  \item Challenges of the semantics of nested loop directives - suggest to avoid doing it on the target.
-  \item The spectrum of prescriptive vs descriptive.
-  \item What if you need more control? What happens underneath in OpenMP? Lead into next sections.
-  \item Mention loop collapse clause is not mechanical collapse, applies loop semantics to the loop nest.
-  \item Mention it's teams loop, to split up creation of parallelism with the concurrency of the loop.
-\end{itemize}
 
 \section{The goal: teams distribute parallel for simd}
 \begin{itemize}
@@ -39,6 +28,7 @@
 \end{itemize}
 
 \section{Teams}
+\label{sec:teams}
 \begin{itemize}
   \item We know about teams from the host.
   \item Threads are launched in a team.
@@ -53,6 +43,7 @@
 \end{itemize}
 
 \subsection{teams distribute}
+\label{ssec:teams_distribute}
 \begin{itemize}
   \item Workshare loop iterations between teams.
   \item Only master thread in each time executes.
@@ -82,6 +73,7 @@
 \end{itemize}
 
 \section{teams distribute parallel for simd}
+\label{sec:bud}
 \begin{itemize}
   \item Use the combined directive to show parallelism of a big loop.
   \item Compiler and runtime will deal with mapping and distribution of work.
@@ -103,3 +95,15 @@
   \item Recommend using linear algebra libraries, this is a motivating example.
 \end{itemize}
 
+\section{The loop directive}
+\label{sec:loop}
+\begin{itemize}
+  \item Introduce the loop directive.
+  \item Good for one big parallel loop.
+  \item Challenges of the semantics of nested loop directives - suggest to avoid doing it on the target.
+  \item The spectrum of prescriptive vs descriptive.
+  \item What if you need more control? What happens underneath in OpenMP? Lead into next sections.
+  \item Mention loop collapse clause is not mechanical collapse, applies loop semantics to the loop nest.
+  \item Mention it's teams loop, to split up creation of parallelism with the concurrency of the loop.
+  \item BUT we need teams first, so loop has to come after.
+\end{itemize}
