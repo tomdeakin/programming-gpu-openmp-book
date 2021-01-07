@@ -27,6 +27,7 @@ This section will give the reader a very concise introduction into enough OpenMP
 \end{itemize}
 
 \subsection{Fork-join parallelism}
+\label{ssec:fork_join}
 \begin{itemize}
   \item Parallel: threads in a team.
   \item Worksharing loops: parallel for.
@@ -43,6 +44,7 @@ This section will give the reader a very concise introduction into enough OpenMP
   \item Synchronization and the need to order operations
 \end{itemize}
 \subsubsection{Data sharing clauses}
+\label{sssec:data_sharing}
 \begin{itemize}
   \item private and firstprivate.
   \item shared and default(none) clauses.
@@ -67,7 +69,9 @@ This section will give the reader a very concise introduction into enough OpenMP
   \item stack arrays might also be useful for first target example to highlight data sharing clauses.
 \end{itemize}
 
-\section{Example: serial to parallel pi}
+\section{Reductions}
+\label{sec:reduction}
+\subsection{Example: serial to parallel pi}
 \begin{itemize}
   \item Pi reduction example.
   \item Shows use of reduction clause.

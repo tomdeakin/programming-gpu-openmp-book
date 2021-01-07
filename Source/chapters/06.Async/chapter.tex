@@ -6,9 +6,12 @@
 
 \def\ArtDir{06.Async/figures}
 
-
 \chapter{Asynchronous offload}
 \label{chapter:async}
+
+This chapter might be a good place for multi-GPU as will require a similar task-based approach.
+
+
 \section{OpenMP tasking model and target regions as tasks}
 \begin{itemize}
   \item Very brief introduction to tasking.
@@ -26,6 +29,18 @@
   \item waiting for tasks with taskwait
   \item simple depends clause
   \item Read Using OpenMP book.
+\end{itemize}
+
+\section{in reduction clause}
+\label{sec:in_reduction}
+\begin{itemize}
+  \item task reductions.
+\end{itemize}
+
+\section{if clause}
+\label{sec:if_clause}
+\begin{itemize}
+  \item conditional offload
 \end{itemize}
 
 \section{Example: TBA}

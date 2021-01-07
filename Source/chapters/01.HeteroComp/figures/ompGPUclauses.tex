@@ -15,88 +15,90 @@
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{tabular}{|l|l|l|}
+\begin{tabular}{|l|l|l|l|}
 \hline
-\textbf{OpenMP clauses}  & \textbf{Constructs} & \textbf{Chapter} \\
+\textbf{OpenMP clauses}  & \textbf{Constructs} & \textbf{Chapter} & \textbf{Structure} \\
 \hline
 %============================================================
-\Code{private}                   & teams, distribute, simd, loop, target & XX \\
+\Code{private}                   & teams, distribute, simd, loop, target & \S\ref{sssec:data_sharing} & Core \\
 \hline
-\Code{firstprivate}              & teams & XX \\
+\Code{firstprivate}              & teams & \S\ref{sssec:data_sharing} & Core \\
 \hline
-\Code{lastprivate}              & distribute, simd, loop   & XX \\
+\Code{lastprivate}              & distribute, simd, loop   & \S\ref{sssec:data_sharing} & Advanced \\
 \hline
-\Code{shared}           & teams & XX \\
+\Code{shared}           & teams & \S\ref{sssec:data_sharing} & Core (concept) / Advanced (clause itself)\\
 \hline
-\Code{reduction}           & teams & XX \\
+\Code{reduction}           & teams, parallel & \S\ref{sec:reduction} and \S\ref{sec:target_reductions} & Core \\
 \hline
-\Code{allocate}           & teams, distribute & XX \\
+\Code{allocate}           & (allocator for private variables) target, teams, distribute & XX & Advanced (N/A?) \\
 \hline
-\Code{default}           & teams & XX \\
+\Code{default}           & teams & XX & Advanced \\
 \hline
-\Code{num_teams}           & teams & XX \\
+\Code{num_teams}           & teams & \S\ref{ssec:gpu_specific_mapping} & Advanced \\
 \hline
-\Code{thread_limit}           & teams & XX \\
+\Code{thread_limit}           & target, teams & XX & Advanced (N/A?) \\
 \hline
-\Code{reduction}    & simd, loop & XX \\
+\Code{reduction}    & simd, loop & see above & Core \\
 \hline
-\Code{in\_reduction}    & target & XX \\
+\Code{in\_reduction}    & target & \S\ref{sec:in_reduction} & Advanced \\
 \hline
-\Code{collapse}      & simd, loop & XX \\
+\Code{collapse}      & simd, loop & \S\ref{ssec:fork_join} & Core \\
 \hline
-\Code{dist\_schedule}    & distribute & XX \\
+\Code{dist\_schedule}    & distribute & \S\ref{ssec:teams_distribute} & Core (but not recommended) \\
 \hline
-\Code{order}                   & distribute, loop & XX \\
+\Code{order}                   & distribute, loop & XX & Advanced \\
 \hline
-\Code{bind}              & loop & XX \\
+\Code{bind}              & loop & XX & Advanced (esoteric) \\
 \hline
-\Code{if}            & simd, target, target data, target enter data, target exit data & XX \\
+\Code{if}            & simd, target, target data, target enter data, target exit data & \S\ref{sec:if_clause} & Advanced (might be Core?)\\
 \hline
-\Code{safelen}   & simd & XX \\
+\Code{safelen}   & simd & XX & N/A \\
 \hline
-\Code{simdlen}   & simd & XX \\
+\Code{simdlen}   & simd & XX & Advanced? (N/A) \\
 \hline
-\Code{aligned}   & simd & XX \\
+\Code{aligned}   & simd & XX & N/A \\
 \hline
-\Code{linear}      & simd & XX \\
+\Code{linear}      & simd & XX & N/A \\
 \hline
-\Code{nontemporal}   & simd & XX \\
+\Code{nontemporal}   & simd & XX & N/A \\
 \hline
-\Code{bind}    & loop & XX \\
+\Code{map}      & target, target data, target enter data, target exit data, declare mapper & \S\ref{ssec:map_clause} & Core \\
 \hline
-\Code{map}      & target, target data, target enter data, target exit data, declare mapper & XX \\
+\Code{use\_device\_ptr}    & target data (interop) & XX & Advanced \\
 \hline
-\Code{use\_device\_ptr}    & target data & XX \\
+\Code{is\_device\_ptr}    & target (interop, alloc APIs) & XX & Advanced \\
 \hline
-\Code{use\_device\_addr}     & target & XX \\
+\Code{use\_device\_addr}     & target data (interop) & XX & Advanced \\
 \hline
-\Code{use\_allocaters}    & target data & XX \\
+\Code{has\_device\_addr}     & target (interop, alloc APIs) & XX & Advanced \\
 \hline
-\Code{allocate}    & target & XX \\
+\Code{uses\_allocaters}    & target data & XX & Advanced (esoteric) \\
 \hline
-\Code{device}           & target,target data, target enter data, target exit data, interop & XX \\
+\Code{device}           & target,target data, target enter data, target exit data, interop & \S\ref{sec:host_device_model} and multi-gpu section & Core \\
 \hline
-\Code{depend}      & target,target enter data, target exit data, interop & XX \\
+\Code{depend}      & target,target enter data, target exit data, interop & \S\ref{chapter:async} & Core \\
 \hline
-\Code{nowait}     & target,target enter data, target exit data, interop & XX \\
+\Code{nowait}     & target,target enter data, target exit data, interop & \S\ref{chapter:async} & Core \\
 \hline
-\Code{thread\_limit} & target & XX \\
+\Code{to/from}    & update & \S\ref{ssec:target_update} & Core \\
 \hline
-\Code{to}    & declare\_target & XX \\
+\Code{to}    & declare\_target & \S\ref{ssec:declare_target} & Advanced \\
 \hline
-\Code{device\_type}   & declare\_target & XX \\
+\Code{link}    & declare\_target & \S\ref{ssec:declare_target} & Advanced \\
 \hline
-\Code{indirect}     & declare\_target & XX \\
+\Code{device\_type}   & declare\_target & \S\ref{ssec:declare_target} & Advanced \\
 \hline
-\Code{init}      & interop & XX \\
+\Code{indirect}     & declare\_target & \S\ref{ssec:declare_target} & Advanced \\
 \hline
-\Code{destroy}   & interop & XX \\
+\Code{init}      & interop & XX & Advanced \\
 \hline
-\Code{use}       & interop & XX \\
+\Code{destroy}   & interop & XX & Advanced \\
+\hline
+\Code{use}       & interop & XX & Advanced \\
 \hline
 \end{tabular}
 
-
+Comment: simd clauses same as from Next Steps book.
 
 
 

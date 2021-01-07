@@ -29,6 +29,7 @@
 \end{itemize}
 
 \subsection{The map clause}
+\label{ssec:map_clause}
 \begin{itemize}
   \item Map clause on a target directive.
   \item List notation of things to map.
@@ -45,7 +46,9 @@
   \item Arrays now allocated on the heap.
   \item Show use of map(tofrom) clauses to copy the data to the device, run in parallel, then copy back at end.
 \end{itemize}
+
 \section{Reductions and mapping back result.}
+\label{sec:target_reductions}
 \begin{itemize}
   \item In OpenMP 5, the reduction result is brought back automatically.
   \item Need to add a note that in OpenMP 4.5, need to use the map clause to do a reduction on the device.
