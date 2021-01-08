@@ -64,21 +64,21 @@
 \hline
 \Code{map}      & target, target data, target enter data, target exit data, declare mapper & \S\ref{ssec:map_clause} & Core \\
 \hline
-\Code{use\_device\_ptr}    & target data (interop) & XX & Advanced \\
+\Code{use\_device\_ptr}    & target data (interop) & \S\ref{sec:interop} & Advanced \\
 \hline
-\Code{is\_device\_ptr}    & target (interop, alloc APIs) & \S\ref{sec:alloc_apis} & Advanced \\
+\Code{is\_device\_ptr}    & target (interop, alloc APIs) & \S\ref{sec:alloc_apis} and \S\ref{sec:interop} & Advanced \\
 \hline
-\Code{use\_device\_addr}     & target data (interop) & XX & Advanced \\
+\Code{use\_device\_addr}     & target data (interop) & \S\ref{sec:interop} & Advanced \\
 \hline
-\Code{has\_device\_addr}     & target (interop, alloc APIs) & \S\ref{sec:alloc_apis} & Advanced \\
+\Code{has\_device\_addr}     & target (interop, alloc APIs) & \S\ref{sec:alloc_apis} and \S\ref{sec:interop} & Advanced \\
 \hline
 \Code{uses\_allocaters}    & target data & XX & Advanced (esoteric) \\
 \hline
-\Code{device}           & target,target data, target enter data, target exit data, interop & \S\ref{sec:host_device_model} and multi-gpu section & Core \\
+\Code{device}           & target,target data, target enter data, target exit data, interop & \S\ref{sec:host_device_model} and \S\ref{sec:multi_gpu} & Core \\
 \hline
-\Code{depend}      & target,target enter data, target exit data, interop & \S\ref{chapter:async} & Core \\
+\Code{depend}      & target,target enter data, target exit data, interop & \S\ref{sec:async} and \S\ref{sec:interop} & Core \\
 \hline
-\Code{nowait}     & target,target enter data, target exit data, interop & \S\ref{chapter:async} & Core \\
+\Code{nowait}     & target,target enter data, target exit data, interop & \S\ref{sec:async} and \S\ref{sec:interop} & Core \\
 \hline
 \Code{to/from}    & update & \S\ref{ssec:target_update} & Core \\
 \hline
@@ -90,11 +90,11 @@
 \hline
 \Code{indirect}     & declare\_target & \S\ref{ssec:declare_target} & Advanced \\
 \hline
-\Code{init}      & interop & XX & Advanced \\
+\Code{init}      & interop & \S\ref{sec:interop} & Advanced \\
 \hline
-\Code{destroy}   & interop & XX & Advanced \\
+\Code{destroy}   & interop & \S\ref{sec:interop} & Advanced \\
 \hline
-\Code{use}       & interop & XX & Advanced \\
+\Code{use}       & interop & \S\ref{sec:interop} & Advanced \\
 \hline
 \end{tabular}
 
