@@ -15,64 +15,64 @@
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{tabular}{|l|l|}
+\begin{tabular}{|l|l|l|}
 \hline
-\textbf{OpenMP functions,}  & Chapter \\
+\textbf{OpenMP functions}  & \textbf{Chapter} & \textbf{Structure} \\
 \hline
 %============================================================
-\Code{int omp\_get\_team\_size()}      & XX \\
+\Code{int omp\_get\_team\_size()}      & \S\ref{ssec:teams_query_functions} & Advanced\\
 \hline
-\Code{int omp\_get\_num\_teams()}       & XX   \\
+\Code{int omp\_get\_num\_teams()}       & \S\ref{ssec:teams_query_functions} & Advanced  \\
 \hline
-\Code{int omp\_get\_team\_num()}       & XX   \\
+\Code{int omp\_get\_team\_num()}       & \S\ref{ssec:teams_query_functions}  & Advanced \\
 \hline
-\Code{void omp\_set\_num\_teams()}       & XX    \\
+\Code{void omp\_set\_num\_teams()}       & \S\ref{ssec:teams_query_functions} & Advanced   \\
 \hline
-\Code{int omp\_get\_max\_teams()}      & XX    \\
+\Code{int omp\_get\_max\_teams()}      & \S\ref{ssec:teams_query_functions}  & Advanced  \\
 \hline
-\Code{void omp\_set\_teams\_thread\_limit()}     & XX    \\
+\Code{void omp\_set\_teams\_thread\_limit()}     & \S\ref{ssec:teams_query_functions} & Advanced   \\
 \hline
-\Code{int omp\_get\_teams\_thread\_limit()}      & XX    \\
+\Code{int omp\_get\_teams\_thread\_limit()}      & \S\ref{ssec:teams_query_functions} & Advanced   \\
 \hline
-\Code{int omp\_get\_teams\_thread\_limit()}      & XX    \\
+\Code{int omp\_get\_teams\_thread\_limit()}      & \S\ref{ssec:teams_query_functions} & Advanced   \\
 \hline
-\Code{int omp\_pause\_resource()}      & XX    \\
+\Code{int omp\_pause\_resource()}      & XX (interop) & Advanced  \\
 \hline
-\Code{int omp\_pause\_resource\_all()}    & XX    \\
+\Code{int omp\_pause\_resource\_all()}    & XX (interop) & Advanced   \\
 \hline
-\Code{int omp\_get\_num\_procs()}     & XX    \\
+\Code{int omp\_get\_num\_procs()}     & XX (not that useful?) & Advanced   \\
 \hline
-\Code{void omp\_set\_default\_device()}    & XX    \\
+\Code{void omp\_set\_default\_device()}    & \S\ref{sec:host_device_model} & Advanced  \\
 \hline
-\Code{int omp\_get\_default\_device()}          & XX    \\
+\Code{int omp\_get\_default\_device()}     & \S\ref{sec:host_device_model} & Advanced  \\
 \hline
-\Code{int omp\_get\_num\_devices()}         & XX    \\
+\Code{int omp\_get\_num\_devices()}         & \S\ref{sec:host_device_model}, multi GPU & Advanced  \\
 \hline
-\Code{int omp\_get\_device\_num()}       & XX    \\
+\Code{int omp\_get\_device\_num()}       & multi-gpu & Advanced (favor device clause) \\
 \hline
-\Code{int omp\_is\_initial\_device()}         & XX    \\
+\Code{int omp\_is\_initial\_device()}         & (am I the host query) \S\ref{sec:host_device_model} & Advanced \\
 \hline
-\Code{int omp\_get\_initial\_device()}          & XX    \\
+\Code{int omp\_get\_initial\_device()}          & \S\ref{sec:host_device_model} & Advanced  \\
 \hline
-\Code{void* omp\_target\_alloc()}        & XX    \\
+\Code{void* omp\_target\_alloc()}        & \S\ref{sec:alloc_apis}  & Advanced \\
 \hline
-\Code{void omp\_target\_free()}        & XX    \\
+\Code{void omp\_target\_free()}        & \S\ref{sec:alloc_apis}  & Advanced \\
 \hline
-\Code{int omp\_target\_is\_present()}           & XX    \\
+\Code{int omp\_target\_is\_present()}           & host api \S\ref{sec:alloc_apis}  & Advanced \\
 \hline
-\Code{int omp\_target\_is\_axxessible()}          & XX    \\
+\Code{int omp\_target\_is\_accessible()}          & host api \S\ref{sec:alloc_apis}  & Advanced \\
 \hline
-\Code{int omp\_target\_memcpy()}          & XX    \\
+\Code{int omp\_target\_memcpy()}          & \S\ref{sec:alloc_apis}  & Advanced \\
 \hline
-\Code{int omp\_target\_memcpy_rect()}          & XX    \\
+\Code{int omp\_target\_memcpy_rect()}          & \S\ref{sec:alloc_apis}  & Advanced \\
 \hline
-\Code{int omp_target_memcpy_async()}          & XX    \\
+\Code{int omp_target_memcpy_async()}          & \S\ref{sec:alloc_apis} and async & Advanced \\
 \hline
-\Code{int omp_target_memcpy_rect_async()}          & XX    \\
+\Code{int omp_target_memcpy_rect_async()}          & \S\ref{sec:alloc_apis} and async & Advanced \\
 \hline
-\Code{int omp_target_associate_ptr()}          & XX    \\
+\Code{int omp_target_associate_ptr()}          & XX & Very advanced \\
 \hline
-\Code{omp_target_disassociate_ptr()}          & XX    \\
+\Code{omp_target_disassociate_ptr()}          & XX & Very advanced \\
 \hline
 \Code{void *omp_get_mapped_ptr()}          & XX    \\
 \hline
