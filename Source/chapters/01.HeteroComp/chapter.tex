@@ -68,12 +68,44 @@ architectures.
 Introduce what a standard CPU looks like. This is the host processor.
 
 \subsection{Introduce GPU model}
-Describe an abstract vendor-neutral GPU.
-Using terms/definitions from OpenCL make this convenient.
-Local memory, will use in Chapter~\ref{chapter:portable}.
+When discussing parallel programming models in general, is it sometimes important to distinguish between concurrent concepts in the programming model and parts of the hardware.
+On CPUs for instance, parallel items called perhaps ``threads'' are assigned to run on physical parts of the CPU called perhaps ``cores''.
+This correspondence is not necessarily unique, and parallelism expressed in the programming model may be assigned physical components of the processor in a number of ways.
 
-In the book we will describe programming this GPU in OpenMP.
-Later, we include case studies of how this applies to real hardware.
+OpenMP does not give sufficient terminology to name the underlying hardware of a given abstract device, and so to help throughout this book, we define an underlying target device using terminology borrowed from another open-standard programming model called OpenCL (from Khronos).
+This is no criticism of OpenMP for it is typically an implementation detail on how the parallel concepts in OpenMP might correspond to physical, real-life hardware.
+However in our situation, it is helpful to speak in terms regarding expressing parallelism in OpenMP differently to how that might correspond at run-time to the physical hardware.
+
+A target device is constructed with a hierarchical structure of hardware.
+The target device is built from a number of Compute Units (CUs)\index{Compute Unit}.
+Each Compute Unit is formed from a number of Processing Elements (PEs)\index{Processing Element}.
+The Processing Elements themselves are the hardware that can execute the program instructions, and are organised into Compute Units.
+Processing Elements can operate independently but there is normally close ties with the other Processing Elements within the Compute Unit.
+There is normally no (or little) interaction between Processing Elements in different Compute Units.
+In particular, Processing Elements are not allowed to communicate with each other unless they reside in the same Compute Unit.
+
+Each Processing Element may be able to execute vector (SIMD) instructions\index{SIMD}, and so might contain the requisite hardware for this.
+The number of data elements the SIMD instructions process is called the width.
+We call the location of each data item within the instruction a SIMD lane\index{SIMD lane}.
+
+This three level hierarchy is shown in Figure~\ref{fig:target_device}.
+The parallel concepts in the OpenMP programming model will be assigned to Compute Units, Processing Elements, and SIMD lanes.
+
+\begin{figure}[t]
+\label{fig:target_device}
+\centerline{\includegraphics[width=200pt]{\ArtDir/target_device.pdf}}
+\caption[A target device is formed of a number of Compute Units (CU). Each of these Compute Units is formed of a number of Processing Elements (PE), which may be able to execute vector (SIMD) instructions.]
+{A target device is formed of a number of Compute Units (CU). Each of these Compute Units is formed of a number of Processing Elements (PE), which may be able to execute vector (SIMD) instructions.}
+\end{figure}
+
+The device memory is shared and available to all of the hierarchy of hardware.
+Each Compute Unit might in addition provide a layer of memory available only to those Processing Elements contained within it.
+This we will call (as in OpenCL) the local memory\index{local memory}.
+The Processing Elements in each Compute Unit can access this memory, however it is not accessible by Processing Elements outside the Compute Unit.
+We will address using this local memory in OpenMP in Section~\ref{sec:team_only_memory}.
+
+This book will show how to program a device like this, such as GPU, using OpenMP.
+In later chapters, we include case studies to show the abstract device model and the concepts in OpenMP come together and are applied to real hardware.
 
 
 \section{Why you need OpenMP: a single code-base for heterogeneous hardware}
