@@ -88,14 +88,13 @@ Each Processing Element may be able to execute vector (SIMD) instructions\index{
 The number of data elements the SIMD instructions process is called the width.
 We call the location of each data item within the instruction a SIMD lane\index{SIMD lane}.
 
-This three level hierarchy is shown in Figure~\ref{fig:target_device}.
+This three level hierarchy is shown in Figure \ref{figure:target_device_hierarchy}.
 The parallel concepts in the OpenMP programming model will be assigned to Compute Units, Processing Elements, and SIMD lanes.
 
 \begin{figure}[t]
-\label{fig:target_device}
 \centerline{\includegraphics[width=200pt]{\ArtDir/target_device.pdf}}
-\caption[A target device is formed of a number of Compute Units (CU). Each of these Compute Units is formed of a number of Processing Elements (PE), which may be able to execute vector (SIMD) instructions.]
-{A target device is formed of a number of Compute Units (CU). Each of these Compute Units is formed of a number of Processing Elements (PE), which may be able to execute vector (SIMD) instructions.}
+\caption{A target device is formed of a number of Compute Units (CU). Each of these Compute Units is formed of a number of Processing Elements (PE), which may be able to execute vector (SIMD) instructions.}
+\label{figure:target_device_hierarchy}
 \end{figure}
 
 The device memory is shared and available to all of the hierarchy of hardware.
