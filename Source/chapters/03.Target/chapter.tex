@@ -44,7 +44,8 @@ Data and execution can be offloaded from the host to the target device.
 The memory spaces are distinct.}
 \end{figure}
 
-We can query the OpenMP runtime for the number of available target devices in the system using the \texttt{omp\_get\_num\_devices()} API call.
+
+We can query the OpenMP runtime for the number of available target devices in the system using the \Code{omp\_get\_num\_devices()} API call.
 
 \begin{verbatim}
 #include <stdio.h>
@@ -56,20 +57,64 @@ int main() {
 }
 \end{verbatim}
 
-\begin{itemize}
-  \item OpenMP 5.1 says this number is the number of the initial device.
-  \item Devices are numbered from 0 to this number, so can loop over them, using the device clause.
-  \item Introduce the device clause.
-\end{itemize}
+The devices themselves are numbered between zero and the number returned by this API call.
+The final device with value equal to the value returned by \Code{omp\_get\_num\_devices()} is the \emph{initial device}.
+The initial device is the host itself.
+This means we can use the same mechanisms for programming attached target devices as we can for programming the host by treating it as a device.
 
+One of the devices will be chosen by the implementation to be the \emph{default device}.
+This is the device that will be used unless another is explicitly chosen.
+In the main body of this book we will show code which will run on the default device.
+In Section~\ref{sec:multi_gpu} we will explore how to use OpenMP to program systems with multiple devices, where devices will be chosen using this simple numbering scheme above.
+
+This model of a host with some attached devices, each with their own separated memory space, is a model commonly found in heterogeneous programming models.
 
 \subsection{Target construct offloading execution}
 \begin{itemize}
   \item Target directive.
   \item Defines movement of execution to the target device.
   \item Host waits for the region to finish.
+  \item Devices are numbered from 0 to this number, so can loop over them, using the device clause.
   \item Don't want too much detail on the tasking model here because will go into it in Chapter~\ref{chapter:async}. It's not relevant for getting starting this early on.
 \end{itemize}
+
+OpenMP uses the \Code{target} construct for offloading execution to a device.
+The majority of the constructs we use in this book are based on this \Code{target} construct.
+The code in the structured block associated with the \Code{target} construct is executed by the target device instead of the host.
+This code that resides in this block is known as the \emph{target region}.
+
+\begin{verbatim}
+#pragma omp target
+{
+  // Code to run on the device
+  // This code is the target region.
+}
+\end{verbatim}
+
+When the host encounters this \Code{target} construct, execution is transferred to the device which completes the work in the target region.
+By default, the host waits until the region has completed, at which point execution is returned back to the host.
+This is shown in Figure~\ref{fig:target_region}.
+
+\begin{figure}[t]
+\centerline{\includegraphics[width=200pt]{\ArtDir/target_region.pdf}}
+\caption{Illustration of transfer of execution from the host to the device at a \Code{target} construct.}
+\label{fig:target_region}
+\end{figure}
+
+OpenMP uses a task mechanism to carefully define the transfer of control.
+We will defer the details of this until Section~\ref{sec:async} where they will be covered in the context of allowing the host to do useful work whilst waiting for the target region to complete.
+For now however, we can be contented with the fact that execution is transferred to the device, and continues again back on the host when the work on the target device is done.
+
+When execution of the target region begins on the device, the execution only occurs in a single thread.
+This means the target device will execute the target region in serial.
+Chapter~\ref{chapter:parallelism} will show the constructs needed to run in parallel on the device.
+
+When the \Code{target} construct is encountered on the host, in addition to transfer of execution, there may be the transfer of \emph{data} between the host and device.
+The device and host do not share a memory space, so data must be copied between them.
+These data transfers can happen at just a few specific places, the first of which is the beginning and end of a target region.
+We will cover some of the memory movement now with the goal of showing our first OpenMP programming correctly running on the device.
+While Chapter~\ref{chapter:parallelism} will cover the parallelism on the device, Chapter~\ref{chapter:memory} will expand on the data transfer rules to include allocatable data (on the heap or free store).
+
 
 \section{The target memory environment and implicit mapping rules.}
 \begin{itemize}
