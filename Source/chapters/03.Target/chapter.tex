@@ -123,6 +123,36 @@ While Chapter~\ref{chapter:parallelism} will cover the parallelism on the device
   \item Different kinds of data we want to move: scalars, (stack) arrays, heap data/pointers, structures.
 \end{itemize}
 
+The target device has its own memory space, distinct from the host.
+The target memory space is called the \emph{device data environment}.
+In order for the target region executing on the device to do anything useful, we must copy data from the host to the device data environment, execute using it, and the copy it back to the host.
+The \Code{target} directive is one such place where this data transfer might occur; there are a few other places that we will introduce later that help to minimizing the transfers.
+
+OpenMP uses a combination of implicit rules and explicit clauses and constructs to copy data between the host memory space and the device data environment.
+We will first introduce the implicit rules, where data is automatically moved between the host and device.
+
+At the start of a target region, data may be copied from the host \emph{to} the device.
+At the end of a target region, data may be copied back \emph{from} the device to the host.
+The direction of the memory transfers in OpenMP are always from the perspective of the host.
+Data is either copied to the device, or from the device.
+
+Recall that the target region is described by the \Code{target} construct.
+The following code snippet shows where the transfers occur for the \Code{target} construct.
+The structured block between the curly braces is the target region offloaded to the device for execution.
+\begin{verbatim}
+#pragma omp target
+{ // <-- copy data to the device
+
+} // <-- copy data from the device
+\end{verbatim}
+
+The implicit rules for what variables are copied at this stage are limited to scalars, stack arrays and structures (\Code{struct}) with complete types.
+We will explain the most commonly occurring types of variables and what happens automatically at the beginning and end of a target region.
+The full details can be found in \S2.21.7 of the OpenMP 5.1 specification.
+
+Data allocated on heap or free store must be explicitly copied, and we will show how to do this later in Chapter~\ref{chapter:memory}.
+The main thing to remember is that any data referred to with a pointer \emph{will not} to transferred automatically.
+
 \subsection{Scalar variables}
 \begin{itemize}
   \item Mapped as firstprivate.
@@ -157,6 +187,9 @@ While Chapter~\ref{chapter:parallelism} will cover the parallelism on the device
   \item Parallelism comes in Chapter~\ref{chapter:parallelism}.
   \item In OpenCL, have to deal with the host API copying buffers to/from host and device before we can run a meaningful kernel. Thinking in OpenCL might help here.
 \end{itemize}
+
+\section{Advanced: Corresponding Variables}
+Into specification details, explain how the term corresponding variable.
 
 %-----------------------------------------------------------------------
 %------------------------- From Next Step ------------------------------
