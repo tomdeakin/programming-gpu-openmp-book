@@ -21,37 +21,37 @@ where the microprocessor emerged.  In those days (the late 70's and early 80's) 
 needed to understand the low level details of the system.  A professional programmer as a matter
 of their normal work-day wrote in low level languages regularly dropping down to assembly code 
 when needed.   Programming was a matter of understanding bottlenecks and then working at the lowest 
-level to knock them back to get the primitive computer to do what was needed.
+level to knock them back to get their primitive computers to do what was needed.
 
 As the 80s progressed and the full force of Moore's law kicked in, the game changed.   With
 microprocessor performance doubling ever year, a programmer was actually punished for 
 working hard to optimize code for a particular system.  The pendulum had swung from
 a world where the programmer was almost a hardware engineer to the opposite.  The ability to 
 add new features carried the day.  Productivity and portability where the driving concerns and
-programmers came to think of them selves as software engineers working to make every more
+programmers came to think of them selves as software engineers working to make ever more
 complex programs correct and full-featured.
 
-In the early 90s with the introduction of out-of-order execution for a microprocessors instructions, the 
+In the early 90s with the introduction of out-of-order execution for a microprocessor's instructions, the 
 pendulum had reached an extremity where the need to write assembly code fell to the side.  Object oriented
 programming and other high level concepts ruled the day for software engineers.  Performance was
-truly the job of the hardware and we all rode the Mooore's law wagon into a bright future of
+truly the job of the hardware and we all rode the Moore's law wagon into a bright future of
 ubiquitous computers filling every facet of our lives.
 
 Pendulums, however, keep moving.  In the early 2000's the ability to manage static effects such as 
 leakage came to dominate.   Power densities made cooling a major problem.  Moore's law was 
 still with us, but it could no longer be used to double performance every couple years.
-As Herb Sutter famously pointed out, ``the free lunch'' for software engineers was over. 
+As Herb Sutter famously observed, ``the free lunch'' for software engineers was over. 
 
 This is ancient history at this point.  Multicore chips emerged.  Core counts were small, cache hierarchies were 
 simple, and DRAM cost models were relatively flat.   People had to write multithreaded programs.   While OpenMP
-was born in the years before multicore chips to serve the needs of programmers working with supercomputers,
-the transition to multicore chips pulled OpenMP into the mainstream of programming.  This was great for 
+was born in the years before multicore chips to program supercomputers,
+the transition to multicore chips pulled it into the mainstream.  This was great for 
 old-timers who still remembered the old-days of hardware-centered programming (that is, the sort of people 
 who created OpenMP in the first place), for the masses of programmers, however, these were dark days.
-Understanding hardware and using that understanding to write performance code was with us.
+Understanding hardware and using that understanding to write performant code was with us.
 
 We thought the pendulum had swung through the low point in its journey and that language/compiler technology
-would take us back to a day where programmers didn't have to spend their days coding to low level features of the
+would take us back to a time when programmers didn't have to spend their days coding to low level features of the
 hardware.  We were wrong.  The pendulum swing into hardware-aware programming was just getting started.
 First there were the many-core ships with non-uniform cost models that required programmers to understand
 where their threads executed and how they lined up with memory.  But then chaos struck the life of programmers with
