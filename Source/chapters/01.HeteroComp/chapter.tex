@@ -9,21 +9,109 @@
 \chapter{Heterogeneity and the future of computing}
 \label{chapter:heterogeneity}
 
-\section{What is Heterogeneous computing and why everyone will be doing it}
+How do you boil down over 40 years of computing history into a few short paragraphs?   
+Think of a pendulum swinging from one extreme to another.  Very little time is spent at
+the point where forces are balanced.  In fact, that point is precisely where the pendulum is
+moving the fastest and those struggling to follow the motion of the pendulum must run the
+fastest to keep up.
+
+This picture is perhaps the best way to think of the history of computing.  We can start with the
+works of Babbage or Turing, but for the sake of brevity, let's start with the modern era of computing
+where the microprocessor emerged.  In those days (the late 70's and early 80's) a programmer
+needed to understand the low level details of the system.  A professional programmer as a matter
+of their normal work-day wrote in low level languages regularly dropping down to assembly code 
+when needed.   Programming was a matter of understanding bottlenecks and then working at the lowest 
+level to knock them back to get the primitive computer to do what was needed.
+
+As the 80s progressed and the full force of Moore's law kicked in, the game changed.   With
+microprocessor performance doubling ever year, a programmer was actually punished for 
+working hard to optimize code for a particular system.  The pendulum had swung from
+a world where the programmer was almost a hardware engineer to the opposite.  The ability to 
+add new features carried the day.  Productivity and portability where the driving concerns and
+programmers came to think of them selves as software engineers working to make every more
+complex programs correct and full-featured.
+
+In the early 90s with the introduction of out-of-order execution for a microprocessors instructions, the 
+pendulum had reached an extremity where the need to write assembly code fell to the side.  Object oriented
+programming and other high level concepts ruled the day for software engineers.  Performance was
+truly the job of the hardware and we all rode the Mooore's law wagon into a bright future of
+ubiquitous computers filling every facet of our lives.
+
+Pendulums, however, keep moving.  In the early 2000's the ability to manage static effects such as 
+leakage came to dominate.   Power densities made cooling a major problem.  Moore's law was 
+still with us, but it could no longer be used to double performance every couple years.
+As Herb Sutter famously pointed out, ``the free lunch'' for software engineers was over. 
+
+This is ancient history at this point.  Multicore chips emerged.  Core counts were small, cache hierarchies were 
+simple, and DRAM cost models were relatively flat.   People had to write multithreaded programs.   While OpenMP
+was born in the years before multicore chips to serve the needs of programmers working with supercomputers,
+the transition to multicore chips pulled OpenMP into the mainstream of programming.  This was great for 
+old-timers who still remembered the old-days of hardware-centered programming (that is, the sort of people 
+who created OpenMP in the first place), for the masses of programmers, however, these were dark days.
+Understanding hardware and using that understanding to write performance code was with us.
+
+We thought the pendulum had swung through the low point in its journey and that language/compiler technology
+would take us back to a day where programmers didn't have to spend their days coding to low level features of the
+hardware.  We were wrong.  The pendulum swing into hardware-aware programming was just getting started.
+First there were the many-core ships with non-uniform cost models that required programmers to understand
+where their threads executed and how they lined up with memory.  But then chaos struck the life of programmers with
+the advent of heterogeneous computing.
+
+The idea is simple, though the software response is anything but simple.  Hardware specialized to a specific task is
+more power-efficient than general purpose hardware.   If your application does computations that look like a graphics pipeline, 
+use a GPU.   If you are operating over arrays of high-dimensionality containing dense blocks, use a Tensor Processor Unit.  If
+you are coordinating execution over a wide range of storage, networking, and computational elements, use an infrastructure
+processing unit. A system composed of heterogenous hardware elements is a system that for a fixed amount of power runs faster.
+This is called \emph{heterogenous computing}.   It's not about moving the work from a CPU onto a GPU and then once on the 
+GPU, keeping the work there (something we call \emph{offloading}).   It's the old game of organizing a computation 
+so the ``whole is greater than the sum of the parts'' by matching each part of your program to the hardware for which it is best suited.
+
+And this is where the pendulum sits today.   Programmers need to understand a great deal about the hardware.  Programmers need to 
+know which classes of algorithms map to which types of hardware.  Programmers need to understand how to target one block of 
+code to a throughput optimized device (e.g. a GPU) while another block of code asynchronously runs on another device
+that may be latency optimized (e.g. a CPU).  The pendulum will swing back.  Some day, the tools programmers use will 
+hide those details from programmers.   That day, however, is not today.   And let's face it, when the pendulum swings to the
+blissful extreme of programming productivity where hardware is hidden behind layers of abstraction, we know it will someday
+swing back again.  That's just how computing seems to work.
+
+In this book, we will explore heterogeneous computing and how your can write programs that exploit heterogeneity 
+using OpenMP.  We are in a world where you have to understand hardware and how software maps onto it.   You can 
+complain about that state of affairs or accept it and figure out how to move forward.  OpenMP is an explicit API.  You 
+tell the compiler what to do through directives and a supporting API, and it does what you say.    In this book we will
+explain how all of that works and in the process tell you about the key design patterns used in heterogeneous computing.
+
+This chapter defines our foundation.  We'll talk about hardware at a high level so you understand what you need to map
+your algorithms onto.  Then we will cover core ideas behind OpenMP.  Experienced OpenMP programmers should just skim
+that part of this chapter, but we want to provide a reminder for people who haven't written much OpenMP code while at the
+same time, clearly establish the jargon of OpenMP that the rest of the book depends on.  Then we'll close this chapter with
+a taste of what you can do when programming your GPU with OpenMP.   In the multi-core world, people think of OpenMP
+as finding key loops and putting a parallel loop directive before that loop.  We close this chapter with the analog to parallel for.  
+Its something we call BUD, \emph{the Big Ugly Directive} which for many people will do most of what they need to get started
+with programming a GPU from OpenMP.
 
 \section{The basic building blocks of modern computing}
 
+Computer architecture is a fascinating field. If you want to master it, go to the
+famous text book we all learned it from (Hennessy and Patterson).  We will simplify and
+abstract the problem by thinking in terms of three basic processor building blocks.
+
 \begin{itemize}
-\item Introduce a set of standard processors.
 \item  the CPU: the multiprocessor and cache coherent memory
 \item  the SIMD or Vector Unit: lock-step execution across vector lanes
 \item  the GPU:  Index space, kernels, work-items and work-groups
 \end{itemize}
 
-\subsection{Introduce Cache coherent shared memory machine. SMP model.}
-Introduce what a standard CPU looks like. This is the host processor.
+It is perhaps a gross oversimplification, but you can to a large degree views modern heterogeneous systems
+as the many different ways you can put those three types of building blocks together.  We will consider each 
+in turn
 
-\subsection{Introduce GPU model}
+\subsection{The CPU}
+
+Introduce what a standard CPU looks like. This is the host processor.  Introduce Cache coherent shared memory machine. SMP model.
+
+\subsection{SIMD and the vector unit}
+
+\subsection{The GPU}
 When discussing parallel programming models in general, is it sometimes important to distinguish between concurrent concepts in the programming model and parts of the hardware.
 On CPUs for instance, parallel items called perhaps ``threads'' are assigned to run on physical parts of the CPU called perhaps ``cores''.
 This correspondence is not necessarily unique, and parallelism expressed in the programming model may be assigned physical components of the processor in a number of ways.
