@@ -12,10 +12,10 @@
 How do you summarize over 40 years of computing history in a couple pages?   
 Think of a pendulum swinging from one extreme to another.  The pendulum spends very little time at
 the low-point where forces are balanced.  In fact, that point is precisely where the pendulum is
-moving the fastest and those trying to follow the motion of the pendulum must struggle to keep up.
+moving the fastest and those trying to follow the motion must struggle the most  to keep up.
 
 This mental model is a good way to think about the history of computing.  We could start with the
-works of Babbage or Turing, but for the sake of brevity, let's start with the modern era of computing
+works of Babbage or much later withTuring, but for the sake of brevity, let's start with the era of computing
 that emerged with the microprocessor.  In those days (the late 70's and early 80's) a programmer
 needed to understand the low level details of the system.  A professional programmer as a matter
 of their normal work-day wrote in low level languages regularly dropping down to assembly code 
@@ -79,14 +79,10 @@ complain about that state of affairs or accept it and figure out how to move for
 tell the compiler what to do through directives and a supporting API, and it does what you say.    In this book we will
 explain how all of that works and in the process tell you about the key design patterns used in heterogeneous computing.
 
-This chapter defines our foundation.  We'll talk about hardware at a high level so you understand what you need to map
-your algorithms onto.  Then we will cover core ideas behind OpenMP.  Experienced OpenMP programmers should just skim
-that part of this chapter, but we want to provide a reminder for people who haven't written much OpenMP code while at the
-same time, clearly establish the jargon of OpenMP that the rest of the book depends on.  Then we'll close this chapter with
-a taste of what you can do when programming your GPU with OpenMP.   In the multi-core world, people think of OpenMP
-as finding key loops and putting a parallel loop directive before that loop.  We close this chapter with the analog to parallel for.  
-Its something we call BUD, \emph{the Big Ugly Directive} which for many people will do most of what they need to get started
-with programming a GPU from OpenMP.
+Our journey begins with this chapter.  We set the stage with a brief description of the hardware we use when
+running programs written with OpenMP.   Even experienced parallel programmers with detailed knowledge of
+parallel hardware should skim this chapter to make sure we are on the same page concerning the jargon used
+for describing hardawre.
 
 \section{The basic building blocks of modern computing}
 
@@ -109,31 +105,161 @@ We will consider each in turn
 
 A CPU is a device optimized for latency sensitive computing.  You click your mouse and you expect something to happen
 immediately.  Of course there is always a delay which is a span of time we call the ``latency''.  As long as this
-latency is small on a human time scale (less than 50 microseconds) the user feels the computer is delivering results
+latency is small on a human time scale (less than 50 microseconds), the user feels the computer is delivering results
 instantaneously and  all is well.  
 
-Low latency computing is difficult.  Since the memory (DRAM) is much slower than the cores that make up the CPU, 
-the CPU utilizes a cache hierarchy to maintain a window of DRAM memory.  As long as the items needed from memory 
-reside in cache, all is well and low latencies are provided.  If needed data is not in cache, it can become difficult for the
-system to deliver the required latencies.
+Low latency computing is difficult.  The time to reference an item in memory (DRAM) is around 100 nanoseconds.  This latency
+seems quite small, but not when you consider that a modern CPU completes basic arithmetic operations in well
+under a nanosecond.  With orders of magnitude differences between the speeds of the CPU cores and the performance
+of memory, a CPU keeps high speed blocks of memory (SRAM) close to the cores.  These are organized as a 
+cache hierarchy to maintain a window into DRAM memory.  As long as the items needed from memory 
+reside in cache, all is well and low latencies are provided.  
 
-One solution to this problem i a CPU is to exploit concurrency.  When multiple units of work (usually called a ``thread'' on a CPU) are 
-available to be scheduled for execution and they are unordered with respect to each other, we say those units of work are concurrent.  
-Since the detailed order of instructions is not defined for concurrent threads, the system can swap form one thread to the next so a 
-thread waiting on some resource (such as a fresh cache-line from memory) is replaced by another thread that is ready to go.
+We show a typical server in figure~\ref{figure:CPU} with a common configuration of CPUs.   
+We show this figure to drive home the fact that the cache hierarchy is complicated.  The design
+of the CPU is optimized around managing memory to deliver low latencies.   Each core 
+supports a pair of hardware threads ($HT_0$ and $HT_1$).  By switching between the two threads
+while the core executes, the various arithmetic logic units ($ALU$) are more likely to be fully consumed.
+On each core is a pair of L1 caches, one for instructions and one for
+data.  They share a unified L2 cache.   Those caches keep data close to the CPU cores to hide the latency
+of access to memory (through the pair of DDR memory controllers on each CPU).  The speed differences
+between memory and the cores is so great, however, that we need another level of cache.  This is the L3 
+cache broken down into blocks and spread out around the chip.   And that's not all.  There are cache coherent 
+protocols that run between the pair of CPUs (through the QPI ports) so our windows into DRAM are 
+consistent between the two CPUs.  These two CPUs and all of their cores share a common view of memory. 
+Ideally this view is the same from any one core to any location in memory so this is often 
+called a Symmetric Multiprocessor (SMP).   Note, however, that SMP is an idealization and the fact of the matter
+is that due to multiple memory controllers (DDR) and the cache hierarchy, the cost function for a memory access is
+anything but uniform and therefore the system in figure~\ref{figure:CPU} is a Non-Uniform Memory Architecture (NUMA).
+We won't explore NUMA issues in this book\footnote{The concept of SMP as an idealization. The implications
+for NUMA in the context of OpenMP is discussed at length in the book \emph{Using OpenMP: the Next Step}}.
 
-The result is clear when you look at a block diagram of a CPU.  We show a typical dual socket CPU based in in figure~\ref{}.
-To maintain low latencies from threads spread out among the core, multiple layers of cache are needed. Each core has a L1 instruction and L1
-data cache.  A core also has a second level unified cache that holds both data an instruction.  Then all the cores in each socket share
-a third level cache with is tiled so each core has a local block of L3  cache.  This complexity uses up a lot of Realestate on a chip.  Transistors that could 
-have been used for compute are used for caches, translation look-aside buffers to manage virtual memory, coherence interfaces to the 
-second socket, and more.   
+\begin{figure}[t]
+\centerline{\includegraphics[width=400pt]{\ArtDir/CPU}}
+\caption{A block diagram of a typical server consisting of two sockets with each socket holding a CPU. Each
+CPU has 16 CPUs the details of which are shown for one core.}
+\label{figure:CPU}
+\end{figure}
 
-This is the host processor.  Introduce Cache coherent shared memory machine. SMP model.
+The CPU memory hierarchy is complicated and consumes a great deal of design-effort and chip area.  
+When data access patterns are regular so the data needed by a core is likely to be in cache, all is well and 
+the latencies observed by the human using the chip are low.  However, if the data needed by a program is
+not in the cache, latencies still fall off and the chip can't keep up with the demands for interactive computing.
+
+One solution to this problem is for the CPU is to exploit the concurrency in the workflows we run
+on our CPUs.  The term \emph{concurrency} is seriously abused in computer science literature so we will
+take the time to define it here.   Consider the work carried out in a program.   We can break this work into 
+distinct units of work.  When multiple units of work (usually called a ``thread'' on a CPU) are 
+available to be scheduled for execution and they are unordered with respect to each other, we say those threads are concurrent.  
+There are many ways an Operating system can schedule the concurrent threads.  If each thread is given an equal chance
+to become active and make forward progress through its work, we say the scheduling is \emph{fair}.  With fair scheduling
+and concurrent threads, the system swaps from one thread to the next so it appears to the user that all the threads
+are making forward progress at the same time (assuming they are blocked on a resource).   This in essence makes the
+software expressed in terms of concurrent threads appear more response and therefore supports interactive use.
+
+All modern operating systems and most commercial-grade applications running on CPUs utilize multiple threads to
+exploit concurrency and support low latency, interactive computing.  When there are large numbers
+or threads to schedule across a CPU, we can increase the speed at which the threads complete their work by adding multiple 
+cores.  When a workflow has concurrency (to support multiple threads) and we exploit that concurrency by running on 
+multiple cores, we say that that work flow is running ``in parallel''.  Concurrency and Parallelism are closely related but 
+different.  Concurrency deals with unordered units-of-work available to be run by a system.  Parallelism takes those 
+concurrent units-of-work and runs them at the same time.  Concurrency is used even on one core to support 
+responsive comptuing, so work can proceed from one unit-of-work while another is blocked waiting on some resource (such as 
+memory).  Parallelism is only at play when multiple units-of-work are \emph{actually} making progress at the same time.  We will have 
+much more to day about concurrency later when we talk about synchronization between units-of-work
+on a GPU.
 
 \subsection{SIMD and the vector unit}
 
+We don't often think about it, but it takes considerable time for a computer to pull instructions from memory
+and decode them for execution.  Wouldn't it be nice if that effort could be amortized over multiple data 
+elements?   In general, this is not possible, but there are problems where the parallelism is ``in the data'';
+where this mode of execution is not only possible, it is straightforward to implement.  We call this 
+SIMD or ``Single Instruction Multiple Data'' parallelism.   
+
+Problems that can exploit SIMD parallelism occur when a problem can be composed into a sequence of
+operations that operate on dense arrays of data.   They are common enough that SIMD units optimized
+for vectors have become one of the standard parallel building blocks of parallel architectures.  To see
+how they are used, it helps to consider an example.  Consider the loop in figure~\ref{code:vaddLoop}.  
+We add vector $A$ to vector $B$ to produce the result $C$.   
+
+
+\begin{CodeExample}%
+{\textbf{Vector Add program} --\small This program will add two vectors of length $N$
+to produce a third vector.
+}%
+{code:vaddLoop}
+\begin{lstlisting}
+#define N 4000;
+
+int main()
+{
+
+   float A[N], B[N], C[N];
+
+   for (int i = 0;i < N; i++) {
+      C[i] = A[i] + B[i];
+   }
+}	  
+\end{lstlisting}
+\end{CodeExample}
+
+
+A computational element called a \emph{vector unit}
+will use SIMD parallelism to execute blocks of instructions between elements of these three arrays. The 
+first step is to define the blocks by unrolling the loop.  Let's consider a case where our vector unit is 128 bits
+wide so we can process four floating point operations be operation in the vector unit.  We therefore 
+unroll the loop by four as shown in figure~\ref{code:vaddUnroll}.  
+
+\begin{CodeExample}%
+{\textbf{Vector Add program unrolled} --\small We unroll our vector add loop based with execution 
+on a vector unit that is 128 bits wide and can support vectors with four 32 bit float numbers.  For 
+simplicity, we assume that N can be evenly divided by 4.
+}%
+{code:vaddUnroll}
+\begin{lstlisting}
+#include <assert.h>
+#define N 4000;
+
+int main()
+{
+   float A[N], B[N], C[N];
+   
+   assert(N%4==0);
+
+   for (int i = 0;i < N4; i=i+4) {
+      C[i]     = A[i]     + B[i];
+      C[i+1] = A[i+1] + B[i+1];
+      C[i+2] = A[i+2] + B[i+2];
+      C[i+3] = A[i+3] + B[i+3];   
+   }
+}	  
+\end{lstlisting}
+\end{CodeExample}
+
+The compiler takes the code from figure~\ref{code:vaddUnroll} and uses a single vector instruction 
+to do all the operations in the loop body.   That's one instruction to complete four floating points adds
+per clock-cycle of the vector unit.  When the workflow in a program maps onto a vector unit, the performance 
+benefits are substantial.
+
+Most programmers do not write vector code directly.  The compiler unrolls the loop, organizes the instructions for SIMD
+execution, and replaces them with specialized vector instructions.  In an idea world, that would be good enough. Indeed,
+for a simple case such as vector addition, the compiler does quite well.  In practice, however, codes do not so directly map
+onto vector instructions and the exploitation of the vector units are often quite poor.
+To help the compiler with transformations needed to support vectorization (such as loop unrolling) OpenMP added
+a SIMD construct and a collection of clauses.  
+
+Vector units for SIMD parallelism are rapidly evolving.  The widths of the vector units are commonly 256 on lower-end
+CPUs and have climbed up to 512 or even 1024 for high-end server CPUs.  There is no reason the concept must 
+be restricted to one dimension vectors.   SIMD units for two dimension arrays have appeared on the market optimized
+for the matrix-multiply operations common inside Deep Learning pipelines. 
+
+
 \subsection{The GPU}
+
+%
+%  TGM:  This section needs to be edited to fit with the others.   
+%
 When discussing parallel programming models in general, is it sometimes important to distinguish between concurrent concepts in the programming model and parts of the hardware.
 On CPUs for instance, parallel items called perhaps ``threads'' are assigned to run on physical parts of the CPU called perhaps ``cores''.
 This correspondence is not necessarily unique, and parallelism expressed in the programming model may be assigned physical components of the processor in a number of ways.
@@ -175,17 +301,43 @@ In later chapters, we include case studies to show the abstract device model and
 
 \section{Why you need OpenMP: a single code-base for heterogeneous hardware}
 
+%TGM: There is much more to write here.  I just wanted some placeholder ideas for now.
+ Heterogenous hardware is here today and all indications are hardware will
+be more heterogeneous in the future.  Software lasts much longer than hardware.   That means
+programmers need to write code that will continue to work as the hardware changes.  
+
+The focus is on performance since that is what parallelism is all about.  But we need to also think about 
+maintainability, the ability to maintain an application code-base over the long haul.  Hence, programmers
+need to write code with an API that covers heterogeneous hardware across vendors.  And that API
+must be one that programmers can be confident will continue to evolve as hardware keeps changing.
+
+OpenMP is a prime candidate to be that API.
+
 \section{The structure of this book}
+
 In the following chapters, we will introduce the necessary concepts for programming heterogeneous systems using OpenMP.
+
+In next chapter we complete laying the foundation for our discussion with an introduction to the core ideas behind OpenMP. 
+Experienced OpenMP programmers should just skim that chapter.  We provide 
+it as a reminder for people who haven't written much OpenMP code while at the
+same time, to establish the jargon of OpenMP that the rest of the book depends on.  We close that chapter with
+a taste of what you can do when programming your GPU with OpenMP.   In the multi-core world, people think of OpenMP
+as finding key loops and putting a parallel loop directive before that loop.  We close the chapter with the analog to parallel for.  
+Its something we call BUD, \emph{the Big Ugly Directive} which for many people will do most of what they need to get started
+with programming a GPU from OpenMP.
+
+After our two introductory chapters, we dive into the meat of heterogeneity with OpenMP.  
 Each chapter will be split into two.
-The first part of each chapter will walk through the most commonly used parts required for obtaining good performance on target devices; a ``common core'' for OpenMP target if you will.
+The first part of each chapter will walk through the most commonly used parts required for obtaining 
+good performance on target devices; a ``common core'' for OpenMP target if you will.
 
 The second part of the each chapter will go into some specific details less frequently encountered.
 These parts form a comprehensive reference for programming target devices using OpenMP.
 As such it covers some of the finer details of the specification that are not required in the main.
 
-The first part alone will be sufficient in the majority of cases for learning most of what is required to program GPUs and other devices with OpenMP.
-Readers are welcome to read only the first part of each chapter, and come back to the latter parts if or when they need some additional information on the concepts.
+The first part alone will be sufficient in the majority of cases for learning most of what is required to 
+program GPUs and other devices with OpenMP. Readers are welcome to read only the first part of 
+each chapter, and come back to the latter parts if or when they need some additional information on the concepts.
 
 
 \section{Templates for use in formatting the rest of the book.}
