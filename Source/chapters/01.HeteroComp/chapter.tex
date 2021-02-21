@@ -9,19 +9,18 @@
 \chapter{Heterogeneity and the future of computing}
 \label{chapter:heterogeneity}
 
-How do you boil down over 40 years of computing history into a few short paragraphs?   
-Think of a pendulum swinging from one extreme to another.  Very little time is spent at
-the point where forces are balanced.  In fact, that point is precisely where the pendulum is
-moving the fastest and those struggling to follow the motion of the pendulum must run the
-fastest to keep up.
+How do you summarize over 40 years of computing history in a couple pages?   
+Think of a pendulum swinging from one extreme to another.  The pendulum spends very little time at
+the low-point where forces are balanced.  In fact, that point is precisely where the pendulum is
+moving the fastest and those trying to follow the motion of the pendulum must struggle to keep up.
 
-This picture is perhaps the best way to think of the history of computing.  We can start with the
+This mental model is a good way to think about the history of computing.  We could start with the
 works of Babbage or Turing, but for the sake of brevity, let's start with the modern era of computing
-where the microprocessor emerged.  In those days (the late 70's and early 80's) a programmer
+that emerged with the microprocessor.  In those days (the late 70's and early 80's) a programmer
 needed to understand the low level details of the system.  A professional programmer as a matter
 of their normal work-day wrote in low level languages regularly dropping down to assembly code 
-when needed.   Programming was a matter of understanding bottlenecks and then working at the lowest 
-level to knock them back to get their primitive computers to do what was needed.
+when needed.   Programming was a matter of understanding hardware bottlenecks and then working at the lowest 
+level to knock them back to get these computers (primitive by today's standards) to do what was needed.
 
 As the 80s progressed and the full force of Moore's law kicked in, the game changed.   With
 microprocessor performance doubling ever year, a programmer was actually punished for 
@@ -91,23 +90,46 @@ with programming a GPU from OpenMP.
 
 \section{The basic building blocks of modern computing}
 
-Computer architecture is a fascinating field. If you want to master it, go to the
-famous text book we all learned it from (Hennessy and Patterson).  We will simplify and
-abstract the problem by thinking in terms of three basic processor building blocks.
+Computer architecture is a fascinating field. If you want to master it, read the
+famous text book we all learned it from (Hennessy and Patterson).  For our purposes
+here, we will simplify the problem by thinking in terms of three basic processor building blocks.
 
 \begin{itemize}
-\item  the CPU: the multiprocessor and cache coherent memory
-\item  the SIMD or Vector Unit: lock-step execution across vector lanes
-\item  the GPU:  Index space, kernels, work-items and work-groups
+\item  the CPU
+\item  the SIMD Unit
+\item  the GPU
 \end{itemize}
 
-It is perhaps a gross oversimplification, but you can to a large degree views modern heterogeneous systems
-as the many different ways you can put those three types of building blocks together.  We will consider each 
-in turn
+We skip many important developments in computer architecture with this oversimplification, but 
+it turns out that most of what you need to know as an application programmer working in 
+heterogenous computing can be addressed in terms of these three basic building blocks.
+We will consider each in turn
 
 \subsection{The CPU}
 
-Introduce what a standard CPU looks like. This is the host processor.  Introduce Cache coherent shared memory machine. SMP model.
+A CPU is a device optimized for latency sensitive computing.  You click your mouse and you expect something to happen
+immediately.  Of course there is always a delay which is a span of time we call the ``latency''.  As long as this
+latency is small on a human time scale (less than 50 microseconds) the user feels the computer is delivering results
+instantaneously and  all is well.  
+
+Low latency computing is difficult.  Since the memory (DRAM) is much slower than the cores that make up the CPU, 
+the CPU utilizes a cache hierarchy to maintain a window of DRAM memory.  As long as the items needed from memory 
+reside in cache, all is well and low latencies are provided.  If needed data is not in cache, it can become difficult for the
+system to deliver the required latencies.
+
+One solution to this problem i a CPU is to exploit concurrency.  When multiple units of work (usually called a ``thread'' on a CPU) are 
+available to be scheduled for execution and they are unordered with respect to each other, we say those units of work are concurrent.  
+Since the detailed order of instructions is not defined for concurrent threads, the system can swap form one thread to the next so a 
+thread waiting on some resource (such as a fresh cache-line from memory) is replaced by another thread that is ready to go.
+
+The result is clear when you look at a block diagram of a CPU.  We show a typical dual socket CPU based in in figure~\ref{}.
+To maintain low latencies from threads spread out among the core, multiple layers of cache are needed. Each core has a L1 instruction and L1
+data cache.  A core also has a second level unified cache that holds both data an instruction.  Then all the cores in each socket share
+a third level cache with is tiled so each core has a local block of L3  cache.  This complexity uses up a lot of Realestate on a chip.  Transistors that could 
+have been used for compute are used for caches, translation look-aside buffers to manage virtual memory, coherence interfaces to the 
+second socket, and more.   
+
+This is the host processor.  Introduce Cache coherent shared memory machine. SMP model.
 
 \subsection{SIMD and the vector unit}
 
