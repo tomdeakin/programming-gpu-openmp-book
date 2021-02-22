@@ -175,9 +175,9 @@ much more to say about concurrency later when we talk about synchronization betw
 
 We don't often think about it, but it takes considerable time for a computer to pull instructions from memory
 and decode them for execution.  Wouldn't it be nice if that effort could be amortized over multiple data 
-elements?   In general, this is not possible, but there are problems where the parallelism is ``in the data'';
-where this mode of execution is not only possible, it is straightforward to implement.  We call this 
-SIMD or ``Single Instruction Multiple Data'' parallelism.   
+elements?   In general this is not always possible, but there are situation and workloads where the parallelism is ``in the data''
+and this mode of execution is possible and straightforward to implement.  We call this 
+SIMD or ``Single Instruction Multiple Data'' parallelism.
 
 Problems that can exploit SIMD parallelism occur when a problem can be composed into a sequence of
 operations that operate on dense arrays of data.   They are common enough that SIMD units optimized
@@ -199,7 +199,7 @@ int main()
 
    float A[N], B[N], C[N];
 
-   for (int i = 0;i < N; i++) {
+   for (int i = 0; i < N; i++) {
       C[i] = A[i] + B[i];
    }
 }	  
@@ -210,12 +210,12 @@ int main()
 A computational element called a \emph{vector unit}
 will use SIMD parallelism to execute blocks of instructions between elements of these three arrays. The 
 first step is to define the blocks by unrolling the loop.  Let's consider a case where our vector unit is 128 bits
-wide so we can process four floating point operations be operation in the vector unit.  We therefore 
+wide so we can process four 32-bit floating point operations in the vector unit.  We therefore 
 unroll the loop by four as shown in figure~\ref{code:vaddUnroll}.  
 
 \begin{CodeExample}%
 {\textbf{Vector Add program unrolled} --\small We unroll our vector add loop based with execution 
-on a vector unit that is 128 bits wide and can support vectors with four 32 bit float numbers.  For 
+on a vector unit that is 128 bits wide and can support vectors with four 32-bit floating point numbers.  For 
 simplicity, we assume that N can be evenly divided by 4.
 }%
 {code:vaddUnroll}
@@ -240,7 +240,7 @@ int main()
 \end{CodeExample}
 
 The compiler takes the code from figure~\ref{code:vaddUnroll} and uses a single vector instruction 
-to do all the operations in the loop body.   That's one instruction to complete four floating points adds
+to do all the operations in the loop body.   That's one instruction to complete four floating point additions
 per clock-cycle of the vector unit.  When the workflow in a program maps onto a vector unit, the performance 
 benefits are substantial.
 
@@ -249,7 +249,8 @@ execution, and replaces them with specialized vector instructions.  In an idea w
 for a simple case such as vector addition, the compiler does quite well.  In practice, however, codes do not so directly map
 onto vector instructions and the exploitation of the vector units are often quite poor.
 To help the compiler with transformations needed to support vectorization (such as loop unrolling) OpenMP added
-a SIMD construct and a collection of clauses.  
+a SIMD construct and a collection of clauses\footnote{SIMD in the context of OpenMP is discussed at length in the book
+\emph{Using OpenMP: the Next Step}, published by MIT Press.}.
 
 Vector units for SIMD parallelism are rapidly evolving.  The widths of the vector units are commonly 256 on lower-end
 CPUs and have climbed up to 512 or even 1024 for high-end server CPUs.  There is no reason the concept must 
