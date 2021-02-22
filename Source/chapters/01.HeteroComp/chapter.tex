@@ -15,54 +15,55 @@ the low-point where forces are balanced.  In fact, that point is precisely where
 moving the fastest and those trying to follow the motion must struggle the most  to keep up.
 
 This mental model is a good way to think about the history of computing.  We could start with the
-works of Babbage or much later withTuring, but for the sake of brevity, let's start with the era of computing
-that emerged with the microprocessor.  In those days (the late 70's and early 80's) a programmer
+works of Babbage or much later with Turing, but for the sake of brevity, let's start with the era of computing
+that emerged with the microprocessor.  In those days (the late 1970s and early '80s) a programmer
 needed to understand the low level details of the system.  A professional programmer as a matter
 of their normal work-day wrote in low level languages regularly dropping down to assembly code 
 when needed.   Programming was a matter of understanding hardware bottlenecks and then working at the lowest 
 level to knock them back to get these computers (primitive by today's standards) to do what was needed.
 
-As the 80s progressed and the full force of Moore's law kicked in, the game changed.   With
-microprocessor performance doubling ever year, a programmer was actually punished for 
+As the '80s progressed and the full force of Moore's Law kicked in, the game changed.   With
+microprocessor performance doubling every year, a programmer was actually punished for 
 working hard to optimize code for a particular system.  The pendulum had swung from
 a world where the programmer was almost a hardware engineer to the opposite.  The ability to 
-add new features carried the day.  Productivity and portability where the driving concerns and
-programmers came to think of them selves as software engineers working to make ever more
+add new features instead became the focus.  Productivity and portability where the driving concerns and
+programmers came to think of themselves as software engineers working to make ever more
 complex programs correct and full-featured.
 
-In the early 90s with the introduction of out-of-order execution for a microprocessor's instructions, the 
-pendulum had reached an extremity where the need to write assembly code fell to the side.  Object oriented
-programming and other high level concepts ruled the day for software engineers.  Performance was
-truly the job of the hardware and we all rode the Moore's law wagon into a bright future of
+In the early '90s with the introduction of out-of-order execution for a microprocessor's instructions, the 
+pendulum had reached an extremity where the need to write assembly code fell to the side.  Object-oriented
+programming and other high level concepts were the talk of the town for software engineers.  Performance was
+truly the job of the hardware and we all clung to the coattails of Moore's Law into a bright future of
 ubiquitous computers filling every facet of our lives.
 
-Pendulums, however, keep moving.  In the early 2000's the ability to manage static effects such as 
-leakage came to dominate.   Power densities made cooling a major problem.  Moore's law was 
+Pendulums, however, keep moving.  In the early 2000s the ability to manage static effects such as electrical
+leakage came to dominate.   Power densities made cooling a major problem.  Manufacturing the microprocessors was harder. Moore's Law was 
 still with us, but it could no longer be used to double performance every couple years.
 As Herb Sutter famously observed, ``the free lunch'' for software engineers was over. 
 
-This is ancient history at this point.  Multicore chips emerged.  Core counts were small, cache hierarchies were 
+This is all ancient history at this point.  Multicore chips emerged.  Core counts were small, cache hierarchies were 
 simple, and DRAM cost models were relatively flat.   People had to write multithreaded programs.   While OpenMP
 was born in the years before multicore chips to program supercomputers,
-the transition to multicore chips pulled it into the mainstream.  This was great for 
+the transition to ubiquitous multicore chips pulled it into the mainstream.  This was great for 
 old-timers who still remembered the old-days of hardware-centered programming (that is, the sort of people 
-who created OpenMP in the first place), for the masses of programmers, however, these were dark days.
-Understanding hardware and using that understanding to write performant code was with us.
+who created OpenMP in the first place). For the masses of programmers, however, these were dark days.
+Understanding hardware and utilizing that deep understanding became a requirement once again to write performant code.
 
-We thought the pendulum had swung through the low point in its journey and that language/compiler technology
+We hoped the pendulum would swung through the low point in its journey and that language/compiler technology
 would take us back to a time when programmers didn't have to spend their days coding to low level features of the
 hardware.  We were wrong.  The pendulum swing into hardware-aware programming was just getting started.
-First there were the many-core ships with non-uniform cost models that required programmers to understand
-where their threads executed and how they lined up with memory.  But then chaos struck the life of programmers with
+First there were the many-core chips with non-uniform cost models that required programmers to understand
+where their threads executed and how they lined up with memory.  Chaos strikes the life of programmers again with
 the advent of heterogeneous computing.
 
 The idea is simple, though the software response is anything but simple.  Hardware specialized to a specific task is
 more power-efficient than general purpose hardware.   If your application does computations that look like a graphics pipeline, 
-use a GPU.   If you are operating over arrays of high-dimensionality containing dense blocks, use a Tensor Processor Unit.  If
+use a GPU: a processor specialized for graphics processing.  If you are operating over arrays of high-dimensionality containing dense blocks
+(a pattern commonly found in Deep Learning applications), use a Tensor Processor Unit.  If
 you are coordinating execution over a wide range of storage, networking, and computational elements, use an infrastructure
-processing unit. A system composed of heterogenous hardware elements is a system that for a fixed amount of power runs faster.
-This is called \emph{heterogenous computing}.   It's not about moving the work from a CPU onto a GPU and then once on the 
-GPU, keeping the work there (something we call \emph{offloading}).   It's the old game of organizing a computation 
+processing unit. A system composed of heterogeneous hardware elements is a system that for a fixed amount of power runs faster.
+This is called \emph{heterogenous computing}.   It's not about moving the work from a CPU onto a GPU, and then once there 
+keeping the work there (something we call \emph{offloading}).   It's the old game of organizing a computation 
 so the ``whole is greater than the sum of the parts'' by matching each part of your program to the hardware for which it is best suited.
 
 And this is where the pendulum sits today.   Programmers need to understand a great deal about the hardware.  Programmers need to 
@@ -82,7 +83,7 @@ explain how all of that works and in the process tell you about the key design p
 Our journey begins with this chapter.  We set the stage with a brief description of the hardware we use when
 running programs written with OpenMP.   Even experienced parallel programmers with detailed knowledge of
 parallel hardware should skim this chapter to make sure we are on the same page concerning the jargon used
-for describing hardawre.
+for describing hardware.
 
 \section{The basic building blocks of modern computing}
 
