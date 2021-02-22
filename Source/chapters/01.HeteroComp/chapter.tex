@@ -99,8 +99,8 @@ here, we will simplify the problem by thinking in terms of three basic processor
 
 We skip many important developments in computer architecture with this oversimplification, but 
 it turns out that most of what you need to know as an application programmer working in 
-heterogenous computing can be addressed in terms of these three basic building blocks.
-We will consider each in turn
+heterogeneous computing can be addressed in terms of these three basic building blocks.
+We will consider each in turn.
 
 \subsection{The CPU}
 
@@ -118,22 +118,22 @@ reside in cache, all is well and low latencies are provided.
 
 We show a typical server in figure~\ref{figure:CPU} with a common configuration of CPUs.   
 We show this figure to drive home the fact that the cache hierarchy is complicated.  The design
-of the CPU is optimized around managing memory to deliver low latencies.   Each core 
-supports a pair of hardware threads ($HT_0$ and $HT_1$).  By switching between the two threads
+of the CPU is optimized around managing memory to deliver low latencies.   Each core may
+support a number of hardware threads (in the figure there are two: $HT_0$ and $HT_1$).  By switching between the two threads
 while the core executes, the various arithmetic logic units ($ALU$) are more likely to be fully consumed.
 On each core is a pair of L1 caches, one for instructions and one for
 data.  They share a unified L2 cache.   Those caches keep data close to the CPU cores to hide the latency
-of access to memory (through the pair of DDR memory controllers on each CPU).  The speed differences
-between memory and the cores is so great, however, that we need another level of cache.  This is the L3 
+of access to the main capacity memory (through the pair of DDR memory controllers on each CPU).  The speed differences
+between memory and the cores is so great, however, that we often find another level of cache.  This is the L3 
 cache broken down into blocks and spread out around the chip.   And that's not all.  There are cache coherent 
-protocols that run between the pair of CPUs (through the QPI ports) so our windows into DRAM are 
+protocols that run between the pair of CPUs (through the QPI ports, a bus which connects the two sockets) so our windows into DRAM are
 consistent between the two CPUs.  These two CPUs and all of their cores share a common view of memory. 
-Ideally this view is the same from any one core to any location in memory so this is often 
+Ideally this view is the same from any one core to any location in memory. This is often 
 called a Symmetric Multiprocessor (SMP).   Note, however, that SMP is an idealization and the fact of the matter
 is that due to multiple memory controllers (DDR) and the cache hierarchy, the cost function for a memory access is
 anything but uniform and therefore the system in figure~\ref{figure:CPU} is a Non-Uniform Memory Architecture (NUMA).
 We won't explore NUMA issues in this book\footnote{The concept of SMP as an idealization. The implications
-for NUMA in the context of OpenMP is discussed at length in the book \emph{Using OpenMP: the Next Step}}.
+for NUMA in the context of OpenMP is discussed at length in the book \emph{Using OpenMP: the Next Step}, published by MIT Press.}.
 
 \begin{figure}[t]
 \centerline{\includegraphics[width=400pt]{\ArtDir/CPU}}
@@ -143,32 +143,33 @@ CPU has 16 CPUs the details of which are shown for one core.}
 \end{figure}
 
 The CPU memory hierarchy is complicated and consumes a great deal of design-effort and chip area.  
-When data access patterns are regular so the data needed by a core is likely to be in cache, all is well and 
+When data access patterns are regular and the data needed by a core is likely to be in cache, all is well and 
 the latencies observed by the human using the chip are low.  However, if the data needed by a program is
 not in the cache, latencies still fall off and the chip can't keep up with the demands for interactive computing.
 
-One solution to this problem is for the CPU is to exploit the concurrency in the workflows we run
-on our CPUs.  The term \emph{concurrency} is seriously abused in computer science literature so we will
+One solution to this problem is for the CPU to exploit the concurrency in the workflows we run.
+The term \emph{concurrency} is seriously abused in computer science literature so we will
 take the time to define it here.   Consider the work carried out in a program.   We can break this work into 
 distinct units of work.  When multiple units of work (usually called a ``thread'' on a CPU) are 
 available to be scheduled for execution and they are unordered with respect to each other, we say those threads are concurrent.  
-There are many ways an Operating system can schedule the concurrent threads.  If each thread is given an equal chance
+There are many ways an Operating System can schedule the concurrent threads, such as time-slicing  If each thread is given an equal chance
 to become active and make forward progress through its work, we say the scheduling is \emph{fair}.  With fair scheduling
 and concurrent threads, the system swaps from one thread to the next so it appears to the user that all the threads
 are making forward progress at the same time (assuming they are blocked on a resource).   This in essence makes the
-software expressed in terms of concurrent threads appear more response and therefore supports interactive use.
+software expressed in terms of concurrent threads appear more responsive and therefore supports interactive use.
 
 All modern operating systems and most commercial-grade applications running on CPUs utilize multiple threads to
 exploit concurrency and support low latency, interactive computing.  When there are large numbers
-or threads to schedule across a CPU, we can increase the speed at which the threads complete their work by adding multiple 
-cores.  When a workflow has concurrency (to support multiple threads) and we exploit that concurrency by running on 
-multiple cores, we say that that work flow is running ``in parallel''.  Concurrency and Parallelism are closely related but 
+of threads to schedule across a CPU, we can increase the speed at which the threads complete their work by adding multiple 
+cores, supplying the threads with more physical hardware resources.  When a workflow has concurrency (to support multiple threads) and we exploit that concurrency by running on 
+multiple cores, we say that that workflow is running ``in parallel''.
+
+Concurrency and Parallelism are closely related but 
 different.  Concurrency deals with unordered units-of-work available to be run by a system.  Parallelism takes those 
 concurrent units-of-work and runs them at the same time.  Concurrency is used even on one core to support 
-responsive comptuing, so work can proceed from one unit-of-work while another is blocked waiting on some resource (such as 
+responsive computing, so work can proceed from one unit-of-work while another is blocked waiting on some resource (such as 
 memory).  Parallelism is only at play when multiple units-of-work are \emph{actually} making progress at the same time.  We will have 
-much more to day about concurrency later when we talk about synchronization between units-of-work
-on a GPU.
+much more to say about concurrency later when we talk about synchronization between units-of-work on a GPU.
 
 \subsection{SIMD and the vector unit}
 
