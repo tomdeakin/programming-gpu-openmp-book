@@ -105,15 +105,54 @@ OpenMP uses a task mechanism to carefully define the transfer of control.
 We will defer the details of this until Section~\ref{sec:async} where they will be covered in the context of allowing the host to do useful work whilst waiting for the target region to complete.
 For now however, we can be contented with the fact that execution is transferred to the device, and continues again back on the host when the work on the target device is done.
 
+Consider the vector addition example from the previous chapters.
+How can we run this on the target device?
+With the addition of a single \Code{target} construct we can run the loop on the device instead of the host.
+In Figure~\ref{code:vaddTarget} we add the construct to line 8.
+This is a big step --- we are now using the accelerator to run our code.
+The target region consists of all the code from lines 9--11: the \Code{for} loop.
+The host CPU will wait until the loop finishes executing on the device.
+
+\begin{CodeExample}%
+{\textbf{Vector Add program} --\small This program will add two vectors of length $N$
+to produce a third vector, running on the target device.
+}%
+{code:vaddTarget}
+\begin{lstlisting}
+#define N 4000;
+
+int main()
+{
+
+   float A[N], B[N], C[N];
+
+   #pragma omp target
+   for (int i = 0; i < N; i++) {
+      C[i] = A[i] + B[i];
+   }
+}	  
+\end{lstlisting}
+\end{CodeExample}
+
 When execution of the target region begins on the device, the execution only occurs in a single thread.
 This means the target device will execute the target region in serial.
 Chapter~\ref{chapter:parallelism} will show the constructs needed to run in parallel on the device.
 
+There is another outstanding question.
+How does the data move onto the device?
+We know they are separate memory spaces, so the host data doesn't yet exist on the device.
 When the \Code{target} construct is encountered on the host, in addition to transfer of execution, there may be the transfer of \emph{data} between the host and device.
 The device and host do not share a memory space, so data must be copied between them.
 These data transfers can happen at just a few specific places, the first of which is the beginning and end of a target region.
 We will cover some of the memory movement now with the goal of showing our first OpenMP programming correctly running on the device.
 While Chapter~\ref{chapter:parallelism} will cover the parallelism on the device, Chapter~\ref{chapter:memory} will expand on the data transfer rules to include allocatable data (on the heap or free store).
+
+For the vector add example in Figure~\ref{code:vaddTarget}, data transfer will also happen on line 8.
+The target construct moves data and execution from the host to the device.
+In this example, we'll show that all the data we need will be transferred by the implicit rules built into OpenMP.
+The example will correctly run on the target device, but we probably expect the performance to be slow: we have to account for data movement and the serial execution on a target device which was likely designed for throughput.
+Over the next few chapters, we'll improve the performance significantly by exposing the parallelism of the loop and managing the data transfer.
+Next we will explain how the data moves in the vector add example.
 
 
 \section{The target memory environment and implicit mapping rules.}
@@ -160,6 +199,83 @@ The main thing to remember is that any data referred to with a pointer \emph{wil
   \item a scalar struct, as long as it is a complete type
   \item {\bf Not} copied back to the host at end of target region.
 \end{itemize}
+
+Programs usually contain lots of scalar variables, and following usual C coding styles, these are often declared in line, close to where they are used.
+If they are declared before the target region, then OpenMP will implicitly make those variables available for use inside the target region.
+
+For example, consider the program in Figure~\ref{code:scaleTarget}.
+This code multiplies the array \Code{A} by a scalar floating point number \Code{alpha}.
+We will deal with how \Code{A} appears on the device in a moment.
+For now, we consider just the scalar variable \Code{alpha}.
+
+\begin{CodeExample}%
+{\textbf{Scaling program} --\small This program will multiply a vector of length $N$
+by a constant in place, running on the target device.
+}%
+{code:scaleTarget}
+\begin{lstlisting}
+#define N 4000;
+
+int main()
+{
+
+   float A[N];
+   float alpha = 2.0;
+
+   #pragma omp target
+   for (int i = 0; i < N; i++) {
+      A[i] = A[i] * alpha;
+   }
+}	  
+\end{lstlisting}
+\end{CodeExample}
+
+The data in scalar variables is copied to the device on entry to the target region.
+OpenMP maps them as \Code{firstprivate} (recall Section~\ref{sssec:data_sharing}).
+This means that all parallel threads which will run on the target device have their own copy of the variable.
+It also means that the variable is initialized with the original value.
+This is important: we know our \Code{alpha} variable will contain the number \Code{2.0} as this is what the variable was set to on the host before it encountered the target construct.
+
+With scalar variables being mapped from the host to the target device as \Code{firstprivate} we much also consider what happens to those variables at the end of the target region.
+As with all \Code{private} variables, the value of the original variable (the one on the host) will become undefined outside of the associated construct.
+Here this means that once the target region is executed on the device and control is returned back to the host, the value of \Code{alpha} should be considered undefined.
+
+We can extend this further with the small snippet of code in Figure~\ref{code:firstprivateTarget}.
+The \Code{alpha} variable will be copied to the device at the start of the target region on line 7 of the program.
+On line 9, the copy of the variable on the device is updated to a new value (\Code{1.0}), but this update will not necessarily be seen on the host device.
+We have no way of knowing what the value shown by the \Code{printf} on line 12 will be.
+
+\begin{CodeExample}%
+{\textbf{Forgotten value program} --\small This program sets a \Code{firstprivate} variable
+inside a target region.
+}%
+{code:scaleTarget}
+\begin{lstlisting}
+#include <stdio.h>
+
+int main()
+{
+   float alpha = 2.0;
+
+   #pragma omp target
+   {
+      alpha = 1.0;
+   }
+
+   printf("alpha=%f\n", alpha);
+}	  
+\end{lstlisting}
+\end{CodeExample}
+
+By mapping scalar variables as \Code{firstprivate} any updates to those variables will not be seen by the host.
+
+In summary, scalar variables will be copied automatically to the target device at the start of the target region.
+They will be initialized on the device with the value on the host.
+But the original variable on the host will no longer contain valid data from this point onwards so it must be reset.
+
+This behaviour also means that we need a different mechanism to return scalar values from the device back to the host.
+We will show how this is done in Chapter~\ref{chapter:memory}.
+
 
 \subsection{Stack arrays}
 \begin{itemize}
