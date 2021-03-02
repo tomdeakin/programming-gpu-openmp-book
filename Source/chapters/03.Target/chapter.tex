@@ -1,6 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%  
-%% Chapter 3: What is OpenMP
+%% Chapter 3: Running on a target device
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -9,16 +9,25 @@
 \chapter{Running on a target device}
 \label{chapter:target}
 
+We will walk through the important steps for running on a target device such as a GPU with OpenMP over the next three chapters.
+We break down the task into three parts: transferring execution from the host to the device, running in parallel on the device once execution is happening there, and finally managing the movement of data between the host and device.
+When thinking about heterogeneous programming thinking of these different aspects can often make things easier to grapple with.
+The main divide surrounds dealing with parallelism and memory as two distinct concepts.
+
+OpenMP has different constructs and clauses for performing each of these tasks.
+This chapter will cover the first of these topics, along with the implicit data movement rules; with this knowledge we'll have a first program running on the device, although it won't be very fast.
+Parallelism is discussed in Chapter~\ref{chapter:parallelism} and the tools to control the memory movement in more optimal ways are introduced in Chapter~\ref{chapter:memory}.
 
 
 \section{Host/device model}
 \label{sec:host_device_model}
-\begin{itemize}
-  \item Host with target attached.
-  \item Target has its own memory space.
-  \item Can have more than one target, device() clause.
-  \item Data moved between host and device by implicit rules and explicit directives.
-\end{itemize}
+%% Original notes:
+%% \begin{itemize}
+%%   \item Host with target attached.
+%%   \item Target has its own memory space.
+%%   \item Can have more than one target, device() clause.
+%%   \item Data moved between host and device by implicit rules and explicit directives.
+%% \end{itemize}
 
 When an OpenMP program begins running, it starts executing on the host processor.
 This host processor is usually a CPU.
@@ -70,13 +79,15 @@ In Section~\ref{sec:multi_gpu} we will explore how to use OpenMP to program syst
 This model of a host with some attached devices, each with their own separated memory space, is a model commonly found in heterogeneous programming models.
 
 \subsection{Target construct offloading execution}
-\begin{itemize}
-  \item Target directive.
-  \item Defines movement of execution to the target device.
-  \item Host waits for the region to finish.
-  \item Devices are numbered from 0 to this number, so can loop over them, using the device clause.
-  \item Don't want too much detail on the tasking model here because will go into it in Chapter~\ref{chapter:async}. It's not relevant for getting starting this early on.
-\end{itemize}
+
+% Original notes
+%% \begin{itemize}
+%%   \item Target directive.
+%%   \item Defines movement of execution to the target device.
+%%   \item Host waits for the region to finish.
+%%   \item Devices are numbered from 0 to this number, so can loop over them, using the device clause.
+%%   \item Don't want too much detail on the tasking model here because will go into it in Chapter~\ref{chapter:async}. It's not relevant for getting starting this early on.
+%% \end{itemize}
 
 OpenMP uses the \Code{target} construct for offloading execution to a device.
 The majority of the constructs we use in this book are based on this \Code{target} construct.
@@ -156,11 +167,12 @@ Next we will explain how the data moves in the vector add example.
 
 
 \section{The target memory environment and implicit mapping rules.}
-\begin{itemize}
-  \item target directive also triggers data movement as well as execution.
-  \item first place where data movement is allowed, and will introduce the others at appropriate points.
-  \item Different kinds of data we want to move: scalars, (stack) arrays, heap data/pointers, structures.
-\end{itemize}
+% Original notes
+%% \begin{itemize}
+%%   \item target directive also triggers data movement as well as execution.
+%%   \item first place where data movement is allowed, and will introduce the others at appropriate points.
+%%   \item Different kinds of data we want to move: scalars, (stack) arrays, heap data/pointers, structures.
+%% \end{itemize}
 
 The target device has its own memory space, distinct from the host.
 The target memory space is called the \emph{device data environment}.
@@ -193,12 +205,14 @@ Data allocated on heap or free store must be explicitly copied, and we will show
 The main thing to remember is that any data referred to with a pointer \emph{will not} to transferred automatically.
 
 \subsection{Scalar variables}
-\begin{itemize}
-  \item Mapped as firstprivate.
-  \item Example: {\tt int N; double x;}
-  \item a scalar struct, as long as it is a complete type
-  \item {\bf Not} copied back to the host at end of target region.
-\end{itemize}
+
+% Original notes
+%% \begin{itemize}
+%%   \item Mapped as firstprivate.
+%%   \item Example: {\tt int N; double x;}
+%%   \item a scalar struct, as long as it is a complete type
+%%   \item {\bf Not} copied back to the host at end of target region.
+%% \end{itemize}
 
 Programs usually contain lots of scalar variables, and following usual C coding styles, these are often declared in line, close to where they are used.
 If they are declared before the target region, then OpenMP will implicitly make those variables available for use inside the target region.
@@ -278,14 +292,54 @@ We will show how this is done in Chapter~\ref{chapter:memory}.
 
 
 \subsection{Stack arrays}
-\begin{itemize}
-  \item Fixed sized stack arrays.
-  \item Example: {\tt double arr[1024];}
-  \item Complete types. Arrays of structs if complete type.
-  \item Copied to device at start of target region, copied back at the end.
-  \item Host not allowed to use copy in the meantime (with further details on this in Chapter~\ref{chapter:async}\dots).
-  \item Data shared between {\bf all threads} on a device.
-\end{itemize}
+
+%% Original notes
+%% \begin{itemize}
+%%   \item Fixed sized stack arrays.
+%%   \item Example: {\tt double arr[1024];}
+%%   \item Complete types. Arrays of structs if complete type.
+%%   \item Copied to device at start of target region, copied back at the end.
+%%   \item Define mapping.
+%%   \item Host not allowed to use copy in the meantime (with further details on this in Chapter~\ref{chapter:async}\dots).
+%%   \item Data shared between {\bf all threads} on a device.
+%% \end{itemize}
+
+An \emph{incomplete type} in C is a variable whose size is not known at compile time.
+Examples are structures (and unions) where the members are not yet specified and array types with unknown dimension.
+For example, the integer array type \Code{int[]} is an incomplete type.
+To make it \emph{complete}, the size of the array needs to be specified, i.e.\ \Code{int[1024]}.
+Now the compiler knows how much memory to allocate for variables of that type.
+
+We may commonly run into arrays of numbers in codes that we want to run on the device.
+For now, we assume they are allocated on the stack, being declared in the code using an array type with a known extent.
+Later we will deal with arrays of unknown size which are allocated on the heap and accessed via pointers.
+
+Non-scalar variables with complete types will be copied to the device at the start of the target region, \emph{and} copied back to the host at the end of the target region.
+We can update the device copy of that data inside the target region, and the updated values will then be retained.
+The data will also be \emph{shared} between any parallel threads that might be running inside the target region.
+This is quite different to the behavior for scalar variables, where the data was copied and privatized, and not copied back at the end of the region.
+
+The vector addition example we showed in Figure~\ref{code:vaddTarget} utilizes this implicit behaviour.
+The arrays \Code{A}, \Code{B} and \Code{C} are of type \Code{float[4000]}.
+The \Code{N} is defined in the preprocessor, so all references to it are replaced with the value \Code{4000}.
+This means those arrays will be copied to the device at the start of the target region.
+The code inside the target region updates the array \Code{C}, and this array will be copied back to the host at the end of the device execution.
+We will also copy back \Code{A} and \Code{B} too as they follow these same rules of being copied at the start and end, even though we did not update them.
+
+This is our first example of what OpenMP calls \emph{mapping}.
+Variables are mapped from the host memory space in and out of the device memory space.
+The variables should be considered simultaneously the same and separate!
+They share the same name, and can only be accessed in their respective places.
+OpenMP is allowed to use the same storage if possible, but it might not.
+When the variable is used on the device, then it is not correct to use it on the host at the same time, and vice versa.
+
+Variables are mapped to the device at the start of the target region and mapped from the device at the end of the target region.
+When the variables are like our stack arrays (i.e.\ variables with complete type), OpenMP implicitly copies the data between the host and device when they are needed.
+This means OpenMP will allocate memory on the device, copy the data from the host into that new allocation at the start of the target region.
+The process is reversed at the end of the target region: the data is copied back to the host variables and then deallocated.
+The allocation/deallocation follows reference counting semantics.
+
+
 
 \subsection{Warning: heap arrays and pointers - reference later chapter}
 \begin{itemize}
@@ -295,14 +349,104 @@ We will show how this is done in Chapter~\ref{chapter:memory}.
   \item Examples of those would be heap arrays, and data-structures with pointers.
 \end{itemize}
 
-\section{Example: Vector add. arrays on stack. No need for map clauses yet.}
-\begin{itemize}
-  \item Takes vector add example from Chapter~\ref{chapter:overview}.
-  \item Arrays are allocated on the stack, so follows implicit mapping rules.
-  \item Example will simply transfer execution.
-  \item Parallelism comes in Chapter~\ref{chapter:parallelism}.
-  \item In OpenCL, have to deal with the host API copying buffers to/from host and device before we can run a meaningful kernel. Thinking in OpenCL might help here.
-\end{itemize}
+
+\section{Example: Walking through vector addition}
+% Original notes
+%% \begin{itemize}
+%%   \item Takes vector add example from Chapter~\ref{chapter:overview}.
+%%   \item Arrays are allocated on the stack, so follows implicit mapping rules.
+%%   \item Example will simply transfer execution.
+%%   \item Parallelism comes in Chapter~\ref{chapter:parallelism}.
+%%   \item In OpenCL, have to deal with the host API copying buffers to/from host and device before we can run a meaningful kernel. Thinking in OpenCL might help here.
+%% \end{itemize}
+
+You have seen the vector addition code a number of times in this chapter.
+In this section we'll walk through the execution of the vector addition program, line by line.
+This example puts together everything in this chapter and sets the scene for later chapters where we are able to exploit the parallelism of the target device itself.
+
+The program is listed in Figure~\ref{code:vaddTargetWalkthrough}.
+We will refer to the line numbers in this figure.
+The overall goal of the program is to add the elements of two arrays together and storing the results in a third array.
+The input arrays here are initialized to \Code{1.0} and \Code{2.0} for every array entry.
+The program sets the elements of the output array to their sum: $1+2=3$.
+
+Line 2 sets the size of the arrays.
+This is done by the C pre-processor just before compile time.
+Every reference to \Code{N} in the program is replaced by the value \Code{4000}.
+We do this so that we're able to allocate our three arrays on line 8.
+The arrays are of a known, fixed, size.
+The C compiler will allocate the memory on the stack.
+For an OpenMP program running on target devices this means we're able to use the implict data transfer rules and we do not need to explicitly manange the different memory spaces.
+OpenMP takes care of stack arrays for us.
+
+The host initalizes the arrays to their starting values on lines 10--12.
+
+So far we've just written a standard serial C program.
+But on line 16 we have our first (and only) OpenMP construct: the \Code{target} directive.
+This construct is associated with a the structred block of code underneath it, which forms the target region.
+The target region in our vector addition program is the \Code{for} loop on lines 17--19.
+The target region will be executed on the target device.
+The target region will run in serial on the target device because we have not exposed any parallelism through the various constructs available in OpenMP for expressing the concurrency.
+The for-loop then is run in sequential order on the device.
+
+The target construct also invokes some transfer of data at the beginning and the end.
+Variables used in the target region need to be made available on the device in the device data environment.
+There are only four variables in this example: three arrays \Code{A}, \Code{B} and \Code{C}, and one scalar integer \Code{i}.
+Note that \Code{N} is replaced by a numerical literal during compilation, so is not a variable.
+
+The variable \Code{i} is declared inside the target region.
+It will of course be available for use on the target device.
+There is no additional parallelism to worry about at this stage, so there is only one copy of this variable, and it exists on the device only.
+The host has no access to or copy of this variable \Code{i}.
+
+The three arrays exist on the host, and are found in the stack.
+They are of a known extent, and so form a complete type.
+OpenMP will therefore implicitly map these arrays to the device for us.
+This will happen on line 16 as part of the target construct.
+Space will be allocated in the device data ennvoronment (in the device memory space) and the values of these arrays as found on the host will be copied over to these new device arrays.
+This means both the host and device have identical copies of the three arrays just before execution is transferred.
+
+Once this data is transferred, execution is transferred.
+The device runs lines 17--19.
+
+After the execution of the for-loop has finished, the target region ends, and execution must be returned to the waiting host.
+Just before this happens, the target construct might copy back any variables that were implicitly mapped.
+In this program, this is the three arrays.
+These data held in these arrays is copied back to the arrays on the host.
+The host copy of array \Code{C} is set to whatever value is in the device code of array \Code{C}: the number \Code{3.0}.
+The other two arrays will also be copied back to the host.
+
+Once this data transfer has finished, the host continues execution on line 20, which simply ends the program.
+
+
+\begin{CodeExample}%
+{\textbf{Vector Add program} --\small This program will add two vectors of length $N$
+to produce a third vector, running on the target device.
+}%
+{code:vaddTargetWalkthrough}
+\begin{lstlisting}
+// Array length, defined at compile time
+#define N 4000;
+
+int main()
+{
+
+   // Allocate arrays on the stack
+   float A[N], B[N], C[N];
+
+   for (int i = 0; i < N; i++) {
+     A[i] = 1.0; B[i] = 2.0; C[i] = 0.0;
+   }
+
+   // Transfer execution to the device
+   // Also map arrays to and from the device
+   #pragma omp target
+   for (int i = 0; i < N; i++) {
+      C[i] = A[i] + B[i];
+   }
+}	  
+\end{lstlisting}
+\end{CodeExample}
 
 \section{Advanced: Corresponding Variables}
 Into specification details, explain how the term corresponding variable.
