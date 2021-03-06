@@ -33,7 +33,7 @@ complex programs correct and full-featured.
 In the early '90s with the introduction of out-of-order execution for a microprocessor's instructions, the 
 pendulum had reached an extremity where the need to write assembly code fell to the side.  Object-oriented
 programming and other high level concepts were the talk of the town for software engineers.  Performance was
-truly the job of the hardware and we all clung to the coattails of Moore's Law into a bright future of
+truly the job of the hardware and we all rode the coattails of Moore's Law into a bright future of
 ubiquitous computers filling every facet of our lives.
 
 Pendulums, however, keep moving.  In the early 2000s the ability to manage static effects such as electrical
@@ -43,8 +43,8 @@ As Herb Sutter famously observed, ``the free lunch'' for software engineers was 
 
 This is all ancient history at this point.  Multicore chips emerged.  Core counts were small, cache hierarchies were 
 simple, and DRAM cost models were relatively flat.   People had to write multithreaded programs.   While OpenMP
-was born in the years before multicore chips to program supercomputers,
-the transition to ubiquitous multicore chips pulled it into the mainstream.  This was great for 
+was born to program supercomputers in the years before multicore chips,
+the transition to ubiquitous multicore chips pulled OpenMP into the mainstream.  This was great for 
 old-timers who still remembered the old-days of hardware-centered programming (that is, the sort of people 
 who created OpenMP in the first place). For the masses of programmers, however, these were dark days.
 Understanding hardware and utilizing that deep understanding became a requirement once again to write performant code.
@@ -52,8 +52,8 @@ Understanding hardware and utilizing that deep understanding became a requiremen
 We hoped the pendulum would swung through the low point in its journey and that language/compiler technology
 would take us back to a time when programmers didn't have to spend their days coding to low level features of the
 hardware.  We were wrong.  The pendulum swing into hardware-aware programming was just getting started.
-First there were the many-core chips with non-uniform cost models that required programmers to understand
-where their threads executed and how they lined up with memory.  Chaos strikes the life of programmers again with
+First there were the many-core chips with non-uniform memory cost models that required programmers to understand
+where their threads executed and how they lined up with memory.  Then Chaos struck the life of programmers again with
 the advent of heterogeneous computing.
 
 The idea is simple, though the software response is anything but simple.  Hardware specialized to a specific task is
@@ -78,7 +78,7 @@ In this book, we will explore heterogeneous computing and how your can write pro
 using OpenMP.  We are in a world where you have to understand hardware and how software maps onto it.   You can 
 complain about that state of affairs or accept it and figure out how to move forward.  OpenMP is an explicit API.  You 
 tell the compiler what to do through directives and a supporting API, and it does what you say.    In this book we will
-explain how all of that works and in the process tell you about the key design patterns used in heterogeneous computing.
+explain how all of that works and, in the process, tell you about the key design patterns used in heterogeneous computing.
 
 Our journey begins with this chapter.  We set the stage with a brief description of the hardware we use when
 running programs written with OpenMP.   Even experienced parallel programmers with detailed knowledge of
@@ -123,14 +123,15 @@ support a number of hardware threads (in the figure there are two: $HT_0$ and $H
 while the core executes, the various arithmetic logic units ($ALU$) are more likely to be fully consumed.
 On each core is a pair of L1 caches, one for instructions and one for
 data.  They share a unified L2 cache.   Those caches keep data close to the CPU cores to hide the latency
-of access to the main capacity memory (through the pair of DDR memory controllers on each CPU).  The speed differences
+of access to main-memory (through the pair of DDR memory controllers on each CPU).  The speed differences
 between memory and the cores is so great, however, that we often find another level of cache.  This is the L3 
-cache broken down into blocks and spread out around the chip.   And that's not all.  There are cache coherent 
-protocols that run between the pair of CPUs (through the QPI ports, a bus which connects the two sockets) so our windows into DRAM are
+cache broken down into blocks and spread out around the chip.   And that's not all.  There are cache coherency
+protocols that run between the pair of CPUs (through the QPI ports, a bus which connects the two sockets) 
+so our windows into memory (dynamic Random Access memory or \emph{DRAM}) are
 consistent between the two CPUs.  These two CPUs and all of their cores share a common view of memory. 
-Ideally this view is the same from any one core to any location in memory. This is often 
+Ideally this view is the same from any one core to any location in memory. This arrangement is often 
 called a Symmetric Multiprocessor (SMP).   Note, however, that SMP is an idealization and the fact of the matter
-is that due to multiple memory controllers (DDR) and the cache hierarchy, the cost function for a memory access is
+is that due to multiple memory controllers (DDR) and the cache hierarchy, the cost function for a memory-access is
 anything but uniform and therefore the system in figure~\ref{figure:CPU} is a Non-Uniform Memory Architecture (NUMA).
 We won't explore NUMA issues in this book\footnote{The concept of SMP as an idealization. The implications
 for NUMA in the context of OpenMP is discussed at length in the book \emph{Using OpenMP: the Next Step}, published by MIT Press.}.
@@ -145,15 +146,18 @@ CPU has 16 CPUs the details of which are shown for one core.}
 The CPU memory hierarchy is complicated and consumes a great deal of design-effort and chip area.  
 When data access patterns are regular and the data needed by a core is likely to be in cache, all is well and 
 the latencies observed by the human using the chip are low.  However, if the data needed by a program is
-not in the cache, latencies still fall off and the chip can't keep up with the demands for interactive computing.
+not in the cache, latencies fall off and the chip can't keep up with the demands of interactive computing.
 
 One solution to this problem is for the CPU to exploit the concurrency in the workflows we run.
-The term \emph{concurrency} is seriously abused in computer science literature so we will
+The term \emph{concurrency}\index{Concurrency} is seriously abused in computer science literature so we will
 take the time to define it here.   Consider the work carried out in a program.   We can break this work into 
 distinct units of work.  When multiple units of work (usually called a ``thread'' on a CPU) are 
 available to be scheduled for execution and they are unordered with respect to each other, we say those threads are concurrent.  
-There are many ways an Operating System can schedule the concurrent threads, such as time-slicing  If each thread is given an equal chance
-to become active and make forward progress through its work, we say the scheduling is \emph{fair}.  With fair scheduling
+There are many ways an Operating System can schedule concurrent threads.  
+The most common approach is called \emph{time-slicing}\index{time-slicing} where the OS gives
+each thread a small block of time to execute moving quickly from one thread to the next.  
+If each thread is given an equal chance
+to become active and make forward progress through its work, we say the scheduling is \emph{fair}.  With fair scheduling\index{Fair scheduling}
 and concurrent threads, the system swaps from one thread to the next so it appears to the user that all the threads
 are making forward progress at the same time (assuming they are blocked on a resource).   This in essence makes the
 software expressed in terms of concurrent threads appear more responsive and therefore supports interactive use.
@@ -162,11 +166,11 @@ All modern operating systems and most commercial-grade applications running on C
 exploit concurrency and support low latency, interactive computing.  When there are large numbers
 of threads to schedule across a CPU, we can increase the speed at which the threads complete their work by adding multiple 
 cores, supplying the threads with more physical hardware resources.  When a workflow has concurrency (to support multiple threads) and we exploit that concurrency by running on 
-multiple cores, we say that that workflow is running ``in parallel''.
+multiple cores, we say that that workflow is running ``in parallel''.  
 
-Concurrency and Parallelism are closely related but 
-different.  Concurrency deals with unordered units-of-work available to be run by a system.  Parallelism takes those 
-concurrent units-of-work and runs them at the same time.  Concurrency is used even on one core to support 
+Concurrency and Parallelism\index{Parallelism} are closely related but 
+different.  Concurrency\index{Concurrency} deals with unordered units-of-work available for execution on a system.  Parallelism takes those  
+units-of-work and runs them at the same time.  Concurrency is used even on one core to support 
 responsive computing, so work can proceed from one unit-of-work while another is blocked waiting on some resource (such as 
 memory).  Parallelism is only at play when multiple units-of-work are \emph{actually} making progress at the same time.  We will have 
 much more to say about concurrency later when we talk about synchronization between units-of-work on a GPU.
@@ -177,10 +181,10 @@ We don't often think about it, but it takes considerable time for a computer to 
 and decode them for execution.  Wouldn't it be nice if that effort could be amortized over multiple data 
 elements?   In general this is not always possible, but there are situation and workloads where the parallelism is ``in the data''
 and this mode of execution is possible and straightforward to implement.  We call this 
-SIMD or ``Single Instruction Multiple Data'' parallelism.
+SIMD\index{SIMD} or ``Single Instruction Multiple Data''\index{Single Instruction Multiple Data} parallelism.
 
-Problems that can exploit SIMD parallelism occur when a problem can be composed into a sequence of
-operations that operate on dense arrays of data.   They are common enough that SIMD units optimized
+Problems that can exploit SIMD parallelism occur when they can be expressed as a sequence of
+operations that operate on dense arrays of data.   These problems are common enough that SIMD units optimized
 for vectors have become one of the standard parallel building blocks of parallel architectures.  To see
 how they are used, it helps to consider an example.  Consider the loop in figure~\ref{code:vaddLoop}.  
 We add vector $A$ to vector $B$ to produce the result $C$.   
@@ -263,6 +267,34 @@ for the matrix-multiply operations common inside Deep Learning pipelines.
 %
 %  TGM:  This section needs to be edited to fit with the others.   
 %
+
+I will write this section in the style of the other two.
+
+I will show a schematic of a GPU.  The one Tom wrote is OK, but it doesn't bring out the large number of PEs 
+in a modern GPU.   So I will be creating a different diagram.
+
+I will talk about the history of the GPU.  How they started as an accelerator for graphics applications but over time
+more and more programmable features were added to the GPU.  In 2006 with the introduction of CUDA and 
+OpenCL just a couple years later, the GPU became a fully programmable device.   This is often called GPGU or
+general purpose GPU programming.
+
+The date 2006 is important.  While CPUs as microprocessors date back to1971 with the Intel 4004, fully
+programmable GPUs are a much younger technology.  Hence, they are evolving rapidly.  Hence, we will describe them
+at a high level sufficient to understand what you need to program them wtih OpenMP, we will not spend time with the low
+level details of any particular GPU.   
+
+I will then talk about the general organization of a GPU using my new figure.  I might add a table showing the NVIDIA/CUDA 
+and OpenCL/Generic names.  In particular work-item vs. CUDA-thread, Compute-unit vs. Streamming multiprocessor, 
+and PE vs CUDA-core.  I also need to talk about the host/device split and global vs. shared vs. private memory.
+
+I want to talk about the core programming  model behind GPUs.  I'll show the standard loop vs. SIMIT for vector add.  I might
+show the code for OpenCL and CUDA kernels in this case.  I'll talk about the index map, kernels, and kernel instances at each point
+in the index map.
+
+The following text comes from Tom's first stab at this content.  I will end up rewriting much of this, but I will use some of it and therefore am 
+keeping it around for now.
+
+
 When discussing parallel programming models in general, is it sometimes important to distinguish between concurrent concepts in the programming model and parts of the hardware.
 On CPUs for instance, parallel items called perhaps ``threads'' are assigned to run on physical parts of the CPU called perhaps ``cores''.
 This correspondence is not necessarily unique, and parallelism expressed in the programming model may be assigned physical components of the processor in a number of ways.
@@ -462,37 +494,37 @@ cover in the book and the chapters where we will cover them}
 %-----------------------------------------------------------------------
 %------------------------- From Next Step ------------------------------
 %-----------------------------------------------------------------------
-\section{From The Next Step Chapter 6}
+%\section{From The Next Step Chapter 6}
+%
+%Specialized accelerator processors, which dramatically improve the performance
+%of some computations, are proliferating, and general-purpose processors are
+%now very often connected to some type of accelerator.  
+%The popularity of these heterogeneous architectures across all types of
+%computing has had a noticeable impact on the development of software.  
+%
+%To exploit these systems, developers must write software that executes various
+%regions of code on different types of devices.  There are many reasons for
+%wanting to do this but very often the motivation is to accelerate
+%computationally intensive loop nests.  
+%
+%However, the programming models for these systems are difficult to use.
+%Often code modules are written twice, once for the general-purpose
+%processor and then again for the accelerator.  The accelerator version is often
+%written in a lower-level, accelerator-specific language.  The result is the
+%undesirable software maintenance problem of keeping two versions of code, which
+i%mplement the same algorithm, synchronized.
 
-Specialized accelerator processors, which dramatically improve the performance
-of some computations, are proliferating, and general-purpose processors are
-now very often connected to some type of accelerator.  
-The popularity of these heterogeneous architectures across all types of
-computing has had a noticeable impact on the development of software.  
-
-To exploit these systems, developers must write software that executes various
-regions of code on different types of devices.  There are many reasons for
-wanting to do this but very often the motivation is to accelerate
-computationally intensive loop nests.  
-
-However, the programming models for these systems are difficult to use.
-Often code modules are written twice, once for the general-purpose
-processor and then again for the accelerator.  The accelerator version is often
-written in a lower-level, accelerator-specific language.  The result is the
-undesirable software maintenance problem of keeping two versions of code, which
-implement the same algorithm, synchronized.
-
-The \OMP\ Language Committee recognized the need to make it easier to program
-heterogeneous architectures and set about to extend \OMP\ to support these types
-of systems \cite{Beyer2011}.  The results of this work were initially released
-in \OMPfourzero\ and updated in \OMPfourfive.
-
-Software developers can use \OMP\ to program accelerators in a higher-level
-language and maintain one version of their code, which can run on either an
-accelerator or a general-purpose processor.  In this chapter, we present the
-syntax for and describe how to use the \OMP\ \emph{device constructs} and
-related runtime functions that were added to support heterogeneous
-architectures. 
+%The \OMP\ Language Committee recognized the need to make it easier to program
+%heterogeneous architectures and set about to extend \OMP\ to support these types
+%of systems \cite{Beyer2011}.  The results of this work were initially released
+%in \OMPfourzero\ and updated in \OMPfourfive.
+%
+%Software developers can use \OMP\ to program accelerators in a higher-level
+l%anguage and maintain one version of their code, which can run on either an
+%accelerator or a general-purpose processor.  In this chapter, we present the
+%syntax for and describe how to use the \OMP\ \emph{device constructs} and
+%related runtime functions that were added to support heterogeneous
+%architectures. 
 
 %What was needed is a programming model that could...
 %Given the popularity of heterogeneous systems across all types of computing,
