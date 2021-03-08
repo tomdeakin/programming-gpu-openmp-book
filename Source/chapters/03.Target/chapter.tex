@@ -639,7 +639,7 @@ and \ref{ssec:06.composite-worksharing-loop-construct}.
 %-----------------------------------------------------------------------
 %------------------------- New subsection ------------------------------
 %-----------------------------------------------------------------------
-\subsection{A New Initial Thread}
+\subsubsection{A New Initial Thread}
 \label{ssec:06.initial-thread}
 \index{Accelerators!Initial thread}
 
@@ -704,7 +704,7 @@ parallel region.
 %-----------------------------------------------------------------------
 %------------------------- New subsection ------------------------------
 %-----------------------------------------------------------------------
-\subsection{Contention Groups}
+\subsubsection{Contention Groups}
 \label{ssec:06.contention-groups}
 \index{Accelerators!Contention group}
 \index{Accelerators!Initial thread}
@@ -733,7 +733,7 @@ if both contention groups are executing on the same device.
 %-----------------------------------------------------------------------
 %------------------------- New subsection ------------------------------
 %-----------------------------------------------------------------------
-\subsection{A League of Teams}
+\subsubsection{A League of Teams}
 \label{ssec:06.league-of-teams}
 \index{Accelerators!League}
 \index{Accelerators!Contention group}
@@ -762,7 +762,7 @@ when we discuss how leagues are used in accelerated worksharing.
 %-----------------------------------------------------------------------
 %------------------------- New subsection ------------------------------
 %-----------------------------------------------------------------------
-\subsection{The Target Task}
+\subsubsection{The Target Task}
 \label{ssec:06.target-task}
 \index{Tasking!Creation}
 \index{Creation of tasks}
@@ -899,3 +899,781 @@ task has completed.
 %construct and \code{depend} clause to demonstrate how to coordinate the
 %asynchronous execution of target regions by leveraging the power of \OMP\
 %tasks.
+
+%-----------------------------------------------------------------------
+%------------------------- New subsection ------------------------------
+%-----------------------------------------------------------------------
+\subsection{Heterogeneous Memory Model}
+\label{ssec:06.heterogeneous-memory-model}
+
+\index{Accelerators!Device constructs}
+%Code executing on a device is typically not very useful without some data to
+%compute on.  
+This section provides an overview of the \OMP\ heterogeneous memory model.
+The device constructs, clauses, and runtime functions that control how data is shared
+between threads executing on the host and an accelerator device are listed below:
+
+\begin{itemize}
+  \item Map and Defaultmap Clauses
+  \item Target Data Construct
+  \item Target Enter and Exit Data Constructs
+  \item Target Update Construct
+  \item Declare Target Directive
+  \item Use\_device\_ptr and Is\_device\_ptr Clauses
+  \item Device Memory Functions
+%  \item Runtime Functions
+%  \begin{itemize}
+%    \item \code{omp_target_alloc}
+%    \item \code{omp_target_free}
+%    \item \code{omp_target_is_present}
+%    \item \code{omp_target_memcpy}
+%    \item \code{omp_target_memcpy_rect}
+%    \item \code{omp_target_associate_ptr}
+%    \item \code{omp_target_disassociate_ptr} 
+%  \end{itemize}
+\end{itemize}
+
+\index{OpenMP clauses!map}
+\index{Accelerators!Map clause}
+Of these, by far the most important is the \code{map} clause.  Recall from
+Chapter~\ref{chap:recap} that variables are shared or private.  As of \OMPfourzero,
+variables can also be \emph{mapped}, which is the concept that \OMP\ uses to
+describe how data is shared across devices.  The \code{defaultmap} clause can
+change the default rules for determining if certain variables are either
+private or mapped.  The general concepts of mapped variables
+are discussed later in this section.  
+The syntax and mechanics of the \code{map} and \code{defaultmap} clauses
+are covered in Section~\ref{sec:06.data-mapping-clauses}.
+
+The host and accelerator may have different representations for the address of
+a variable.  The \code{use_device_ptr} and \code{is_device_ptr} clauses are
+provided for the instances in which this difference in address representation
+must be dealt with explicitly.  These device pointer clauses are covered in
+Section~\ref{sec:06.Device-pointer-clauses}.
+
+Variable's with static storage (for example, global variables) may be mapped
+for the entire program using the \code{declare target} directive, which is
+covered in Section~\ref{sec:06.declare-target-construct}.
+
+The \code{target}~\code{data}, \code{target}~\code{enter}~\code{data},
+\code{target}~\code{exit}~\code{data}, and \code{target}~\code{update}
+constructs are used to reduce the performance overhead of copying data between
+the host and an accelerator.  These data-mapping constructs are
+covered in Section~\ref{sec:06.data_mapping_constructs}.
+
+The device memory functions are described in detail in
+Section~\ref{ssec:02.new_runtime_functions_3} starting on
+page~\pageref{ssec:02.new_runtime_functions_3}.  
+The \code{omp_target_is_present} function determines if a variable
+is mapped.  Otherwise, the other device memory functions 
+manage dynamically allocated device memory.  
+Section~\ref{sec:06.device-memory-routines} has examples 
+that demonstrate how to use these functions.
+%These low-level functions are
+%essential for more advanced operations.
+
+%-----------------------------------------------------------------------
+%------------------------- New subsection ------------------------------
+%-----------------------------------------------------------------------
+\subsubsection{Mapped Variables}
+\label{ssec:06.mapped-variables}
+\index{Mapped variable}
+
+\index{Accelerators!Initial thread}
+Threads executing on an accelerator can have private variables.  The initial
+thread that begins the execution of a target region gets a private instance of
+a variable that appears in a \code{private} or \code{firstprivate} clause on the
+\code{target} construct.  For a \code{firstprivate} clause, the private variable
+is initialized with the value of the original variable from the host thread
+that encountered the construct.  Likewise, any automatic (stack)
+variables that are declared in a scope contained within the construct
+are private to the initial thread.
+
+%How do the host and accelerator threads share variables?  
+\OMP\ threads 
+share variables that are stored in a single shared memory.  However, 
+heterogeneous architectures do not always have memory that is symmetrically shared between
+host and accelerator devices.  A very common example of a 
+heterogeneous architecture like this is one where the accelerator is a card 
+and communication to the accelerator occurs over a PCIE bus. 
+
+As shown in figure~\ref{figure:chapter-6-device-memory-types}, \OMP\ supports
+heterogeneous architectures with both distributed and shared memory by \emph{mapping}
+variables from the host to an accelerator.
+When the host and accelerator device do not share memory, a mapped variable
+is copied from the host's memory into the accelerator's local memory.
+Mapping hides whether or not a variable is shared by or copied to a device.
+Based on a heterogeneous architecture's memory system, the \OMP\
+implementation does what is required, either sharing or copying a variable when it
+is mapped.
+
+\begin{figure*}[!tbhp]
+\centering
+\pdfimageresolution 400
+\fbox{\includegraphics[clip=true,scale=1.00]
+         {\ArtDir/device-memory-types.pdf}
+     }
+\caption{ \textbf{A mapped variable in shared or distributed memory} -- \small
+        A mapped variable may be in either shared or distributed memory.
+        The OpenMP implementation determines if copies are required.
+        }
+\label{figure:chapter-6-device-memory-types}
+\end{figure*}
+
+\index{Memory consistency!Model} 
+How does one ensure that threads on different devices see the same
+value of a mapped variable and when?  For the most part, the \OMP\ memory
+consistency model as outlined in Chapter~\ref{ssec:01.memory_model}, starting on
+page~\pageref{ssec:01.memory_model}, is extended to mapped variables.  
+
+A mapped variable is similar to a shared variable.  Without some 
+type of synchronization, two threads executing on
+different devices cannot simultaneously access the same mapped variable if
+either of the threads writes to the variable.  
+
+\index{OpenMP clauses!map}
+\index{Accelerators!Map clause}
+Threads executing on different devices may see a consistent value of a mapped
+variable at points that are determined by the effects of the \code{map} clause
+and the \code{target update} construct.
+
+If memory is distributed, then mapping a variable requires memory allocation,
+copy, and flush operations.  The allocation and copy operations are not
+required (or are trivial) when memory is shared, but the flush
+operation is still necessary.  Although the underlying machinations of variable mapping
+is handled by the \OMP\ implementation, it is important to be aware
+of the dual-nature of mapped variables to write programs that 
+achieve good performance across different architectures.  
+
+%Because the instances of a mapped variable may be in different address spaces,
+Because two devices may not share the same address space,
+the address of a mapped variable may not be the same on two devices
+When a pointer variable is mapped, only the pointer is synchronized, not the
+block of memory it points to.  However, array sections may be used to map the
+pointed-to memory.
+
+%\index{OpenMP clauses!map}
+%\index{Accelerators!Map clause}
+%Variables are explicitly mapped using the \code{map} clause (see
+%Section~\ref{sec:06.map-clause}).  For variables referenced in a \code{target}
+%construct that do not appear in a \code{map}, \code{private},
+%\code{firstprivate} or \code{is_device_ptr} clause, data-mapping rules
+%determine if they are mapped or private (see
+%Section~\ref{ssec:06.defaultmap-clause}).
+
+%Since there might be two copies of the variable, there is a policy for
+%maintaining the consistency of the different copies of the variable.
+%For example, if a thread on the accelerator writes to a mapped variable, when
+%can a thread on the host device see the updated value of the variable?  
+
+%-----------------------------------------------------------------------
+%------------------------- New subsection ------------------------------
+%-----------------------------------------------------------------------
+\subsubsection{Device Data Environments}
+\label{ssec:06.device-data-environments}
+
+\index{Accelerators!Device data environment}
+\index{Device data environment}
+An accelerator has a \emph{device data environment} that contains the set of
+all variables currently accessible by threads running on that device.  As we
+discussed in the previous section, host threads share variables with target
+device threads by mapping them.  Mapping a variable ensures that the variable
+is in the data environment of an accelerator.
+
+\index{Device data environment!Orginal variable}
+\index{Device data environment!Corresponding variable}
+An \emph{original} variable in a host thread's data environment is mapped to a
+\emph{corresponding} variable in the accelerator's data environment.
+Depending on the availability of shared memory between the host and target
+devices, the original and corresponding variables are either the same variable
+allocated in shared memory, or they are allocated in different memories and
+copy operations are required to keep the original and corresponding variables
+consistent. Whether a mapped variable uses shared or distributed memory is 
+taken care of by the \OMP\ implementation.
+
+\index{Device data environment!Present in}
+There only can be one instance of a variable in a device data environment.  The
+\OMP\ implementation keeps track of which variables are mapped.  If a variable
+is already \emph{present} in a device data environment, mapping it again will
+find the variable is already there and increment a reference count.  It
+will not allocate another instance of the variable.
+
+Minimizing the transfer of data between the host and an accelerator is often
+critical to getting good performance on heterogeneous architectures.
+Repetitively mapping a variable that is reused by multiple \code{target}
+constructs is potentially inefficient.  The \code{target}~\code{data},
+\code{target enter data} and \code{target}~\code{exit}~\code{data} constructs amortize data
+transfers by mapping variables across the execution of multiple \code{target}
+constructs.  Further, the \code{declare}~\code{target} construct can map static and
+global variables for the whole program.  Once a variable is mapped to an
+accelerator, situations can arise where the value of the variable must be
+updated from or to the device, and the \code{target}~\code{update}
+construct fulfills this need.  The \code{omp_target_is_present} runtime
+function is used to test if a variable is mapped.  
+\index{Accelerators!omp\_target\_is\_present} 
+\index{OpenMP runtime functions!omp\_target\_is\_present} 
+
+%-----------------------------------------------------------------------
+%------------------------- New subsection ------------------------------
+%-----------------------------------------------------------------------
+\subsubsection{Device Pointers}
+\label{ssec:06.device-pointers}
+
+\index{Accelerators!Device constructs}
+Because shared and distributed memory is supported, the \OMP\ memory model
+assumes that the host and accelerator data environments are in different
+address spaces.  However, this assumption creates some restrictions on
+accessing the address of the variable.
+% Ruud - I hope this change is OK
+% A programmer using the \OMP\ device constructs must be aware of the different
+With the \OMP\ device constructs, the user must be aware of the different
+address spaces and be careful when using pointers.  
+If the host and accelerator do not share memory, their local memories are in
+different address spaces.  When a variable is mapped to an accelerator's data
+environment, a copy occurs, and the address of the variable on the accelerator
+is not the same as the address of the variable on the host.
+
+Memory addresses are stored in pointer variables.  A host thread cannot access
+memory via a pointer variable that contains an accelerator address.  Likewise,
+an accelerator thread cannot access memory via a pointer variable that contains
+a host address.  
+Further, the host and accelerator may have different representations for the
+address of a variable.  For example, the value of a memory address might
+require 64 bits on a host and 32 bits on an accelerator.
+
+In Figure~\ref{figure:chapter6-devptr1}, the host pointer variable \code{hptr} is
+assigned the address of a memory location in the host's address space.  
+Mapping \code{hptr} copies the value of the pointer variable to the accelerator. The
+access to \code{hptr} at line $6$ in the target region by an accelerator thread is illegal.
+The accelerator thread is attempting to access a host address.
+
+Likewise in Figure~\ref{figure:chapter6-devptr2}, the accelerator pointer
+variable \code{dptr} is assigned the address of a memory location in the
+accelerator's address space.  The access to \code{dptr} at line $7$ by a host thread is illegal.
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+1   char *hptr = malloc(N);
+2
+3   // Error - Accessing a host address on accelerator
+4   #pragma omp target map(hptr)
+5   for (int i=0; i<N; i++)
+6     *hptr++ = 0;
+\end{verbatim}
+\caption{ \textbf {Illegal access of a host memory address } -- \small
+          A pointer variable containing a host memory address cannot be
+          de-referenced by an accelerator thread.
+         }
+\label{figure:chapter6-devptr1}
+\end{figure*}
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+1   char *dptr;
+2   #pragma omp target map(dptr)
+3   dptr = malloc(N);
+4
+5   // Error - Accessing a device address on host
+6   for (int i=0; i<N; i++)
+7     *dptr++ = 0;
+\end{verbatim}
+\caption{ \textbf {Illegal access of an accelerator memory address} -- \small
+          A pointer variable containing an accelerator memory address 
+          cannot be de-referenced by a host thread.
+         }
+\label{figure:chapter6-devptr2}
+\end{figure*}
+
+\index{Accelerators!Device data environment}
+\index{Device data environment}
+\index{Accelerators!Device pointer}
+\index{Device pointer}
+A \emph{device pointer} \index{Accelerators!Device pointer} is a pointer
+variable in the host data environment whose value is an object that contains
+the address of a storage location in an accelerator's device data environment.  
+
+Note that the value of a device pointer is an object.  How the
+value of a device address is represented on a host is not necessarily the same
+way that it is represented on an accelerator.  
+When a device pointer is referenced in a target construct, the compiler
+may need to transform the representation of the device address stored in
+the device pointer.
+
+%If a device pointer is stored in
+%a host pointer, then the compiler needs to transform the representation of that
+%pointer when it is used on the device.  
+
+%The \code{use_device_ptr} and \code{is_device_ptr} 
+%clauses are provided for the instances in which the difference in address
+%representation between the host and accelerator must be dealt with explicitly.
+%\index{Accelerators!Is\_device\_ptr clause}
+%\index{OpenMP clauses!is\_device\_ptr}
+%\index{Accelerators!Use\_device\_ptr clause}
+%\index{OpenMP clauses!use\_device\_ptr}
+%We need to indicate that a variable is a device pointer when it is referenced
+%in a \code{target} construct.  
+
+%The \code{omp_target_alloc} 
+%function, described in detail in Section~\ref{ssec:02.new_runtime_functions_3},
+%allocates storage in an accelerator's
+%device data environment and returns a device pointer.  The function cannot be
+%called inside a target region.  
+
+\index{OpenMP clauses!is\_device\_ptr}
+\index{Accelerators!Is\_device\_ptr clause}
+In Figure~\ref{figure:chapter6-devptr3}, the \code{omp_target_alloc} function
+returns a device address.  The device pointer \code{dptr} must appear in an
+\code{is_device_ptr} clause on the \code{target} construct to correctly refer
+to it in the target region.  The variable \code{dptr} is private in the target
+region.  On entry to the region, the private \code{dptr} variable is initialized
+with the accelerator's memory address that corresponds to the original value of
+\code{dptr} before the region (the host's representation of the device address).
+See Section~\ref{sec:06.Device-pointer-clauses} for more details on device
+pointers.
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+1   int dev = omp_get_default_device();
+2   char *dptr = omp_target_alloc(dev, n);
+3 
+4   #pragma omp target is_device_ptr(dptr)
+5   for (int i=0; i<n; i++)
+6     *dptr++ = 0;
+\end{verbatim}
+\caption{ \textbf {Legal access of an accelerator memory address using a device pointer} -- \small
+          A device pointer variable that appears in an \texttt{is\_device\_ptr} clause 
+          may be de-referenced in a target region.
+        }
+\label{figure:chapter6-devptr3}
+\end{figure*}
+
+
+%-----------------------------------------------------------------------
+%------------------------- New subsection ------------------------------
+%-----------------------------------------------------------------------
+\subsubsection{Array Sections}
+\label{ssec:06.array-sections}
+\index{Array section}
+\index{Mapped variable!Array section}
+
+Pointer variables are used extensively in C and C++.  The value stored in a
+pointer variable is the address of another variable.  As we saw in the last
+section, in order to support a variety of systems, the \OMP\ model assumes that
+the host and accelerator may not share the same address space. Thus, mapping a
+pointer variable by itself is not very useful.  We want to map the pointed-to
+variable (the memory that the pointer references). In order to map the
+pointed-to variable, we need to know its size.
+
+For C and C++, we need something in the \OMP\ syntax to express the concept of
+mapping the pointed-to variables.  This is one of the reasons that \OMPfourzero\
+added \emph{array}~\emph{section} syntax for array and pointer 
+variables.\footnote{Array sections may also appear in the \code{depend} clause.}
+
+An array section is a subset of the elements in an array.  In \OMP\, array
+sections are restricted to a contiguous set of elements.  The C and C++ array
+subscript syntax is extended to support an array section expression.  The
+array section syntax \code{base[\emph{offset}:\emph{length}]} is described below:
+
+\begin{itemize}
+
+  \item The $base$ is a C or C++ variable name with array, pointer type, or
+  in C++, reference to array or reference to pointer type.
+
+  \item The $offset$ is an non-negative integer expression that is an offset
+  from the start of the array.  The $offset$ is optional and, if not specified,
+  defaults to 0.
+
+  \item The $length$ is a non-negative integer expression that is the length
+  of the array section.   If the $base$ variable has a type of array or
+  reference to array, then the $length$ is optional and defaults to the
+  number of elements in the array.  If the $base$ variable has a type of
+  pointer or reference to pointer, then the $length$ must be specified.
+
+%  \item The $stride$ is a (non-negative) integer expression that, when it is
+%  greater than one, selects non-contiguous elements from the array.  The
+%  $stride$ is optional and defaults to one.  
+%  
+\end{itemize}
+
+\index{Array section!Pointer-based}
+The value of a pointer variable used in an array section is the address of a
+pointed-to array variable.  The pointed-to array variable may or may not have
+been dynamically allocated.  Even if the pointed-to variable is a single scalar
+variable, when it's used in an array section, it is an array of one element.
+
+An array section is \emph{pointer-based} when the $base$ is a pointer variable.
+A pointer-based array section is mapped using the following steps: \begin{enumerate}
+
+  \item Create a pointer variable in the accelerator's data environment.
+
+  \item Map the host's pointed-to variable to the accelerator's data
+  environment.
+
+  \item Initialize the accelerator's pointer variable with the address of the
+  pointed-to variable in the accelerator's address space.
+
+\end{enumerate}
+
+In Figure~\ref{figure:chapter6-array-sections1}, the host pointer variable
+\code{hptr} is assigned the address of a storage location in the host's data
+environment.  The array section \code{hptr[0:1024]} is then mapped to the
+accelerator's data environment.  The 1024 element array pointed to by \code{hptr} is
+mapped to the accelerator.  The \code{hptr} pointer variable is not mapped but is
+private in the target region and initialized with the address of the pointed-to
+array. Compare this to Figure~\ref{figure:chapter6-devptr1}.
+
+\begin{figure*}[!tbhp]
+\begin{verbatim}
+1   char *hptr;
+2
+3   hptr = malloc(1024);
+4
+5   // Map an array section.
+6   #pragma omp target map(hptr[0:1024])
+7   for (int i=0; i<N; i++)
+8     hptr[i] = 0;
+9   
+\end{verbatim}
+\caption{ \textbf {Map a pointer-based array section} -- \small
+          Use an array section to map pointed-to memory.
+         }
+\label{figure:chapter6-array-sections1}
+\end{figure*}
+
+\index{Array section!Examples}
+\index{OpenMP clauses!map}
+\index{Accelerators!Map clause}
+Array sections are available in the Fortran base language.  In C/C++, an
+array section may appear only as a list item in an \OMP\ \code{map} or
+\code{depend} clause.  The C/C++ base language was not extended to support
+array sections.  Some examples of array sections in C/C++ are shown
+in Figure~\ref{figure:chapter6-map-ptr1}
+
+\begin{figure*}[!tbhp]
+\begin{verbatim}
+ 1 float *p = malloc(N);
+ 2 float a[N];
+ 3
+ 4 // Map pointer based array section
+ 5 map(p[0:N:1]) 
+ 6 map(p[0:N])
+ 7 map(p[:N])
+ 8
+ 9 // Map array based array section
+10 map(A[0:N:1])
+11 map(A[0:N])
+12 map(A[:N])
+13 map(A[:]) // Size is N
+14 
+15 // Map array section with offset
+16 map(p[32:N-32]
+17 map(A[N/2:N/4]
+18
+\end{verbatim}
+\caption{ \textbf {Array section syntax examples} -- \small
+          Various usage of array section syntax in C and C++.
+         }
+\label{figure:chapter6-map-ptr1}
+\end{figure*}
+
+\index{Array section!Array slice}
+Array sections are also useful for mapping a slice of an array.  It might be
+that mapping a very large array exceeds the storage capacity of the
+accelerator's local memory.  In this case, we would like to map slices of the
+array and then compute on each slice.  Figure~\ref{figure:chapter6-mapslice}
+shows how this can be done.
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 #define BIG 256
+ 2 #define N (1024*1024)
+ 3 int a[N*BIG];
+ 4 
+ 5 void F(const int c, const int d)
+ 6 {
+ 7   for (int k=0; k<N*BIG; k+=N) {
+ 8     #pragma omp target map(from:a[k:N]) firstprivate(c,d) 
+ 9     for (int i=0; i<N; i++) {
+10       a[k+i] =  k+i * (c + d);
+11     } // End of target
+12   }
+13 }
+\end{verbatim}
+\caption{ \textbf {Use array section to map a subset of an array} -- \small
+          Map a slice of the array \texttt{a} each time through the loop.
+         }
+\label{figure:chapter6-mapslice}
+\end{figure*}
+
+%-----------------------------------------------------------------------
+%------------------------- New subsection ------------------------------
+%-----------------------------------------------------------------------
+\subsection{The Target Construct}
+\label{sec:06.target-construct}
+\index{OpenMP constructs!Target}
+\index{Accelerators!Target}
+
+\index{Accelerators!Initial thread}
+The purpose of the \code{target} construct is to offload the execution of code
+to an accelerator.  The code in a target region is executed by a new
+initial thread.  
+The code in Figure~\ref{figure:chapter6-hello} is a simple 
+hello world example that uses the \code{target} construct.  
+
+\begin{figure*}[!tbhp]
+\begin{verbatim}
+ 1 #include <stdio.h>
+ 2 #include <omp.h>
+ 3 void hello(void)
+ 4 {
+ 5   #pragma omp target 
+ 6   {
+ 7     if (!omp_is_initial_device())
+ 8       printf("Hello World from accelerator\n");
+ 9     else
+10       printf("Hello World from host\n");
+11   }
+12 }
+\end{verbatim}
+\caption{ \textbf {Example of a target construct } -- \small
+          If the initial thread is running on an accelerator, it executes the
+          first \texttt{printf()}.
+          Otherwise, it is running on the host device and
+          executes the second \texttt{printf()}.
+          Note that some implementations may not support calling \texttt{printf()} on an accelerator. 
+         }
+\label{figure:chapter6-hello}
+\end{figure*}
+
+\index{Accelerators!omp\_is\_initial\_device}
+\index{OpenMP runtime functions!omp\_is\_initial\_device}
+The \OMP\ runtime function
+\code{omp_is_initial_device} returns true if the code is executing on the
+host device.  If there are no accelerators on the system where the code is
+running, then the initial thread that executes the target region runs on the host
+device.  
+
+\index{Accelerators!Device constructs}
+\index{Accelerators!Host fall back} 
+Since the initial thread that executes the target region can always 
+\emph{fall back} to the host, programs that use device constructs are
+portable to systems that do not have accelerators. However, in the following
+description of the \code{target} construct it is assumed that the code is
+running on a system with at least one accelerator.  
+
+The \code{target} construct syntax in C/C++ and Fortran is given in
+Figure~\ref{figure:syntax-target-construct}.  The clauses that are available on
+the \code{target} construct are listed in
+Figure~\ref{figure:syntax-target-clauses}.
+
+\begin{figure}[!htbp]
+\centering
+\begin{tabular}{|l|}
+\hline
+\ompbctarget \ompclauses  \\
+\hspace{2em}\emph{structured block} \\
+\hline
+
+\ompbftarget \ompclauses \\
+\hspace{2em}\emph{structured block} \\
+\ompbftargetend \\
+\hline
+
+\end{tabular}
+\caption{ \textbf{Syntax of the target construct in C/C++ and Fortran} -- \small
+          A target region is executed by an
+          initial thread running on an accelerator.
+          }
+\label{figure:syntax-target-construct}
+\end{figure}
+
+\index{OpenMP clauses!if}
+\index{OpenMP clauses!map}
+\index{OpenMP clauses!device}
+\index{OpenMP clauses!private}
+\index{OpenMP clauses!firstprivate}
+\index{OpenMP clauses!is\_device\_ptr}
+\index{OpenMP clauses!defaultmap}
+\index{OpenMP clauses!nowait}
+\index{OpenMP clauses!depend}
+\index{Accelerators!If clause}
+\index{Accelerators!Map clause}
+\index{Accelerators!Device clause}
+\index{Accelerators!Private clause}
+\index{Accelerators!Firstprivate clause}
+\index{Accelerators!Is\_device\_ptr clause}
+\index{Accelerators!Defaultmap clause}
+\index{Accelerators!Nowait clause}
+\index{Accelerators!Depend clause}
+\begin{figure}[!htbp]
+\centering
+\begin{tabular}{|l l|}
+\hline
+\bciftarget & (C/C++)\\
+\bfiftarget & (Fortran)\\
+\bmap & \\
+\bcdevice & (C/C++)\\
+\bfdevice & (Fortran)\\
+\bprivate & \\
+\bfirstprivate & \\
+\bisdeviceptr & \\
+\bdefaultmap & \\
+\bnowait & \\
+\bdepend & \\
+\hline
+
+\end{tabular}
+\caption{ \textbf{Clauses supported by the target construct} -- \small
+          The \texttt{if} and \texttt{device} clauses are discussed in
+          Section~\ref{sec:06.which-device}. The \texttt{map} clause is discussed in
+          Section~\ref{sec:06.map-clause}.  The \texttt{nowait} and \texttt{depend} clauses are
+          discussed in Section~\ref{sec:06.async-exec}.  The \texttt{is\_device\_ptr}
+          clause is discussed in Section~\ref{ssec:06.device-pointers} The
+          \texttt{defaultmap} clause is discussed in 
+          Section~\ref{ssec:06.defaultmap-clause}.
+          }
+\label{figure:syntax-target-clauses}
+\end{figure}
+
+\index{Accelerators!Target task}
+The \code{target} construct is a task generating construct.  When a thread
+encounters a \code{target} construct a target task is generated on the host
+device.  You can think of the target task as a task bound to the host
+device that wraps the exection of the target region.  The target task is
+complete (on the host) when the target region is complete (on the accelerator).
+The \code{nowait} and \code{depend} clauses affect the type and asynchronous
+behavior of the target task. 
+
+By default, the execution of the target task is synchronous.  The encountering
+thread cannot continue past the target construct until the target task is
+complete.  The \code{nowait} clause makes the execution of the target region
+asynchronous.  After generating the target task, the encountering thread does
+not wait for the target task to complete, but instead it can continue and
+execute the code after the \code{target} construct.  Task scheduling via
+the \code{taskwait} cosntruct or the \code{depend} clause may be used to
+synchronize with the completion of the target task.  The execution model of the
+\code{target} construct is covered in detail in
+Section~\ref{sec:06.execution-model}.
+
+% Ruud - Changed to a "D" for consistency.
+\index{Accelerators!Default-device-var ICV}
+\index{ICV!default-device-var}
+\index{Accelerators!Host fall back} 
+The target region is executed by an initial thread.  Where the initial thread
+runs (the host or an accelerator) is determined by the \emph{default-device-var}
+ICV. The \code{device} clause can be used to specify a device other than the
+default.  The \code{if} clause is available to conditionally fall back to
+running the initial thread on the host.
+
+The initial thread gets a private instance of a variable that appears in a
+\code{private} or \code{firstprivate} clause on a \code{target} construct.  For
+a \code{firstprivate} clause, the private variable is initialized with the value
+of the original variable from the host thread that encountered the target
+construct.  Likewise, any automatic (stack) variables that are declared in a
+scope contained within the target construct are private to the initial thread.
+
+Variables that appear in \code{map} clauses are mapped.  Any assignments 
+specified by a \code{map} clause occur when the target task executes. 
+If a variable referenced in the \code{target} construct does not appear in a
+\code{map}, \code{private}, \code{firstprivate} or \code{is_device_ptr} clause,
+then default data-mapping rules determine if and how the variable is mapped
+(see Section~\ref{sec:06.data-mapping-clauses}).
+
+\index{Array section!Pointer-based}
+C/C++ pointer variables that appear in \code{map} clauses as the base of an
+array section are private in the target region. The private variables are 
+initialized with the value
+of the address of the array section's pointed-to memory in the accelerator's
+address space.
+
+The code in Figure~\ref{figure:chapter6-target-mxv} illustrates how to
+use the \code{target} construct to offload to an accelerator the matrix times
+vector product example taken from \cite{ChapmanEtAl:2007}.  By adding
+the \code{target} construct at line $6$, the loop body is offloaded to an
+accelerator.
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 void mxv(int m, int n, double * restrict a,
+ 2          double * restrict b, double * restrict c)
+ 3 {
+ 4 
+ 5   #pragma omp target map(a[:n],b[:n],c[:n]) firstprivate(m,n)
+ 6   {
+ 7     int i, j;
+ 8     #pragma omp parallel for default(none) \
+ 9             shared(m,n,a,b,c) private(i,j)
+10     for (i=0; i<m; i++)
+11     {
+12       a[i] = b[i*n]*c[0];
+13       for (j=1; j<n; j++)
+14         a[i] += b[i*n+j]*c[j];
+15     } // End of parallel for
+16   } // End of target
+17 }
+\end{verbatim}
+\caption{ \textbf {Example using the target construct to execute the matrix 
+                   times vector on an accelerator} -- \small
+          The host thread waits for the execution of the target region to
+          finish before it continues after the construct.
+         }
+\label{figure:chapter6-target-mxv}
+\end{figure*}
+
+When a host thread encounters the \code{target} construct at line $5$, it generates an
+included target task, suspends the current task, and starts executing the
+target task.  Because the target task is included, the host thread must
+wait for the target region, and thus the target task to complete, before
+continuing to execute the statement after the target construct.
+Scalar variables that do not appear in a \code{map} clause default to
+firstprivate, but for clarity the variables \code{m} and \code{n} are listed 
+explicitly in a clause.
+Because the variables \code{a}, \code{b}, and \code{c} are pointers, array sections are
+required in the \code{map} clause to describe the size of the pointed-to
+memory.  The pointer variables themselves are private in the target region.  
+
+The array sections' pointed-to memory is mapped to the accelerator's address
+space.
+If the host and accelerator do not share memory, storage is allocated in the
+accelerator's local memory, and the array sections are copied from the host's
+memory to the accelerator's local memory.
+The private pointer variables are assigned the address of the array section's
+pointed-to memory in the accelerator's address space.
+Because the variables \code{i} and \code{j} are declared in a scope enclosed in the
+target construct at line $7$, they are private.
+
+The target region is executed by an initial thread running on the default
+accelerator.  The initial thread encounters the \code{parallel for}
+worksharing construct at lines $8-9$ and becomes the master of a new team of
+threads that work together to execute the for-loop at line $10$.  
+The variables \code{m}, \code{n}, \code{a}, \code{b}, and \code{c} which were private to the initial
+thread are now shared among the threads in the team.  The variables \code{i} and
+\code{j} are private to each thread in the team.
+
+If the host and accelerator do not share memory, then when the target region is
+complete, the array sections are copied back from the accelerator's local
+memory to the host's memory.  The storage allocated in the accelerator's local
+memory is then released.  After the target region is complete, the target task
+completes and the host thread starts executing again at line $17$ after the
+\code{target} construct.
+
+The restrictions on the usage of the \code{target} construct are as follows:
+
+\begin{itemize}
+
+\item A \code{target} construct cannot be nested inside a target region.
+
+\item A \code{target}~\code{data}, \code{target}~\code{update}, \code{target}~\code{enter}~\code{data}, or \code{target}~\code{exit}~\code{data} construct cannnot be nested in a target region.
+
+\item \code{threadprivate} variables cannot be accessed in a target region.
+
+\item In C++ a virtual member function cannot be invoked on an object that was
+not constructed on the accelerator.  The object cannot be a mapped variable.
+
+\item In Fortran, if an array section is derived from a variable that has a
+\code{POINTER} or \code{ALLOCATABLE} attribute, then the variable cannot be
+modified in the target region.
+
+\end{itemize}
+
+

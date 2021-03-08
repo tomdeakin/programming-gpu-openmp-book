@@ -177,505 +177,1611 @@
 %------------------------- From Next Step ------------------------------
 %-----------------------------------------------------------------------
 \section{From The Next Step Chapter 6}
-\subsection{Heterogeneous Memory Model}
-\label{ssec:06.heterogeneous-memory-model}
+\subsection{Data Mapping Clauses}
+\label{sec:06.data-mapping-clauses}
 
-\index{Accelerators!Device constructs}
-%Code executing on a device is typically not very useful without some data to
-%compute on.  
-This section provides an overview of the \OMP\ heterogeneous memory model.
-The device constructs, clauses, and runtime functions that control how data is shared
-between threads executing on the host and an accelerator device are listed below:
+\index{Accelerators!Device data environment}
+\index{Device data environment}
+Recall from Section~\ref{ssec:06.device-data-environments} that an accelerator has a
+\emph{device data environment}, which contains the set of all variables that are
+available to the threads executing on that accelerator.  When an 
+\emph{original}~\emph{variable} in the host's data environment is mapped to an accelerator, a
+\emph{corresponding}~\emph{variable} is allocated in the accelerator's device data
+environment.  During the execution of a program, the set of corresponding
+variables in an accelerator's device data environment will change as variables
+are mapped and unmapped from it.
 
-\begin{itemize}
-  \item Map and Defaultmap Clauses
-  \item Target Data Construct
-  \item Target Enter and Exit Data Constructs
-  \item Target Update Construct
-  \item Declare Target Directive
-  \item Use\_device\_ptr and Is\_device\_ptr Clauses
-  \item Device Memory Functions
-%  \item Runtime Functions
-%  \begin{itemize}
-%    \item \code{omp_target_alloc}
-%    \item \code{omp_target_free}
-%    \item \code{omp_target_is_present}
-%    \item \code{omp_target_memcpy}
-%    \item \code{omp_target_memcpy_rect}
-%    \item \code{omp_target_associate_ptr}
-%    \item \code{omp_target_disassociate_ptr} 
-%  \end{itemize}
+Depending on the memory architecture of the heterogeneous system, the original
+and corresponding variables may or may not share the same storage location.
+Because of this, a user must consider these two aspects of mapped
+variables: \begin{itemize}
+
+    \item Because the original and corresponding variables \emph{may} share the
+    same storage location, a mapped variable should be thought of like a shared
+    variable.  This means that if either the original or the corresponding
+    variable is written to by a thread, synchronization and memory consistency
+    operations are required to avoid data races.
+
+    \item Because the original and corresponding variables \emph{may not} share
+    the same storage location, copy operations might be required to make the
+    original and corresponding variables consistent.  These copy operations can
+    be costly in regards to performance and should be
+    avoided if possible.
+
 \end{itemize}
 
+If a variable is accessed in a target
+region, but the variable does not appear as a list item in a \code{map} clause
+on the construct then there are default rules to determine if the variable is
+mapped or private.  These rules and the \code{defaultmap} clause are covered in
+Section~\ref{ssec:06.defaultmap-clause}.  Structure members may appear as list
+items in a \code{map} clause but with some limitations that are described in
+Section~\ref{ssec:06.map-structs}.
+Section~\ref{ssec:06.zero-array-sections} shows how to access
+previously mapped memory using pointer-based array sections with a length of
+zero.
+
+%Section~\ref{ssec:06.zero-array-sections} covers what happens when an
+%array section with a length of zero appears in a \code{map} clause.
+
+
+%-----------------------------------------------------------------------
+%------------------------- New subsection ------------------------------
+%-----------------------------------------------------------------------
+\subsubsection{The Map Clause}
+\label{sec:06.map-clause}
 \index{OpenMP clauses!map}
 \index{Accelerators!Map clause}
-Of these, by far the most important is the \code{map} clause.  Recall from
-Chapter~\ref{chap:recap} that variables are shared or private.  As of \OMPfourzero,
-variables can also be \emph{mapped}, which is the concept that \OMP\ uses to
-describe how data is shared across devices.  The \code{defaultmap} clause can
-change the default rules for determining if certain variables are either
-private or mapped.  The general concepts of mapped variables
-are discussed later in this section.  
-The syntax and mechanics of the \code{map} and \code{defaultmap} clauses
-are covered in Section~\ref{sec:06.data-mapping-clauses}.
 
-The host and accelerator may have different representations for the address of
-a variable.  The \code{use_device_ptr} and \code{is_device_ptr} clauses are
-provided for the instances in which this difference in address representation
-must be dealt with explicitly.  These device pointer clauses are covered in
-Section~\ref{sec:06.Device-pointer-clauses}.
-
-Variable's with static storage (for example, global variables) may be mapped
-for the entire program using the \code{declare target} directive, which is
-covered in Section~\ref{sec:06.declare-target-construct}.
-
-The \code{target}~\code{data}, \code{target}~\code{enter}~\code{data},
-\code{target}~\code{exit}~\code{data}, and \code{target}~\code{update}
-constructs are used to reduce the performance overhead of copying data between
-the host and an accelerator.  These data-mapping constructs are
-covered in Section~\ref{sec:06.data_mapping_constructs}.
-
-The device memory functions are described in detail in
-Section~\ref{ssec:02.new_runtime_functions_3} starting on
-page~\pageref{ssec:02.new_runtime_functions_3}.  
-The \code{omp_target_is_present} function determines if a variable
-is mapped.  Otherwise, the other device memory functions 
-manage dynamically allocated device memory.  
-Section~\ref{sec:06.device-memory-routines} has examples 
-that demonstrate how to use these functions.
-%These low-level functions are
-%essential for more advanced operations.
-
-%-----------------------------------------------------------------------
-%------------------------- New subsection ------------------------------
-%-----------------------------------------------------------------------
-\subsection{Mapped Variables}
-\label{ssec:06.mapped-variables}
-\index{Mapped variable}
-
-\index{Accelerators!Initial thread}
-Threads executing on an accelerator can have private variables.  The initial
-thread that begins the execution of a target region gets a private instance of
-a variable that appears in a \code{private} or \code{firstprivate} clause on the
-\code{target} construct.  For a \code{firstprivate} clause, the private variable
-is initialized with the value of the original variable from the host thread
-that encountered the construct.  Likewise, any automatic (stack)
-variables that are declared in a scope contained within the construct
-are private to the initial thread.
-
-%How do the host and accelerator threads share variables?  
-\OMP\ threads 
-share variables that are stored in a single shared memory.  However, 
-heterogeneous architectures do not always have memory that is symmetrically shared between
-host and accelerator devices.  A very common example of a 
-heterogeneous architecture like this is one where the accelerator is a card 
-and communication to the accelerator occurs over a PCIE bus. 
-
-As shown in figure~\ref{figure:chapter-6-device-memory-types}, \OMP\ supports
-heterogeneous architectures with both distributed and shared memory by \emph{mapping}
-variables from the host to an accelerator.
-When the host and accelerator device do not share memory, a mapped variable
-is copied from the host's memory into the accelerator's local memory.
-Mapping hides whether or not a variable is shared by or copied to a device.
-Based on a heterogeneous architecture's memory system, the \OMP\
-implementation does what is required, either sharing or copying a variable when it
-is mapped.
-
-\begin{figure*}[!tbhp]
-\centering
-\pdfimageresolution 400
-\fbox{\includegraphics[clip=true,scale=1.00]
-         {\ArtDir/device-memory-types.pdf}
-     }
-\caption{ \textbf{A mapped variable in shared or distributed memory} -- \small
-        A mapped variable may be in either shared or distributed memory.
-        The OpenMP implementation determines if copies are required.
-        }
-\label{figure:chapter-6-device-memory-types}
-\end{figure*}
-
-\index{Memory consistency!Model} 
-How does one ensure that threads on different devices see the same
-value of a mapped variable and when?  For the most part, the \OMP\ memory
-consistency model as outlined in Chapter~\ref{ssec:01.memory_model}, starting on
-page~\pageref{ssec:01.memory_model}, is extended to mapped variables.  
-
-A mapped variable is similar to a shared variable.  Without some 
-type of synchronization, two threads executing on
-different devices cannot simultaneously access the same mapped variable if
-either of the threads writes to the variable.  
-
-\index{OpenMP clauses!map}
-\index{Accelerators!Map clause}
-Threads executing on different devices may see a consistent value of a mapped
-variable at points that are determined by the effects of the \code{map} clause
-and the \code{target update} construct.
-
-If memory is distributed, then mapping a variable requires memory allocation,
-copy, and flush operations.  The allocation and copy operations are not
-required (or are trivial) when memory is shared, but the flush
-operation is still necessary.  Although the underlying machinations of variable mapping
-is handled by the \OMP\ implementation, it is important to be aware
-of the dual-nature of mapped variables to write programs that 
-achieve good performance across different architectures.  
-
-%Because the instances of a mapped variable may be in different address spaces,
-Because two devices may not share the same address space,
-the address of a mapped variable may not be the same on two devices
-When a pointer variable is mapped, only the pointer is synchronized, not the
-block of memory it points to.  However, array sections may be used to map the
-pointed-to memory.
-
-%\index{OpenMP clauses!map}
-%\index{Accelerators!Map clause}
-%Variables are explicitly mapped using the \code{map} clause (see
-%Section~\ref{sec:06.map-clause}).  For variables referenced in a \code{target}
-%construct that do not appear in a \code{map}, \code{private},
-%\code{firstprivate} or \code{is_device_ptr} clause, data-mapping rules
-%determine if they are mapped or private (see
-%Section~\ref{ssec:06.defaultmap-clause}).
-
-%Since there might be two copies of the variable, there is a policy for
-%maintaining the consistency of the different copies of the variable.
-%For example, if a thread on the accelerator writes to a mapped variable, when
-%can a thread on the host device see the updated value of the variable?  
-
-%-----------------------------------------------------------------------
-%------------------------- New subsection ------------------------------
-%-----------------------------------------------------------------------
-\subsection{Device Data Environments}
-\label{ssec:06.device-data-environments}
-
-\index{Accelerators!Device data environment}
-\index{Device data environment}
-An accelerator has a \emph{device data environment} that contains the set of
-all variables currently accessible by threads running on that device.  As we
-discussed in the previous section, host threads share variables with target
-device threads by mapping them.  Mapping a variable ensures that the variable
-is in the data environment of an accelerator.
-
-\index{Device data environment!Orginal variable}
-\index{Device data environment!Corresponding variable}
-An \emph{original} variable in a host thread's data environment is mapped to a
-\emph{corresponding} variable in the accelerator's data environment.
-Depending on the availability of shared memory between the host and target
-devices, the original and corresponding variables are either the same variable
-allocated in shared memory, or they are allocated in different memories and
-copy operations are required to keep the original and corresponding variables
-consistent. Whether a mapped variable uses shared or distributed memory is 
-taken care of by the \OMP\ implementation.
-
-\index{Device data environment!Present in}
-There only can be one instance of a variable in a device data environment.  The
-\OMP\ implementation keeps track of which variables are mapped.  If a variable
-is already \emph{present} in a device data environment, mapping it again will
-find the variable is already there and increment a reference count.  It
-will not allocate another instance of the variable.
-
-Minimizing the transfer of data between the host and an accelerator is often
-critical to getting good performance on heterogeneous architectures.
-Repetitively mapping a variable that is reused by multiple \code{target}
-constructs is potentially inefficient.  The \code{target}~\code{data},
-\code{target enter data} and \code{target}~\code{exit}~\code{data} constructs amortize data
-transfers by mapping variables across the execution of multiple \code{target}
-constructs.  Further, the \code{declare}~\code{target} construct can map static and
-global variables for the whole program.  Once a variable is mapped to an
-accelerator, situations can arise where the value of the variable must be
-updated from or to the device, and the \code{target}~\code{update}
-construct fulfills this need.  The \code{omp_target_is_present} runtime
-function is used to test if a variable is mapped.  
-\index{Accelerators!omp\_target\_is\_present} 
-\index{OpenMP runtime functions!omp\_target\_is\_present} 
-
-%-----------------------------------------------------------------------
-%------------------------- New subsection ------------------------------
-%-----------------------------------------------------------------------
-\subsection{Device Pointers}
-\label{ssec:06.device-pointers}
-
-\index{Accelerators!Device constructs}
-Because shared and distributed memory is supported, the \OMP\ memory model
-assumes that the host and accelerator data environments are in different
-address spaces.  However, this assumption creates some restrictions on
-accessing the address of the variable.
-% Ruud - I hope this change is OK
-% A programmer using the \OMP\ device constructs must be aware of the different
-With the \OMP\ device constructs, the user must be aware of the different
-address spaces and be careful when using pointers.  
-If the host and accelerator do not share memory, their local memories are in
-different address spaces.  When a variable is mapped to an accelerator's data
-environment, a copy occurs, and the address of the variable on the accelerator
-is not the same as the address of the variable on the host.
-
-Memory addresses are stored in pointer variables.  A host thread cannot access
-memory via a pointer variable that contains an accelerator address.  Likewise,
-an accelerator thread cannot access memory via a pointer variable that contains
-a host address.  
-Further, the host and accelerator may have different representations for the
-address of a variable.  For example, the value of a memory address might
-require 64 bits on a host and 32 bits on an accelerator.
-
-In Figure~\ref{figure:chapter6-devptr1}, the host pointer variable \code{hptr} is
-assigned the address of a memory location in the host's address space.  
-Mapping \code{hptr} copies the value of the pointer variable to the accelerator. The
-access to \code{hptr} at line $6$ in the target region by an accelerator thread is illegal.
-The accelerator thread is attempting to access a host address.
-
-Likewise in Figure~\ref{figure:chapter6-devptr2}, the accelerator pointer
-variable \code{dptr} is assigned the address of a memory location in the
-accelerator's address space.  The access to \code{dptr} at line $7$ by a host thread is illegal.
-
-\begin{figure*}[!tb]
-\begin{verbatim}
-1   char *hptr = malloc(N);
-2
-3   // Error - Accessing a host address on accelerator
-4   #pragma omp target map(hptr)
-5   for (int i=0; i<N; i++)
-6     *hptr++ = 0;
-\end{verbatim}
-\caption{ \textbf {Illegal access of a host memory address } -- \small
-          A pointer variable containing a host memory address cannot be
-          de-referenced by an accelerator thread.
-         }
-\label{figure:chapter6-devptr1}
-\end{figure*}
-
-\begin{figure*}[!tb]
-\begin{verbatim}
-1   char *dptr;
-2   #pragma omp target map(dptr)
-3   dptr = malloc(N);
-4
-5   // Error - Accessing a device address on host
-6   for (int i=0; i<N; i++)
-7     *dptr++ = 0;
-\end{verbatim}
-\caption{ \textbf {Illegal access of an accelerator memory address} -- \small
-          A pointer variable containing an accelerator memory address 
-          cannot be de-referenced by a host thread.
-         }
-\label{figure:chapter6-devptr2}
-\end{figure*}
-
-\index{Accelerators!Device data environment}
-\index{Device data environment}
-\index{Accelerators!Device pointer}
-\index{Device pointer}
-A \emph{device pointer} \index{Accelerators!Device pointer} is a pointer
-variable in the host data environment whose value is an object that contains
-the address of a storage location in an accelerator's device data environment.  
-
-Note that the value of a device pointer is an object.  How the
-value of a device address is represented on a host is not necessarily the same
-way that it is represented on an accelerator.  
-When a device pointer is referenced in a target construct, the compiler
-may need to transform the representation of the device address stored in
-the device pointer.
-
-%If a device pointer is stored in
-%a host pointer, then the compiler needs to transform the representation of that
-%pointer when it is used on the device.  
-
-%The \code{use_device_ptr} and \code{is_device_ptr} 
-%clauses are provided for the instances in which the difference in address
-%representation between the host and accelerator must be dealt with explicitly.
-%\index{Accelerators!Is\_device\_ptr clause}
-%\index{OpenMP clauses!is\_device\_ptr}
-%\index{Accelerators!Use\_device\_ptr clause}
-%\index{OpenMP clauses!use\_device\_ptr}
-%We need to indicate that a variable is a device pointer when it is referenced
-%in a \code{target} construct.  
-
-%The \code{omp_target_alloc} 
-%function, described in detail in Section~\ref{ssec:02.new_runtime_functions_3},
-%allocates storage in an accelerator's
-%device data environment and returns a device pointer.  The function cannot be
-%called inside a target region.  
-
-\index{OpenMP clauses!is\_device\_ptr}
-\index{Accelerators!Is\_device\_ptr clause}
-In Figure~\ref{figure:chapter6-devptr3}, the \code{omp_target_alloc} function
-returns a device address.  The device pointer \code{dptr} must appear in an
-\code{is_device_ptr} clause on the \code{target} construct to correctly refer
-to it in the target region.  The variable \code{dptr} is private in the target
-region.  On entry to the region, the private \code{dptr} variable is initialized
-with the accelerator's memory address that corresponds to the original value of
-\code{dptr} before the region (the host's representation of the device address).
-See Section~\ref{sec:06.Device-pointer-clauses} for more details on device
-pointers.
-
-\begin{figure*}[!tb]
-\begin{verbatim}
-1   int dev = omp_get_default_device();
-2   char *dptr = omp_target_alloc(dev, n);
-3 
-4   #pragma omp target is_device_ptr(dptr)
-5   for (int i=0; i<n; i++)
-6     *dptr++ = 0;
-\end{verbatim}
-\caption{ \textbf {Legal access of an accelerator memory address using a device pointer} -- \small
-          A device pointer variable that appears in an \texttt{is\_device\_ptr} clause 
-          may be de-referenced in a target region.
-        }
-\label{figure:chapter6-devptr3}
-\end{figure*}
-
-
-%-----------------------------------------------------------------------
-%------------------------- New subsection ------------------------------
-%-----------------------------------------------------------------------
-\subsection{Array Sections}
-\label{ssec:06.array-sections}
+\index{Accelerators!Array section}
 \index{Array section}
-\index{Mapped variable!Array section}
+Variable names, array sections, and structure elements may appear as list items
+in a \code{map} clause.  An optional \emph{map-type} and \code{always}
+\emph{map-type-modifier} control how the list items are mapped.  The syntax of
+the \code{map} clause is shown in Figure~\ref{figure:syntax-map-clause}.  If no
+\emph{map-type} is specified, the default is \code{tofrom}.
 
-Pointer variables are used extensively in C and C++.  The value stored in a
-pointer variable is the address of another variable.  As we saw in the last
-section, in order to support a variety of systems, the \OMP\ model assumes that
-the host and accelerator may not share the same address space. Thus, mapping a
-pointer variable by itself is not very useful.  We want to map the pointed-to
-variable (the memory that the pointer references). In order to map the
-pointed-to variable, we need to know its size.
+\index{Mapped variable}
+\index{Mapped variable!Map-type}
+\index{Mapped variable!Alloc map-type}
+\index{Mapped variable!To map-type}
+\index{Mapped variable!Delete map-type}
+\index{Mapped variable!From map-type}
+\index{Mapped variable!Release map-type}
+\index{Mapped variable!Tofrom map-type}
+\index{Mapped variable!Always map-type-modifier}
+\begin{figure}[!b]
+\centering
+\begin{tabular}{|l|}
+\hline
+\code{map} \emph{([[map-type-modifier[,]] map-type:] list)} \\
+\hline
+where the optional \emph{map-type} is one of:  \\
+\hspace{2em}\code{alloc} \\
+\hspace{2em}\code{to} \\
+\hspace{2em}\code{from} \\
+\hspace{2em}\code{tofrom} \\
+\hspace{2em}\code{release} \\
+\hspace{2em}\code{delete} \\
+\hline
+where the optional \emph{map-type-modifier} is:  \\
+\hspace{2em}\code{always} \\
+\hline
+\end{tabular}
+\caption{ \textbf{Syntax of the map clause in C/C++ and Fortran} -- \small
+          The map clause controls how variables are mapped.
+          }
+\label{figure:syntax-map-clause}
+\end{figure}
 
-For C and C++, we need something in the \OMP\ syntax to express the concept of
-mapping the pointed-to variables.  This is one of the reasons that \OMPfourzero\
-added \emph{array}~\emph{section} syntax for array and pointer 
-variables.\footnote{Array sections may also appear in the \code{depend} clause.}
+\index{Mapped variable!Map-enter phase}
+\index{Mapped variable!Map-exit phase}
+There are three phases that occur when mapping a variable in a \code{target}
+region: \begin{enumerate}
+    \item The \emph{map-enter} phase occurs on entry to the \code{target}
+    region when the variable is mapped to the accelerator.  
+    \item The \emph{compute} phase occurs when, during the execution of the
+    \code{target} region, threads executing on the accelerator access the
+    mapped variable.
+    \item The \emph{map-exit} phase occurs on exit from a \code{target} region
+    when the variable is unmapped from the accelerator.  
+\end{enumerate}
 
-An array section is a subset of the elements in an array.  In \OMP\, array
-sections are restricted to a contiguous set of elements.  The C and C++ array
-subscript syntax is extended to support an array section expression.  The
-array section syntax \code{base[\emph{offset}:\emph{length}]} is described below:
+The map-enter and map-exit phases manage the storage allocation and copy
+operations for a mapped variable.
+In the map-enter phase storage is allocated for the variable in the accelerator's
+address space, and then the value of host's original variable is copied to the 
+accelerator's corresponding variable.
+In the map-exit phase, the value of the accelerator's corresponding variable 
+is copied to the host's original variable, and then the storage for the 
+corresponding variable in the accelerator's address space is released.
+    
+%The map-enter and map-exit phases manage the storage allocation and copy
+%operations for a mapped variable as follows:
+%
+%In the map-enter phase: \begin{list}
+%  \item Allocate storage for the corresponding variable in the accelerator's
+%  address space.
+%  \item Copy the value of the host's original variable to the accelerator's
+%  corresponding variable.
+%\end{list}
+%
+%  \item compute phase: \begin{itemize}
+%    \item Threads running on the accelerator access the corresponding variable
+%    during the execution of a target region.
+%  \end{itemize}
+%
+%In the map-exit phase: \begin{enumerate}
+%  \item Copy the value of the accelerator's corresponding variable to the
+%  host's original variable.
+%  \item Release the storage for the corresponding variable in the accelerator's
+%  address space.
+%\end{enumerate}
 
-\begin{itemize}
+In Figure~\ref{figure:chapter6-map-v1}, the map-enter phase occurs on entry to
+the target region at line $3$.  Storage is allocated for the three
+corresponding arrays \code{a}, \code{b} and \code{t} in the accelerator's address space.  The
+values of the host's original \code{a}, \code{b} and \code{t} array variables are then copied
+to the accelerator's corresponding array variables. 
 
-  \item The $base$ is a C or C++ variable name with array, pointer type, or
-  in C++, reference to array or reference to pointer type.
+\begin{figure*}[!b]
+\begin{verbatim}
+ 1 #include <stdlib.h>
+ 2 void func(float a[1024], float b[1024], int t[1024])
+ 3 {
+ 4   #pragma omp target map(a, b, t) // Map-enter
+ 5   {
+ 6     int i;
+ 7 
+ 8     for (i=0; i<1024; i++)
+ 9       t[i] = rand()%1024;
+10 
+11     for (i=0; i<1024; i++)
+12       a[i] =  b[t[i]];
+13 
+14   } // End of target, map-exit
+15 }
+\end{verbatim}
+\caption{ \textbf {Example of the map clause} -- \small
+          Copies occur for the arrays \texttt{a}, \texttt{b}, and 
+          \texttt{t} at the entry to and exit from the target region.
+         }
+\label{figure:chapter6-map-v1}
+\end{figure*}
 
-  \item The $offset$ is an non-negative integer expression that is an offset
-  from the start of the array.  The $offset$ is optional and, if not specified,
-  defaults to 0.
+The map-exit occurs on exit from the target region at line $14$.  The values of
+the accelerator's corresponding array variables are copied back to the host's
+original array variables, and the storage for the three variables in the
+accelerator's address space is then released.
 
-  \item The $length$ is a non-negative integer expression that is the length
-  of the array section.   If the $base$ variable has a type of array or
-  reference to array, then the $length$ is optional and defaults to the
-  number of elements in the array.  If the $base$ variable has a type of
-  pointer or reference to pointer, then the $length$ must be specified.
+Notice that, in the compute phase, the arrays \code{a} and \code{t} are only written to and
+that array \code{b} is only read from.  Let's assume that \code{t} is a temporary variable, and
+that the values written to it are never used after the target region.  It is
+apparent then that the copies for \code{a} and \code{c} that occur during the map-enter
+phase are not needed.  Further, the copies that occur during the map-exit phase
+for \code{b} and \code{c} are not needed.  
 
-%  \item The $stride$ is a (non-negative) integer expression that, when it is
-%  greater than one, selects non-contiguous elements from the array.  The
-%  $stride$ is optional and defaults to one.  
-%  
-\end{itemize}
+\index{Mapped variable!Map-enter phase}
+\index{Mapped variable!Map-exit phase}
+The \code{map} clause's \emph{map-type} is used to optimize the copies that
+occur during the map-enter and map-exit phases. On many heterogeneous systems,
+it is costly to copy variables between the host and an accelerator.  The
+\emph{map-type} is used to disable these copies as shown in
+Figure~\ref{figure:chapter6-map-types}.
 
-\index{Array section!Pointer-based}
-The value of a pointer variable used in an array section is the address of a
-pointed-to array variable.  The pointed-to array variable may or may not have
-been dynamically allocated.  Even if the pointed-to variable is a single scalar
-variable, when it's used in an array section, it is an array of one element.
+\index{Mapped variable}
+\index{Mapped variable!Map-type}
+\index{Mapped variable!Alloc map-type}
+\index{Mapped variable!To map-type}
+\index{Mapped variable!Delete map-type}
+\index{Mapped variable!From map-type}
+\index{Mapped variable!Release map-type}
+\index{Mapped variable!Tofrom map-type}
+\begin{figure*}[!b]
+\centering
+\begin{tabular}{|l l l|}
+\hline
+\code{map-type} & Perform map-enter copies & Perform map-exit copies \\
+\hline
+\code{alloc} & No & No \\
+\code{to} & Yes & No \\
+\code{from} & No & Yes \\
+\code{tofrom} & Yes & Yes \\
+\code{release} & -- & No \\
+\code{delete} & -- & No \\
+\hline
+\end{tabular}
+\caption{ \textbf{Map-type effect on mapping variables} -- \small
+          The default \emph{map-type} is \texttt{tofrom}.  The \texttt{release}
+          and \texttt{delete} \emph{map-types} apply only to the map-exit phase
+          and can only appear in a \texttt{map} clause on a
+          \texttt{target}~\texttt{exit}~\texttt{data} construct (See
+          Section~\ref{ssec:06.target-enter-and-exit-data-constructs}).
+        }
+\label{figure:chapter6-map-types}
+\end{figure*}
 
-An array section is \emph{pointer-based} when the $base$ is a pointer variable.
-A pointer-based array section is mapped using the following steps: \begin{enumerate}
+In Figure~\ref{figure:chapter6-map-v2} the code from
+Figure~\ref{figure:chapter6-map-v1} is updated to use explicit map-types.  The
+map-enter phase occurs on entry to the target region at line $4$ and
+storage is allocated for the three corresponding arrays \code{a}, \code{b} and \code{t} in the
+accelerator's address space.  Only the value of the host's original \code{b} array
+variable is copied to the accelerator's corresponding \code{b} array variable. The
+corresponding \code{a} and \code{t} array variables are left uninitialized.  The map-exit
+phase occurs on exit from the target region at line $15$.  Only the
+value of the accelerator's corresponding \code{a} array variable is copied to the
+host's original \code{a} array variable.  The storage in the accelerator's address
+space for all three variables is then released.  Using map-types, unnecessary
+copy operations have been eliminated.
 
-  \item Create a pointer variable in the accelerator's data environment.
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 #include <stdlib.h>
+ 2 void func(float a[1024], float b[1024], int t[1024])
+ 3 {
+ 4   #pragma omp target map(from:a) map(to:b) \
+ 5                      map(alloc:t) // Map-enter
+ 6   {
+ 7     int i;
+ 8 
+ 9     for (i=0; i<1024; i++)
+10       t[i] = rand()%1024;
+11 
+12     for (i=0; i<1024; i++)
+13       a[i] =  b[t[i]];
+14 
+15   } // End of target, map-exit
+16 }
+\end{verbatim}
+\caption{ \textbf {Example of the map clause with map-types} -- \small
+          Eliminate superfluous copies by using map-types.
+         }
+\label{figure:chapter6-map-v2}
+\end{figure*}
 
-  \item Map the host's pointed-to variable to the accelerator's data
-  environment.
+On entry to a \code{target}, \code{target}~\code{data}, or
+\code{target}~\code{enter}~\code{data} construct, a map-enter phase occurs.
+Likewise, on exit from a \code{target}, \code{target}~\code{data}, or
+\code{target}~\code{exit}~\code{data} construct, a map-exit phase occurs.
+The \code{target}~\code{data}, \code{target}~\code{enter}~\code{data}, and
+\code{target}~\code{exit}~\code{data} data mapping constructs only map
+variables and do not execute any code on an accelerator (see
+Section~\ref{sec:06.data_mapping_constructs}).
 
-  \item Initialize the accelerator's pointer variable with the address of the
-  pointed-to variable in the accelerator's address space.
+What happens when a construct maps a variable, but that variable has already
+been mapped by a \code{target}~\code{enter}~\code{data} construct or by an
+enclosing \code{target}~\code{data} construct?  
+There can be only one instance of a corresponding variable in an accelerator's
+device data environment.  A reference count is associated with each
+corresponding variable.  When a variable is \emph{present} in an accelerator's
+device data environment, its corresponding variable's reference count is
+greater than or equal to one.
+The map-enter and map-exit phases increment or decrement the
+corresponding variable's reference count.  The point of the reference count is
+to keep track of the number of times a variable has been mapped and to only
+remove it from the accelerator device data environment after it has been
+unmapped the same number times.
+
+In the code in
+Figure~\ref{figure:chapter6-map-v3} 
+\code{target}~\code{data} construct at line $5$ maps the variables \code{a}, \code{b} and
+\code{t} according to their respective map-types.  
+However, the variables \code{a}, \code{b} and \code{t}
+are mapped again by the enclosed \code{target} constructs at lines $8$ and $16$.
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 #include <stdlib.h>
+ 2 #include <stdio.h>
+ 3 void func(float a[1024], float b[1024], int t[1024])
+ 4 {
+ 5   #pragma omp target data map(from:a) map(to:b) \
+ 6                           map(alloc:t) // Map-enter
+ 7   {
+ 8     #pragma omp target map(always,from:t) // Map-enter
+ 9     for (int i=0; i<1024; i++) {
+10       t[i] = rand()%1024;
+11     } // Map-exit
+12 
+13     for (int i=0; i<1024; i++)
+14        printf("t[%d]=%d\n", i, t[i]);
+15 
+16     #pragma omp target map(a,b,t) // Map-enter
+17     for (int i=0; i<1024; i++) {
+18       a[i] =  b[t[i]];
+19     } // Map-exit
+20 
+21   } // End of target data, map-exit
+22 }
+\end{verbatim}
+\caption{ \textbf {Example of a variable appearing in nested map clauses} -- \small
+          There is only one instance of a variable in an accelerator's
+          address space.
+         }
+\label{figure:chapter6-map-v3}
+\end{figure*}
+
+The \code{target}~\code{data} construct's map-enter phase at line $5$ allocates
+storage in the accelerator's address space for the variables \code{a}, \code{b} and \code{t}.
+Only the corresponding variable \code{a} is assigned the value of the host's
+original \code{a} variable.  The \code{b} and \code{t} corresponding variables are
+uninitialized.
+
+\index{Mapped variable}
+\index{Mapped variable!Map-type}
+\index{Mapped variable!Always map-type-nodifier}
+The target construct's map-enter phase at line $8$ does not allocate storage
+for the variable \code{t}, because \code{t} is already present in the accelerator's device
+data environment.  The \code{always} \emph{map-type-modifier} combined with the
+\code{from} \emph{map-type} forces a copy of \code{t} from the accelerator to the host
+during the map-exit phase at the end of the target region at line $11$.
+
+\index{Mapped variable!Map-enter phase}
+The target construct's map-enter phase at line $16$ does not allocate storage
+or copy the variables \code{a}, \code{b} and \code{t} to the accelerator, because they are
+already present in the accelerator's device data environment.  Likewise, the
+map-exit phase at line $19$ does not copy the variables back to the host or
+release the storage on the accelerator.  In this case, it is as if the effects
+of the \code{map} clause are ignored.
+
+\index{Mapped variable!Map-exit phase}
+Finally, at line $20$ the map-exit phase for the \code{target}~\code{data}
+construct copies the value of the \code{b} from the accelerator and then releases
+the storage for all three variables.
+
+%To briefly review, the map-enter phase for a variable includes two conditional
+%actions: 1) storage allocation and 2) a copy operation to the accelerator.
+%Likewise, the map-exit phase for a variable includes the following two conditional actions: 1)
+%a copy operation from the accelerator and 2) storage release.  
+
+%The allocation and release of storage actions are  conditioned to occur based
+%on the reference count.  Further, the copy operations are conditioned to occur
+%depending on the \emph{map-type} and \code{always} \emph{map-type-modifier}.
+
+At the start of the map-enter phase, if a corresponding variable's
+reference count is greater than or equal to one, then no new storage is allocated,
+and the value of the original variable is not copied to the corresponding
+variable.  The only effect is that the reference count is incremented.
+
+Likewise, at the start of a map-exit phase, if a corresponding variable's
+reference count is greater than one, then the value of the corresponding
+variable is not copied back to the original variable, and its storage is not
+released.  The only effect is that the reference count is decremented.
+
+%In the map-enter phase, when a mapped variable's map-type is \code{to} or
+%\code{tofrom}, a copy to a corresponding variable occurs only when the
+%reference count is incremented to one (such as when the corresponding variable is
+%entered into the accelerator's data environment).
+
+%Similarly, in the map-exit phase, when a mapped variable's map-type is
+%\code{from} or \code{tofrom}, a copy from a corresponding variable
+%only occurs when the reference count is decremented to zero (such as when the corresponding
+%variable is removed from the accelerator's device data environment).
+
+The \code{always} \emph{map-type-modifier} asserts that the map-enter and
+map-exit copies should occur regardless of the reference count.  It
+provides a way to force a copy to occur.
+
+\index{Mapped variable}
+\index{Mapped variable!Map-type}
+\index{Mapped variable!Alloc map-type}
+\index{Mapped variable!To map-type}
+\index{Mapped variable!Delete map-type}
+\index{Mapped variable!From map-type}
+\index{Mapped variable!Release map-type}
+\index{Mapped variable!Tofrom map-type}
+\index{Mapped variable!Always map-type-nodifier}
+The steps associated with the map-enter and map-exit phases are updated to
+incorporate the reference count, \emph{map-type}, and \emph{map-type-modifier}
+as shown below:
+
+The map-enter phase: \begin{enumerate}
+
+  \item If a corresponding variable is not present in the accelerator's device
+  data environment then: \begin{itemize}
+     
+    \item Allocate storage in the accelerator's address space for the
+    corresponding variable, and initialize its reference count to zero.
+
+  \end{itemize}
+
+  \item Increment the corresponding variable's reference count by one.
+
+  \item If the \code{to} or \code{tofrom} map-type is specified then:
+  \begin{itemize}
+
+    \item If the corresponding variable's reference count is one or the
+    \code{always} \emph{map-type-modifier} is specified, then assign the value of the
+    host's original variable to the accelerator's corresponding variable.
+
+  \end{itemize}
 
 \end{enumerate}
 
-In Figure~\ref{figure:chapter6-array-sections1}, the host pointer variable
-\code{hptr} is assigned the address of a storage location in the host's data
-environment.  The array section \code{hptr[0:1024]} is then mapped to the
-accelerator's data environment.  The 1024 element array pointed to by \code{hptr} is
-mapped to the accelerator.  The \code{hptr} pointer variable is not mapped but is
-private in the target region and initialized with the address of the pointed-to
-array. Compare this to Figure~\ref{figure:chapter6-devptr1}.
+The map-exit phase: \begin{itemize}
 
-\begin{figure*}[!tbhp]
-\begin{verbatim}
-1   char *hptr;
-2
-3   hptr = malloc(1024);
-4
-5   // Map an array section.
-6   #pragma omp target map(hptr[0:1024])
-7   for (int i=0; i<N; i++)
-8     hptr[i] = 0;
-9   
-\end{verbatim}
-\caption{ \textbf {Map a pointer-based array section} -- \small
-          Use an array section to map pointed-to memory.
-         }
-\label{figure:chapter6-array-sections1}
-\end{figure*}
+  \item If a corresponding variable is present in the accelerator's device
+  data environment then: \begin{enumerate}
 
-\index{Array section!Examples}
+    \item If the \code{from} or \code{tofrom} \emph{map-type} is specified
+    then: \begin{itemize} 
+    
+      \item If the corresponding variable's reference count is one or the
+      \code{always} \emph{map-type-modifier} is specified, then assign the value
+      of the accelerator's corresponding variable to the
+      host's original variable.
+
+    \end{itemize}
+
+    \item Decrement the corresponding variable's reference count by one.
+
+%    \item If the \code{delete} \emph{map-type} is specified, then set the
+%    corresponding variable's reference count to zero.
+
+    \item If the \code{delete} \emph{map-type} is specified and the
+    corresponding variable's reference count is not infinite, then
+    set it to zero.
+
+    \item If the corresponding variable's reference count is zero, then release the storage
+    for the corresponding variable in the accelerator's address space.
+
+  \end{enumerate}
+
+\end{itemize}
+
+Although the \code{alloc} and \code{release} \emph{map-types} do not appear
+explicity above, their effect is to either decrement or increment the reference count.  
+The \code{delete} \emph{map-type} sets the reference count to zero.  It
+provides a way to force the removal of a variable from an accelerator's device
+data environment.  
+Globally mapped variables and device memory associated to host memory by the
+\code{omp_target_associate_ptr()} function have an infinite reference count and
+cannot be removed.
+Both the \code{delete} and \code{release} \emph{map-types}
+may appear only in \code{map} clauses on the
+\code{target}~\code{exit}~\code{data} construct (see Section~\ref
+{ssec:06.target-enter-and-exit-data-constructs}).
+\index{Accelerators!omp\_target\_associate\_ptr} 
+\index{OpenMP runtime functions!omp\_target\_associate\_ptr} 
+\index{Mapped variable!Globally mapped}
+
+%-----------------------------------------------------------------------
+%------------------------- New subsection ------------------------------
+%-----------------------------------------------------------------------
+\subsubsection{Mapping Structure Members}
+\label{ssec:06.map-structs}
 \index{OpenMP clauses!map}
 \index{Accelerators!Map clause}
-Array sections are available in the Fortran base language.  In C/C++, an
-array section may appear only as a list item in an \OMP\ \code{map} or
-\code{depend} clause.  The C/C++ base language was not extended to support
-array sections.  Some examples of array sections in C/C++ are shown
-in Figure~\ref{figure:chapter6-map-ptr1}
+\index{Mapped variable!Structure member}
 
-\begin{figure*}[!tbhp]
-\begin{verbatim}
- 1 float *p = malloc(N);
- 2 float a[N];
- 3
- 4 // Map pointer based array section
- 5 map(p[0:N:1]) 
- 6 map(p[0:N])
- 7 map(p[:N])
- 8
- 9 // Map array based array section
-10 map(A[0:N:1])
-11 map(A[0:N])
-12 map(A[:N])
-13 map(A[:]) // Size is N
-14 
-15 // Map array section with offset
-16 map(p[32:N-32]
-17 map(A[N/2:N/4]
-18
-\end{verbatim}
-\caption{ \textbf {Array section syntax examples} -- \small
-          Various usage of array section syntax in C and C++.
-         }
-\label{figure:chapter6-map-ptr1}
-\end{figure*}
+Similar to how an array section can map a subset of the elements in an array,
+individual structure members can appear in \code{map} clauses in order to map
+a subset of the members in a structure variable.  The restrictions on mapping
+structure members are as follows:
 
-\index{Array section!Array slice}
-Array sections are also useful for mapping a slice of an array.  It might be
-that mapping a very large array exceeds the storage capacity of the
-accelerator's local memory.  In this case, we would like to map slices of the
-array and then compute on each slice.  Figure~\ref{figure:chapter6-mapslice}
-shows how this can be done.
+\begin{itemize}
+
+ \item Structure members must explicitly appear in \code{map} clauses,
+ otherwise a reference to a structure member in a \code{target} construct
+ implicitly maps the whole structure.
+
+ \item To map a subset of the members in a structure variable, 
+ all structure members in the subset must appear in a \code{map} clause(s) on the same
+ construct.
+
+ \item If a subset of members of a structure variable are mapped, only the
+ structure members in the subset can be referenced in a \code{target} region.
+
+ \item When a subset of members of a structure variable are mapped, the
+ subset may not be increased by additionally mapping other members of the
+ structure variable.
+
+ \item C/C++ structure members with type pointer may appear as the base of an
+ array section, but only the rightmost structure member can specify an array
+ section.  For example, \code{S.a[:100]} is legal syntax, but \code{S.b[:100].z} is not.
+ \index{Mapped variable!Array section}
+ \index{Array section!Pointer-based}
+ \index{Array section!Structure member}
+
+\end{itemize}
+
+\index{Accelerators!Mapped function}
+To illustrate these concepts, some simple use cases are presented in
+Figure~\ref{figure:chapter6-mapstruct}.  A structure type \code{Stype} is declared
+at line $1$. Lines $3-4$ use the \code{declare}~\code{target} construct to declare that
+\code{f1()}, \code{f2()}, and \code{f3()} are mapped functions and may be called from a target region 
+(see Section~\ref{sec:06.declare-target-construct}).
 
 \begin{figure*}[!tb]
 \begin{verbatim}
- 1 #define BIG 256
- 2 #define N (1024*1024)
- 3 int a[N*BIG];
- 4 
- 5 void F(const int c, const int d)
- 6 {
- 7   for (int k=0; k<N*BIG; k+=N) {
- 8     #pragma omp target map(from:a[k:N]) firstprivate(c,d) 
- 9     for (int i=0; i<N; i++) {
-10       a[k+i] =  k+i * (c + d);
-11     } // End of target
-12   }
-13 }
+ 1 typedef struct { int x, y, size, *p; } Stype;
+ 2 extern Stype S;
+ 3 extern int f1(int,int), f2(int*,int), f3(Stype *);
+ 4 #pragma omp declare target to(f1, f2, f3) 
+ 5 
+ 6 void foo1(Stype S)
+ 7 {
+ 8    #pragma omp target
+ 9    f1(S.x, S.y);
+10 
+11    #pragma omp target map(S.x, S.y)
+12    f1(S.x, S.y);
+13 
+14    #pragma omp target map(S, S.p[:S.size])
+15    f2(S.p, S.size);
+16 
+17    #pragma omp target map(S.x)
+18    f3(&S);
+19 
+20    #pragma omp target data map(S.x)
+21    {
+22       #pragma omp target map(S.y) // Error
+23       f1(S.x, S.y);
+24    }
+25 }
 \end{verbatim}
-\caption{ \textbf {Use array section to map a subset of an array} -- \small
-          Map a slice of the array \texttt{a} each time through the loop.
+\caption{ \textbf {Example of mapping structure members} -- \small
+          Structure members may appear in map clauses and array sections with some
+          restrictions.
          }
-\label{figure:chapter6-mapslice}
+\label{figure:chapter6-mapstruct}
 \end{figure*}
+
+For the \code{target} construct at line $8$, the whole structure variable $S$
+is mapped even though only the members \code{S.x} and \code{S.y} are referenced in the
+construct.  The structure members \code{S.x} and \code{S.y} appear explicitly in
+a \code{map} clause on the \code{target} construct at line $11$, and now only
+these two members are mapped instead of the whole structure variable \code{S}.  The
+\code{map} clause on the \code{target} construct at line $14$ has an array
+section where \code{S.p} is used as the base of the array section.
+
+On line $17$, only \code{S.x} is mapped, but the call at line $18$ refers to the
+address of \code{S}.  This is allowed as long as the code inside the function \code{f3()}
+accesses only \code{S.x}.  In the last example that spans lines $20-24$ the structure
+member \code{S.x} is mapped by the \code{target}~\code{data} construct at line
+$20$.  The \code{target} construct then maps \code{S.y}.  This is an error because
+it tries to change the subset of mapped structure members (the fourth
+restriction above).  This may be remedied by adding \code{S.y} to the \code{map}
+clause on line $20$.
+
+%-----------------------------------------------------------------------
+%------------------------- New subsection ------------------------------
+%-----------------------------------------------------------------------
+\subsubsection{The Defaultmap Clause and Data-mapping Attributes}
+\label{ssec:06.defaultmap-clause}
+\index{OpenMP clauses!defaultmap}
+\index{Accelerators!Defaultmap clause}
+
+\index{Mapped variable!Data-mapping attribute}
+If and how a variable is mapped is determined by the variable's data-mapping
+attributes.  
+%If a variable is not mapped in a \code{target} construct, it is
+%\code{private} or \code{firstprivate}.  
+The rules for determining the
+data-mapping attributes for a variable are either explicitly or implicitly
+determined.
+
+\index{Mapped variable}
+\index{Mapped variable!Map-type}
+\index{Mapped variable!Default map-type}
+The data-mapping attributes for variables that appear in clauses or are
+declared in a scope inside the \code{target} construct are explicitly determined
+according to the following rules: \begin{itemize}
+
+  \item A variable that appears in a \code{map} clause is mapped according to
+  the \emph{map-type}.
+
+  \item A variable that appears in a \code{private}, \code{firstprivate}, or
+  \code{is_device_ptr} clause is private.
+
+  \item A variable that is declared in a scope inside the \code{target}
+  construct is private.
+
+\end{itemize}
+
+The data-mapping attributes for all other variables referenced in a
+\code{target} construct are implicitly determined according to the following
+rules: \begin{itemize}
+
+  \item If the variable is not a scalar variable, the variable is mapped
+  with a \emph{map-type} of \code{tofrom}.
+
+  \item If the \code{target} construct does not have a
+  \code{defaultmap(tofrom:scalar)} clause, then a \emph{scalar} variable is
+  \code{firstprivate}.  
+
+  \item If the \code{target} construct has a \code{defaultmap(tofrom:scalar)}
+  clause, then a \emph{scalar} variable is mapped with a \emph{map-type} of
+  \code{tofrom}.
+
+  \index{Array section!Pointer-based}
+  \item A pointer variable that appears in a pointer based array section in
+  C/C++ is \code{private}.
+
+\end{itemize}
+
+\index{Mapped variable!Scalar}
+In general, variables with implicitly determined data-mapping attributes are
+treated as if they had appeared in a \code{map} clause with a \emph{map-type}
+of \code{tofrom}.  The exception is scalar and C/C++ pointer variables.
+Scalar variables have a base language built-in type (for example, \code{int} or
+\code{float} in C/C++).\footnote{The precise definition of a scalar variable is
+determined by the base language.}  
+
+The performance overhead of a mapped variable can be higher than a \code{private}
+variable.  A mapped variable requires a presence check to see if the variable
+is already present in the accelerator's device data environment.
+Variables that are \code{private} do not require this check.  
+The overhead of performing the presence
+check is more pronounced for the smaller variables, such as scalars.  For these reasons,
+the implicit data-sharing attribute for scalar variables referenced in a
+\code{target} construct is \code{firstprivate}.  However, the
+\code{defaultmap(tofrom:scalar)} clause is provided to change the implicit
+data-mapping attribute for these variables to mapped with a \emph{map-type} of
+\code{tofrom}.
+
+%In addition, many implementations use something similar to a remote procedure
+%call to start a target region executing on an accelerator.  It is very
+%efficient to pass scalar variables by value as arguments to the remote
+%procedure.  Passing arguments by value happens to match quite nicely to the
+%semantics of firstprivate.
+
+\index{Accelerators!Initial thread}
+\index{Array section}
+In the \code{saxpy()} function shown in Figure~\ref{figure:chapter6-defaultmap-v1}, the
+scalar variables \code{a} and \code{n} are \code{firstprivate}.  
+%The pointer variables $y$ and
+%$x$ are \code{private}, since they are used in array sections
+%(see Section~\ref{ssec:06.array-sections}).  
+Because they are used in array sections, the
+The pointer variables \code{y} and
+\code{x} are \code{firstprivate} and initialized with the address of the corresponding
+array section in the accelerator's device data environment
+(see Section~\ref{ssec:06.array-sections}).\footnote{The original
+pointer value is discarded when the host and accelerator do not share the same address space.}
+Each initial thread created by the
+\code{target teams} construct at line $3$ gets a private instance of \code{a}, \code{n},
+\code{y} and \code{x}.  
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 void saxpy(float *restrict y, float *restrict x, float a, int n)
+ 2 {
+ 3   #pragma omp target teams map(y[:n]) map(to:x[:n]) 
+ 4   {
+ 6     #pragma omp distribute 
+ 7     for (int i=0; i<n; i++) {
+ 8         y[i] =  y[i] + a*x[i];
+ 9     } // End of distribute
+10   } // End of target teams
+11 }
+\end{verbatim}
+\caption{ \textbf {Example of default data-mapping attribute rules} -- \small
+          The pointer variables \texttt{x} and \texttt{y} are \texttt{private}. The 
+          scalar variables \texttt{a} and \texttt{n} are \texttt{firstprivate}.
+         }
+\label{figure:chapter6-defaultmap-v1}
+\end{figure*}
+
+Notice that if a variable is \code{firstprivate}, then any changes to that variable in
+the target region will not be reflected back to the original variable.  This
+can result in unexpected results.  For example, in
+Figure~\ref{figure:chapter6-defaultmap-v2} the variable \code{sum} is \code{firstprivate}.
+After the target region completes at line $8$, the computed value of \code{sum} is
+lost, and the \code{dotp()} function always returns $0.0$.
+To correct the problem with the \code{sum} variable, either place
+it in a \code{map} clause or add a \code{defaultmap(tofrom:scalar)}
+clause to the \code{target} construct.  It is recommended to not
+rely on implicit behavior and instead list variables explicitly in \code{map},
+\code{private}, or \code{firstprivate} clauses as appropriate.
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 float dotp(float *restrict y, float *restrict x, int n)
+ 2 {
+ 3   float sum = 0.0;
+ 4   #pragma omp target map(y[:n]) map(to:x[:n])
+ 5   {
+ 6     for (int i=0; i<n; i++)
+ 7       sum += y[i] * x[i];
+ 8   } // End of target
+ 9
+10   return sum;
+11 }
+\end{verbatim}
+\caption{ \textbf {Example of problems with implicit firstprivate variables} -- \small
+          Because the variable \texttt{sum} is \texttt{firstprivate}, the computed value
+          of \texttt{sum} is lost at the end of the target region.
+         }
+\label{figure:chapter6-defaultmap-v2}
+\end{figure*}
+
+%-----------------------------------------------------------------------
+%------------------------- New subsection ------------------------------
+%-----------------------------------------------------------------------
+\subsubsection{Pointers and Zero-length Array Sections}
+\label{ssec:06.zero-array-sections}
+\index{Array section!Zero-length}
+\index{Array section!Pointer-based}
+\index{Mapped variable!Array section}
+
+In Section~\ref{ssec:06.array-sections}, we showed how array sections are used
+to map memory that a pointer variable points to.  Recall that an
+array section has a length.  If the length of an array section is zero, then it
+is a \emph{zero-length array section}.
+
+A pointer-based zero-length array section has a special meaning in a
+\code{map} clause on a \code{target} construct.  The pointer variable is
+\code{private} in the target region.  If the value of the original pointer is
+an address that is already mapped, then the corresponding \code{private} pointer variable in the
+\code{target} region is assigned the corresponding device address.  If the
+value of the original pointer is an address that is not mapped, then the corresponding
+\code{private} pointer variable is assigned NULL.
+
+% Moved for placement in latex? 
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 #include <stdlib.h>
+ 2 void f()
+ 3 {
+ 4    char *p, *q, A[128];
+ 5    extern void f1(char *);
+ 6    #pragma omp declare target to(f1) 
+ 7 
+ 8    p = malloc(1024);
+ 9    q = A;
+10 
+11    #pragma omp target data map(p[:1024], A)
+12    {
+13      #pragma omp target map(p[:0])
+14      f1(p);
+15 
+16      #pragma omp target // Implicit map(q[:0])
+17      f1(q);
+18 
+19      #pragma omp target map(p)
+20      f1(p); // Error 
+21    }
+22    free(p);
+23 }
+\end{verbatim}
+\caption{ \textbf {Example of C/C++ pointers as zero-length array sections} -- \small
+          Pointer variables are implicitly treated as pointer-based zero-length array
+          sections in target regions.
+         }
+\label{figure:chapter6-zerolength}
+\end{figure*}
+
+A pointer-based zero-length array section is convenient when a pointer variable is
+used in a \code{target} construct, and the memory it points to was mapped (for
+example, by an enclosing target data region) before the \code{target} construct is
+encountered.  The code that uses the pointer variable in the target region 
+might not refer to the length of the pointed-to memory.
+
+%Pointer-based zero-length array sections are useful when accessing memory that
+%has already been mapped and the length of that mapped memory may not
+%be required by the code in the associated target region.
+
+\index{Mapped variable!Data-mapping attribute}
+Pointer variables referenced in a \code{target} construct that have an implicit
+data-mapping attribute are treated as if they had appeared in a \code{map}
+clause as the pointer variable in a zero-length array section with a
+\emph{map-type} of \code{tofrom}.  Some simple examples using zero-length array
+section are shown in Figure~\ref{figure:chapter6-zerolength}.
+
+The \code{map} clause on the \code{target data} construct on line $11$ maps the
+array \code{A} and the dynamically allocated memory that \code{p} points to.  The pointer
+variable \code{p} is not mapped.  Because it appears in an array section, the
+pointer variable \code{p} is \code{private} in the \code{target} construct starting at line
+$13$.  The \code{private} variable \code{p} is assigned the corresponding device address of
+the memory allocated at line $8$.
+
+%You can think of this as look-up operation that checks to see if the pointer is
+%pointing at mapped memory and if it is to just use the corresponding address of
+%the mapped mapped.
+
+For the \code{target} construct at line $16$, the pointer variable \code{q} is
+implicitly treated as if it appeared in a \code{map} clause in a zero-length
+array section.  At line $17$, \code{q} is a private pointer variable that is pointing
+at the device address of the mapped array \code{A}.  If you explicitly map a pointer
+variable as shown in line $19$, then you are mapping the value of a host
+address to the accelerator.  The mapped pointer variable does not contain a
+valid accelerator memory address.  The call to \code{f1()} will possibly de-reference
+the invalid address stored in \code{p}.
+
+%-----------------------------------------------------------------------
+%------------------------- New section ---------------------------------
+%-----------------------------------------------------------------------
+\subsection{The Declare Target Directive}
+\label{sec:06.declare-target-construct}
+\index{OpenMP constructs!Declare target}
+\index{Accelerators!Declare target}
+
+The \code{declare target} construct is used for both functions and variables.
+If a function is called from a target region, then the name of the function must
+appear in a \code{declare target} directive.  The \code{declare}~\code{target}
+directive is used to map global variables to an accelerator's device data
+environment for the whole execution of the program.
+The \code{declare target} construct syntax in C/C++ and Fortran is shown in
+Figure~\ref{figure:syntax-declare-target-construct} along with its supported clauses.
+
+\index{OpenMP clauses!to}
+\index{OpenMP clauses!link}
+\index{Accelerators!To clause}
+\index{Accelerators!Link clause}
+\begin{figure*}[!tb]
+\centering
+\begin{tabular}{|l|}
+\hline
+\ompbcdeclaretarget \\
+\hspace{2em}\emph{declarations-definitions-seq} \\
+\ompbcdeclaretargetend \\
+\hspace{2em}\emph{or} \\
+\ompbcdeclaretarget \emph{(extended-list)} \\
+\hspace{2em}\emph{or} \\
+\ompbcdeclaretarget{ \emph{clause[[[,] clause] \ldots]}} \\
+\hline
+\ompbfdeclaretarget \emph{(extended-list)} \\
+\hspace{2em}\emph{or} \\
+\ompbfdeclaretarget \ompclauses \\
+\hline
+\emph{where clause is:} \\
+\bdeclto \\
+\hspace{2em}\emph{or} \\
+\blink \\
+\hline
+\end{tabular}
+\caption{ \textbf{Syntax of the declare target construct in C/C++ and 
+               Fortran} -- \small
+          The various syntactical forms of the directive result in a 
+          \emph{extended-list} of variable and function names.
+          }
+\label{figure:syntax-declare-target-construct}
+\end{figure*}
+
+The various syntactical forms of the \code{declare}~\code{target} directive result
+in an \emph{extended-list} of variable and function names, or in the case of
+the \code{link} clause, a list of variable names.  In describing the
+functionality, we will refer to a function or variable name that appears
+in a \code{declare}~\code{target} directive.
+
+In C/C++, the \code{declare}~\code{target} and
+\code{end}~\code{declare}~\code{target} directives provide a convenient means
+to create an \emph{extended-list} of the names of variables and functions that are
+declared between the two directives, where the variable declarations are at
+file or namespace scope and the function declarations are at file, namespace, or
+class scope.
+An \emph{extended-list} of function and variable names may appear as list items on
+the directive or in clauses.  The \code{to} clause accepts an
+\emph{extended-list} of variable and function names.  The \code{link} clause
+accepts only a list of variable names.  
+In Fortran, the \code{declare}~\code{target} directive without clauses or an
+\emph{extended-list} may appear in the interface specification for a
+subroutine, function, program or module. 
+
+%\footnote{See the \OMPfourfive Specification Section 2.10.6 for specific
+%restrictions related to Fortran procedures and variables}.
+
+\index{Accelerators!Mapped function}
+If a function name appears in a \code{declare}~\code{target} directive in the
+same translation unit as the definition of the function, then it is a
+\emph{mapped}~\emph{function}.  A mapped function has a corresponding
+accelerator-specific version of the function.  A function name must appear in a
+\code{declare}~\code{target} directive before the function is called from a
+\code{target} construct or another mapped function.
+
+A variable whose name appears in the \code{declare}~\code{target} directive
+must have static storage duration.  In C/C++, these are variables that are
+declared at file, namespace, static-block, or static-class scope. In Fortran,
+these are named variables and named common blocks.
+
+\index{Mapped variable!Globally mapped}
+A variable name that appears in a \code{declare}~\code{target} directive in
+the same translation unit where it is defined is 
+\emph{globally}~\emph{mapped}.  
+If the variable is referenced in a mapped function or
+device construct, it must appear in a \code{declare}~\code{target} directive in
+the same translation unit as the function or construct.
+
+A variable that is globally mapped is created and initialized in an
+accelerator's device data environment before a program begins execution.
+Globally mapped variables have an infinite reference count and are never
+removed from an accelerator's device data environment.  They are permanently
+mapped for the execution of the whole program.  Some examples of the
+\code{declare}~\code{target} directive are shown in
+Figure~\ref{figure:chapter6-decltarg}.
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 int Lastpos = 0;
+ 2 extern char Buf[128];
+ 3 #pragma omp declare target(Lastpos, Buf)
+ 4 
+ 5 extern int F(int, int);
+ 6 #pragma omp declare target to(F)
+ 7 
+ 8 #pragma omp declare target
+ 9 int State = -1;
+10 extern int search(char *);
+11 
+12 void find_state(char c)
+13 {
+14   int pos;
+15   Buf[Lastpos] = c;
+16   pos = search(Buf);
+17   Lastpos = pos;
+18   State = F(Lastpos, pos);
+19 }
+20 #pragma omp end declare target
+21 
+22 void process_input(char c)
+23 {
+24   #pragma omp target firstprivate(c)
+25   find_state(c);
+26 }
+\end{verbatim}
+\caption{ \textbf {Example of the declare target directive} -- \small
+          Various forms of the directive all have the same effect.
+         }
+\label{figure:chapter6-decltarg}
+\end{figure*}
+
+The first form of the \code{declare}~\code{target} directive on line $3$
+declares that the variables \code{Lastpos} and \code{Buf} are globally mapped.  The
+original \code{Lastpos} variable on the host and an accelerator's corresponding
+version of the variable are initialized to $0$.  The variable \code{Buf} is declared
+but not defined in the example.  \code{Buf} must appear in a
+\code{declare}~\code{target} directive in the place where \code{Buf} is defined.
+
+The \code{declare}~\code{target} directive on line $6$ uses the \code{to}
+clause to declare that \code{F()} is a mapped function.  The prototype
+of the function \code{F()} is declared, but \code{F()} is not defined in the example.  The
+function name \code{F} must appear in a \code{declare}~\code{target} directive in
+the place (some other file) where the definition of \code{F()} occurs.
+
+The \code{declare}~\code{target} on line $8$ and the
+\code{declare}~\code{end}~\code{target} on line $20$ declare that variable
+\code{State} and \code{search()} and \code{find\_state()} are mapped functions.  The
+host's original variable \code{State} and an accelerator's corresponding version of
+the variable are initialized to $-1$.  Like \code{F}, the function name \code{search}
+must appear in a \code{declare}~\code{target} directive where it is defined.
+The function \code{find\_state()} is both declared and defined between the pair of
+directives, and an accelerator-specific version of it is generated.  The call to
+\code{find\_state()} appears inside a \code{target} construct at lines $24-25$.  When
+an initial thread executes the target region, the accelerator-specific version of the
+\code{find\_state()} function is invoked.
+\index{Accelerators!Initial thread}
+
+\index{Accelerators!Mapped function}
+\index{Mapped variable!Globally linked}
+\index{Accelerators!Device data environment}
+\index{Device data environment}
+A variable that is globally mapped will reserve memory in an accelerator's
+device data environment for the whole program.  The \code{link} clause provides
+another way to access a global variable in a mapped function without having to
+globally map the variable.  Note that function names cannot appear in a
+\code{link} clause.  The \code{link} clause declares that a variable is
+\emph{globally linked}.  A reference to a globally linked variable can appear
+in a mapped function with the restriction that before the function is called
+from a target region, the variable will have been mapped by a \code{map}
+clause.
+
+An example of \code{link} clause is shown in Figure~\ref{figure:chapter6-link}.
+On line $2$ the variable \code{Vector} is globally linked by the
+\code{declare}~\code{target} directive, which declares that the global
+variable \code{Vector} will be mapped before the \code{compute()} function is executed on
+the accelerator.  The \code{map} clause on the \code{target} construct at line
+$15$ maps \code{Vector}.  The call to \code{compute()} in the target region can then
+find the mapped \code{Vector} variable.  
+
+%If $Vector$ had not been mapped, then a runtime error might occur.
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 float Vector[1024];
+ 2 #pragma omp declare target link(Vector)
+ 3 
+ 4 #pragma omp declare target
+ 5 extern float F(float , float);
+ 6 int compute(float a)
+ 7 {
+ 8    for (int i=0; i<1024; i++)
+ 9       Vector[i] = F(Vector[i], a);
+10 }
+11 #pragma omp end declare target
+12 
+13 int update_vector(float a)
+14 {
+15   #pragma omp target map(Vector) firstprivate(a)
+16   compute(a);
+17 }
+\end{verbatim}
+\caption{ \textbf {Example of the link clause on a declare target directive} -- \small
+          Variables appearing in the \texttt{link} clause are \emph{globally linked}.  
+          They must be mapped before they are referenced in a mapped function.
+         }
+\label{figure:chapter6-link}
+\end{figure*}
+
+%-----------------------------------------------------------------------
+%------------------------- New section ---------------------------------
+%-----------------------------------------------------------------------
+\subsection{The Data-mapping Constructs}
+\label{sec:06.data_mapping_constructs}
+
+This section describes a group of constructs that map variables and manage the
+consistency of mapped variables between the host and an accelerator.  A
+map-enter and map-exit phase occurs at the entry and exit of each target region
+for variables that are mapped in the region.  Redundantly mapping a variable in
+multiple target regions can be detrimental to performance, especially when the
+host and the accelerator do not share memory.
+\index{Mapped variable!Map-enter phase}
+\index{Mapped variable!Map-exit phase}
+
+The \code{target}~\code{data} construct described in
+Section~\ref{ssec:06.target_data_construct} maps variables across a region of
+code that encloses multiple target regions.  Variables are mapped once and then
+used in many enclosed target regions.  The
+\code{target}~\code{enter}~\code{data} and
+\code{target}~\code{exit}~\code{data} construct are not associated with a
+specific code region and perform only the map-enter or map-exit phase,
+respectively.  These two unstructured constructs are described in
+Section~\ref{ssec:06.target-enter-and-exit-data-constructs}.  Once a variable
+is mapped, the \code{target}~\code{update} construct described in Section~
+\ref{ssec:06.target_update_construct} can be used to make its value consistent
+between the host and the accelerator where it is mapped.
+
+
+%-----------------------------------------------------------------------
+%------------------------- New subsection ------------------------------
+%-----------------------------------------------------------------------
+\subsubsection{The Target Data Construct}
+\label{ssec:06.target_data_construct}
+\index{OpenMP constructs!Target data}
+\index{Accelerators!Target data}
+\index{Mapped variable}
+
+\index{Accelerators!Device data environment}
+\index{Device data environment}
+The \code{target data} construct maps variables to a device data environment
+for the extent of the target data region.  In other words, when a thread
+executing on the host device encounters a \code{target data} construct,
+variables appearing in \code{map} clauses on the construct are mapped according
+to the map-enter phase.  However, unlike the \code{target} construct, the host
+thread continues executing the code inside the target data region.  Once the
+host thread encounters the end of the target data region, the map-exit phase
+occurs for the variables that appeared in the \code{map} clauses on the
+construct. 
+\index{Mapped variable!Map-enter phase}
+\index{Mapped variable!Map-exit phase}
+
+In summary, a \code{target data} construct is like a \code{target} construct
+minus the code executing on the accelerator.  It only maps variables.  The
+\code{target data} construct syntax in C/C++ and Fortran is shown in
+Figure~\ref{figure:syntax-target-data-construct}.
+
+\begin{figure*}[!tb]
+\centering
+\begin{tabular}{|l|}
+\hline
+\ompbctargetdata \ompclauses  \\
+\hspace{2em}\emph{structured block} \\
+\hline
+\ompbftargetdata \ompclauses \\
+\hspace{2em}\emph{structured block} \\
+\ompbftargetdataend \\
+\hline
+\end{tabular}
+\caption{ \textbf{Syntax of the target data construct in C/C++ and 
+               Fortran} -- \small
+          Map variables to a device for the extent of the region.
+          }
+\label{figure:syntax-target-data-construct}
+\end{figure*}
+
+Clauses that can appear on the \code{target}~\code{data} 
+construct are shown in Figure~\ref{figure:syntax-target-data-clauses}.
+
+\index{OpenMP clauses!if}
+\index{OpenMP clauses!map}
+\index{OpenMP clauses!device}
+\index{OpenMP clauses!use\_device\_ptr}
+\index{Accelerators!If clause}
+\index{Accelerators!Map clause}
+\index{Accelerators!Device clause}
+\index{Accelerators!Use\_device\_ptr clause}
+\begin{figure*}[!tb]
+\centering
+\begin{tabular}{|l l|}
+\hline
+\bciftargetdata & (C/C++)\\
+\bfiftargetdata & (Fortran)\\
+\bmap & \\
+\bcdevice & (C/C++)\\
+\bfdevice & (Fortran)\\
+\busedeviceptr & \\
+\hline
+\end{tabular}
+\caption{ \textbf{Clauses supported by the target data construct} -- \small
+          The \texttt{if} and \texttt{device} clauses are discussed in
+          Section~\ref{sec:06.which-device}. The \texttt{map} clause is discussed in
+          Section~\ref{sec:06.map-clause}.  The \texttt{use\_device\_ptr}
+          clause is discussed in Section~\ref{ssec:06.use_device_ptr-clause}.
+          }
+\label{figure:syntax-target-data-clauses}
+\end{figure*}
+
+On entry to and exit from a target data region, map-entry and map-exit phases
+occur, respectively, for the variables that appear in \code{map} clauses on the
+construct.  An original variable can have only one corresponding variable in an
+accelerator's device data environment (See Section~\ref{sec:06.map-clause}).
+When a variable is mapped by a \code{target}~\code{data} construct, all device
+constructs enclosed in the target data region that also map that variable will
+find a corresponding variable present in the accelerator's device data
+environment and use it. An example of a \code{target}~\code{data} construct
+that encloses two \code{target} constructs is shown in
+Figure~\ref{figure:chapter6-target-data-v1}.
+
+\begin{figure*}[!tbhp]
+\begin{verbatim}
+ 1 #define N (1024*1024)
+ 2 double A[N], B[N];
+ 3 extern double F(double * restrict);
+ 4 
+ 5 void G(double c, double d)
+ 6 {
+ 7   double e;
+ 8   #pragma omp target data map(B)
+ 9   {
+10     #pragma omp target map(B) map(always,from:A) \
+11                        firstprivate(c,d)
+12     for (int i=0; i<N; i++)
+13       A[i] =  B[i] * c + d;
+14 
+15     e = F(A);
+16 
+17     #pragma omp target map(B) firstprivate(e)
+18     for (int i=0; i<N; i++)
+19       B[i] =  B[i] / e;
+20 
+21   } // End of target data
+22 }
+\end{verbatim}
+\caption{ \textbf {Example of a target data construct} -- \small
+          The array variable \texttt{B} is mapped once to an accelerator
+          across two target regions.
+         }
+\label{figure:chapter6-target-data-v1}
+\end{figure*}
+
+The variable \code{B} is mapped by the \code{target}~\code{data} construct at line
+$8$, which encloses the two \code{target} constructs at lines $10$
+and $17$.  Storage is allocated in the accelerator's device data environment
+for the corresponding \code{B} variable, assigned the value of the host's
+original \code{B} variable, and its reference count is initialized to one.
+
+The host thread that encounters the \code{target}~\code{data} construct
+executes the code inside the target data region.  It encounters the \code{target}
+construct at line $10$, which maps \code{B}.  During its map-enter phase, \code{B} is found
+to already be present in the accelerator's device data environment and the
+reference count for \code{B} is incremented to two.  When the target region completes
+and during the map-exit phase, the reference count for \code{B} is decremented back
+to one.  \code{B} is not removed from the accelerator's device data environment.
+
+After the target region spanning lines $10-13$ has completed, the host thread
+continues executing the code in the target data region calling the function \code{F()} at
+line $15$ and then encountering the second \code{target} construct at line
+$17$.  The reference count for the variable \code{B} is again incremented at the
+entry to and decremented at the exit from the target region.  Because it still
+has a reference count greater-than zero, \code{B} remains mapped.
+
+Finally, the host thread continues execution after the second target region is
+complete and then completes the target region at line $21$.  During the map-exit
+phase for the variable \code{B}, its reference count is decremented to zero, the
+value of the accelerator's corresponding \code{B} variable is copied to the host's
+original \code{B} variable, and the storage for \code{B} on the accelerator is released.
+
+The variable \code{A} may be mapped by a \code{target data} or \code{target enter data} construct 
+before the function \code{G()} is called, and so it would be present in the accelerator's
+device data environment with a non-zero reference count.
+However, the updated value of \code{A} is always needed for the call to \code{F()} at line $15$.
+The \code{always} \emph{map-type} in the \code{map} clause on line $10$ ensures
+that, regardless of the reference count for \code{A}, after the associated target
+region completes, the value of the variable \code{A} on the host and the accelerator
+is always consistent (the same).  
+
+%-----------------------------------------------------------------------
+%------------------------- New subsection ------------------------------
+%-----------------------------------------------------------------------
+\subsubsection{The Target Update Construct}
+\label{ssec:06.target_update_construct}
+% Ruud - Changed to lowercase
+\index{OpenMP constructs!Target update}
+\index{Accelerators!Target update}
+
+\index{Mapped variable}
+If a variable is mapped by the \code{target}~\code{data} or
+\code{target}~\code{enter}~\code{data} constructs or by the
+\code{declare}~\code{target} directive, there are instances when a host thread
+might need to access the mapped variable.  The \code{target update} construct
+makes the value of a mapped variable the same on the host as on an
+accelerator.  It either assigns the value of the host's original variable to
+the accelerator's corresponding variable, or it assigns the
+value of the corresponding variable to the original variable. It makes the
+original and corresponding variables consistent.  The \code{target update}
+construct syntax in C/C++ and Fortran is given in
+Figure~\ref{figure:syntax-target-update-construct}.
+
+\begin{figure}[!tb]
+\centering
+\begin{tabular}{|l|}
+\hline
+\ompbctargetupdate \ompclauses  \\
+\hline
+\ompbftargetupdate \ompclauses \\
+\hline
+\end{tabular}
+\caption{ \textbf{Syntax of the target update construct in C/C++ and 
+               Fortran} -- \small
+          Make the value of a mapped variable consistent between the
+          host and an accelerator.
+          }
+\label{figure:syntax-target-update-construct}
+\end{figure}
+
+The clauses that are
+available on the \code{target}~\code{update} construct are shown in
+Figure~\ref{figure:syntax-target-update-clauses}.
+\index{OpenMP clauses!if}
+\index{OpenMP clauses!device}
+\index{OpenMP clauses!nowait}
+\index{OpenMP clauses!depend}
+\index{OpenMP clauses!to}
+\index{OpenMP clauses!from}
+\index{Accelerators!If clause}
+\index{Accelerators!Device clause}
+\index{Accelerators!Nowait clause}
+\index{Accelerators!Depend clause}
+\index{Accelerators!To clause}
+\index{Accelerators!From clause}
+\begin{figure}[!htbp]
+\centering
+\begin{tabular}{|l l|}
+\hline
+\bciftargetupdate & (C/C++)\\
+\bfiftargetupdate & (Fortran)\\
+\bcdevice & (C/C++)\\
+\bfdevice & (Fortran)\\
+\bnowait & \\
+\bdepend & \\
+\bto & \\
+\bfrom & \\
+\hline
+\end{tabular}
+\caption{ \textbf{Clauses supported by the target update construct} -- \small
+          The \texttt{if} and \texttt{device} clauses are discussed in
+          Section~\ref{sec:06.which-device}. The \texttt{map} clause is discussed in
+          Section~\ref{sec:06.map-clause}.  The \texttt{nowait} and \texttt{depend} clauses are
+          discussed in Section~\ref{sec:06.async-exec}.  The \texttt{to} and \texttt{from} clauses
+          are described below.
+          }
+\label{figure:syntax-target-update-clauses}
+\end{figure}
+
+\index{Mapped variable!Globally mapped}
+An example using the \code{target}~\code{update} construct is shown in
+Figure~\ref{figure:chapter6-target-update-v1}.  At line $4$ the array variable
+\code{B} is globally mapped by the \code{declare}~\code{target} directive (see
+Section~\ref{sec:06.declare-target-construct}).  
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 #define N (1024*1024)
+ 2 extern void update_boundary(double *, int, int);
+ 3 double B[N];
+ 4 #pragma omp declare target(B)
+ 5 
+ 6 void G(double *restrict B, double e, int n, int l)
+ 7 {
+ 8   #pragma omp target update from(B[0:l],B[n-1-l:l])
+ 9   update_boundary(B, n, l);
+10   #pragma omp target update to(B[0:1],B[n-1-l:l])
+11 
+12   #pragma omp target
+13   for (int i=0; i<n; i++)
+14     B[i] =  B[i] / e;
+15 }
+\end{verbatim}
+\caption{ \textbf {Example of the target update construct} -- \small
+          The array variable \texttt{B} is globally mapped.  The target update
+          construct is used make elements at the start and the end the
+          array \texttt{B} consistent between the host and the accelerator.
+         }
+\label{figure:chapter6-target-update-v1}
+\end{figure*}
+
+The \code{target}~\code{update} construct at line $8$ uses the \code{from}
+clause to assign the first and last \code{l} elements of \code{B} from the accelerator's
+corresponding \code{B} variable to the same elements in the host's original \code{B}
+variable.  It makes the array elements consistent between the host and the
+accelerator.  In this case, it is getting the values from the accelerator's
+version of \code{B}.
+
+Let us assume that the function \code{update\_boundary()} at line $9$ reads and then
+writes only the \code{l} first and last elements of \code{B}. It updates the boundaries
+of \code{B}.  When the host writes to the elements in \code{B}, those elements are no
+longer consistent between the host and the accelerator.
+
+The \code{target}~\code{update} construct at line $10$ then uses the \code{to}
+clause to assign the first and last \code{l} elements of \code{B} from the host to the
+sames elements in the accelerator's \code{B} variable.  It makes the array elements
+consistent, but this time it is using the values from the host's version of
+\code{B}.
+
+Notice that the \code{target}~\code{update} construct is executed by a host thread.
+The construct cannot appear in a target region.  This example used a variable
+that was globally-mapped, but any mapped variable may appear in a \code{to} or
+\code{from} clause (for example, one that was mapped by an enclosing target data
+region).
+
+%Suppose we extend the example in Figure~\ref{figure:chapter6-target-data-v1}.
+%We want to map the variable once across the two enclosed target regions.
+%However, we'd like to \emph{update} the variable $b$ with the host value
+%between the two target regions.  In Figure~\ref{figure:chapter6-target-update}
+%the \code{target update} construct with the \code{to} clause assigns the corresponding variable $b$ the value of the original variable $b$ after the valud of $b$ has been modified in the host data environment.
+%
+%TBD: Explain that this is a data race or at least undefined behavior without the \code{target update} construct.  If a write to a variable occurs on one device then another device cannot access that variable without an intevening target update construct to make the variable consistent across the two data environments.
+%
+%\begin{figure*}[!tbh]
+%\begin{verbatim}
+% 1 #pragma omp target data map(b)
+% 2 {
+% 3   #pragma omp target map(to:c,d,a)
+% 4   for (i=0; i<count; count++)
+% 5   {
+% 6     a[i] =  b[i] * c + d;
+% 7   }
+% 8
+% 9   e = F(a);
+%10   for (i=0; i<count; i+=step)
+%11      b[i] = G(b[i], step);
+%12
+%13   #pragma omp target update to(b)
+%11
+%12   #pragma omp target map(to:e)
+%13   for (i=0; i<count; count++)
+%14   {
+%15     b[i] =  b[i] + e;
+%16   }
+%17 } // End of target data
+%}
+%\end{verbatim}
+%\caption{ \textbf {Code fragment with a target update directive} -- \small
+%          The variable b is mapped to a device data environment once
+%          across two target regions and updated with the host value
+%          between the target regions.
+%         }
+%\label{figure:chapter6-target-update}
+%\end{figure*}
+
+%-----------------------------------------------------------------------
+%------------------------- New subsection ------------------------------
+%-----------------------------------------------------------------------
+\subsubsection{The Target Enter and Exit Data Constructs}
+\label{ssec:06.target-enter-and-exit-data-constructs}
+% Ruud - Changed to lowercase
+\index{OpenMP constructs!Target enter data}
+\index{OpenMP constructs!Target exit data}
+\index{Accelerators!Target enter data}
+\index{Accelerators!Target exit data}
+\index{Mapped variable}
+
+\index{Mapped variable!Map-enter phase}
+\index{Mapped variable!Map-exit phase}
+The \code{target}~\code{data} construct applies to a subsequent
+structured block.
+There is a map-enter phase that occurs on entry to and a map-exit phase that
+occurs on exit from a target data region.  
+However, sometimes the way we want to map variables does
+not fit a structured block model.  We want to map variables in an
+unstructured way. The target enter and exit data constructs provide this
+capability.  These are standalone constructs that are not associated with a
+statement or structured block of code.  When a host thread encounters the
+\code{target}~\code{enter}~\code{data} construct, a map-enter phase occurs for
+variables that appear in \code{map} clauses on the construct.  Similarly, a
+map-exit phase occurs for variables in \code{map} clauses on the
+\code{target}~\code{exit}~\code{data} construct when it is encountered. 
+
+The syntax for the \code{target}~\code{enter}~\code{data} and
+\code{target}~\code{exit}~\code{data} constructs in C/C++ and Fortran is
+shown in Figure~\ref{figure:chapter6-target-enter-exit-data-constructs}.  
+
+\index{Accelerators!Device data environment}
+\index{Device data environment}
+\begin{figure*}[!tb]
+\centering
+\begin{tabular}{|l|}
+\hline
+\ompbctargetenterdata \ompclauses  \\
+\ompbctargetexitdata \ompclauses  \\
+\hline
+\ompbftargetenterdata \ompclauses \\
+\ompbftargetexitdata \ompclauses \\
+\hline
+\end{tabular}
+\caption{ \textbf{Syntax of the target enter and exit data constructs in 
+               C/C++ and Fortran} -- \small
+          Standalone constructs for mapping variables to and from
+          an accelerator's device data environment.
+          }
+\label{figure:chapter6-target-enter-exit-data-constructs}
+\end{figure*}
+
+\index{Mapped variable}
+\index{Mapped variable!Map-type}
+\index{Mapped variable!Alloc map-type}
+\index{Mapped variable!To map-type}
+\index{Mapped variable!Delete map-type}
+\index{Mapped variable!From map-type}
+\index{Mapped variable!Release map-type}
+The clauses that are available on the constructs are shown in
+Figure~\ref{figure:chapter6-target-enter-exit-data-clauses}.  The
+\emph{map-types} that may appear in a \code{map} clause on a
+\code{target}~\code{enter}~\code{data} construct are restricted to \code{alloc}
+and \code{to}.  The \emph{map-types} that may appear in a \code{map} clause on
+a \code{target}~\code{exit}~\code{data} construct are restricted to
+\code{release}, \code{from}, and \code{delete}.  An explicit \emph{map-type}
+must be specified in \code{map} clauses on these constructs. A \code{tofrom}
+\emph{map-type} is not legal in a \code{map} clause on either construct.  The
+\code{delete} \emph{map-type} may appear only in a \code{map} clause on a
+\code{target}~\code{exit}~\code{data} construct.  It sets the reference count
+of a corresponding variable to zero and removes it from an accelerator.  Its
+purpose is to force the removal of a variable from an accelerator's device data
+environment no matter what its reference count is.
+
+\index{OpenMP clauses!if}
+\index{OpenMP clauses!map}
+\index{OpenMP clauses!device}
+\index{OpenMP clauses!nowait}
+\index{OpenMP clauses!depend}
+\index{Accelerators!If clause}
+\index{Accelerators!Map clause}
+\index{Accelerators!Device clause}
+\index{Accelerators!Nowait clause}
+\index{Accelerators!Depend clause}
+\begin{figure}[!tb]
+\centering
+\begin{tabular}{|l l|}
+\hline
+\bciftargetenterdata & (C/C++)\\
+\bciftargetexitdata & (C/C++)\\
+\bfiftargetenterdata & (Fortran)\\
+\bfiftargetexitdata & (Fortran)\\
+\bmap & \\
+\bcdevice & (C/C++)\\
+\bfdevice & (Fortran)\\
+\bnowait & \\
+\bdepend & \\
+\hline
+\end{tabular}
+\caption{ \textbf{Clauses supported by the target enter and exit data 
+               constructs} -- \small
+          The \texttt{if} and \texttt{device} clauses are discussed in
+          Section~\ref{sec:06.which-device}. The \texttt{map} clause is discussed in
+          Section~\ref{sec:06.map-clause}.  The \texttt{nowait} and \texttt{depend} clauses are
+          discussed in Section~\ref{sec:06.async-exec}.
+          }
+\label{figure:chapter6-target-enter-exit-data-clauses}
+\end{figure}
+ 
+\index{Array section}
+A C++ class declaration is shown in
+Figure~\ref{figure:chapter6-target-enter-exit-data} with two member functions
+\code{allocate()} and \code{release()}.  At line $9$, the
+\code{target}~\code{enter}~\code{data} construct executes a map-enter phase for
+a pointer-based array section. The pointer variable in the array section is
+\code{p}, and it contains the address of the memory that was dynamically allocated
+at line $6$.  The \code{alloc} \emph{map-type} indicates that the corresponding
+memory for the array section on the accelerator is not initialized with any
+value.
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+ 1 class myArray {
+ 2   int length;
+ 3   double *ptr;
+ 4 
+ 5   void allocate(int l) {
+ 6     double *p = new double[l];
+ 7     ptr = p;
+ 8     length = l;
+ 9     #pragma omp target enter data map(alloc:p[0:length])
+10   }
+11 
+12   void release() {
+13     double *p = ptr;
+14     #pragma omp target exit data map(release:p[0:length])
+15     delete[] p;
+16     ptr = 0;
+17     length = 0;
+18   }
+19 };
+\end{verbatim}
+\caption{ \textbf {C++ Example of the target enter and exit data constructs} -- \small
+          The \texttt{allocate()} method will execute a map-enter phase for the
+          dynamically allocated memory pointed to by \texttt{p}.  The \texttt{release()}
+          method will execute the corresponding map-exit phase.
+         }
+\label{figure:chapter6-target-enter-exit-data}
+\end{figure*}
+
+\index{Array section!Pointer-based}
+At line $16$, in the \code{release()} member function, the
+\code{target}~\code{exit}~\code{data} construct executes a map-exit phase for a
+pointer-based array section.  It is expected that the class member \code{ptr} is
+still pointing at the memory allocated in the \code{allocate()} member function.  The
+locally scoped pointer variable \code{p} is assigned the value of \code{ptr} and then
+used in the pointer-based array section.  The \code{release} \emph{map-type} in the
+\code{map} clause frees the corresponding storage for the array section in the
+accelerator's device data environment.  The corresponding array section is not
+copied back to the original host memory.
+
+Notice that the array sections in both \code{map} clauses are examples of
+pointer-based array sections where only the pointed-to memory is mapped and not
+the pointer variable itself.  The locally scoped \code{p} variables are required
+because the C++ \code{this->ptr} is an lvalue expression, not a pointer variable.
+The variable that appears in an array section must be an array name or a
+pointer variable.
+
+%It is evident that the type of programming pattern shown in
+%Figure~\ref{figure:chapter6-delete} does not lend itself to the
+%structured block requirement of the \code{target}~\data{data} construct.  
+
+An example using the \code{delete} \emph{map-type} is shown in
+Figure~\ref{figure:chapter6-delete-maptype}.  Line $5$ is executed zero or more
+times depending on the value of the variable \code{v}.  Each time a host thread
+executes the \code{target}~\code{enter}~\code{data} construct, a map-enter phase
+occurs for \code{S}.  The first map-enter phase allocates storage, initializes
+the corresponding variable \code{S} with the value of the host's original \code{S}
+variable, and sets the corresponding variable's reference count to one.  Each
+subsequent map-enter phase increments the reference count.  The
+\code{map} clause on the \code{target}~\code{exit}~\code{data} construct on
+line $8$ uses the \code{delete} \emph{map-type} to set the reference count of \code{S} to
+zero.  The variable \code{S} is then removed from the accelerator's device data
+environment.  The value of \code{S} on the host after line $9$ is undefined since
+the \code{delete} \emph{map-type} does not copy the corresponding variable back
+to the original host variable.
+
+\begin{figure*}[!tb]
+\begin{verbatim}
+1 void G(char S[128], int v)
+2 {
+3   extern int mutate(char *s, int);
+4   while (!v) {
+5     #pragma omp target enter data map(to:S)
+6     v = mutate(S, v);
+7   }
+8   #pragma omp target exit data map(delete:S)
+9 }
+\end{verbatim}
+\caption{ \textbf {Example of the delete map-type} -- \small
+          Regardless of its reference count, remove \texttt{S} from an     
+          accelerator's device data environment.
+         }
+\label{figure:chapter6-delete-maptype}
+\end{figure*}
+
+When a variable appears in a \code{map} clause on a
+\code{target}~\code{exit}~\code{data} construct and that variable is not
+present in the accelerator's device data environment, then it is ignored
+by the construct.  For example, in the case where the variable \code{v} is 0 on
+entry to the function, the \code{target}~\code{exit}~\code{data} construct at
+line $8$ does nothing.
+
+The \code{target}~\code{enter}~\code{data} and \code{data}~\code{exit}~\code{data} 
+constructs have another potential benefit.  Using the
+\code{nowait} clause, the constructs may execute as
+deferrable tasks (see section~ \ref{sec:06.async-exec}).  This enables the
+possibility of asynchronously executing map-enter and map-exit data transfers
+while the host thread continues executing other tasks in parallel.
 
