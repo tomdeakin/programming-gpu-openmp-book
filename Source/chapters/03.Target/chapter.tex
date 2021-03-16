@@ -21,6 +21,7 @@ Recalling the matrix multiplication example from the previous chapter shown agai
 \begin{CodeExample}%
 {\textbf{Matrix Multiplication program} --\small This program will multiply two matrices $A$ and $B$
 to produce a third $C$ which has been set to zero, running on the target device.
+All arrays have been previously allocated in stack memory.
 }%
 {code:matmulTarget}
 \begin{lstlisting}
@@ -171,6 +172,12 @@ int main()
 When execution of the target region begins on the device, the execution only occurs in a single thread.
 This means the target device will execute the target region in serial.
 Chapter~\ref{chapter:parallelism} will show the constructs needed to run in parallel on the device.
+
+For the matrix multiplication example shown at the start of this chapter (Figure~\ref{code:matmulTarget}), execution is transferred in the same way.
+The host enters the function, and encounters the \Code{target} construct.
+Execution is then transferred to the device for the target region scope: the end of the closely nested \Code{for}-loops.
+Once execution has finished, it reverts back to the host to continue execution, and return from the function in the example.
+
 
 There is another outstanding question.
 How does the data move onto the device?
@@ -362,6 +369,13 @@ This means OpenMP will allocate memory on the device, copy the data from the hos
 The process is reversed at the end of the target region: the data is copied back to the host variables and then deallocated.
 The allocation/deallocation follows reference counting semantics.
 
+We look back again at our matrix multiplication in Figure~\ref{code:matmulTarget}.
+The arrays \Code{A}, \Code{B} and \Code{C} have been allocated on the stack in the calling host program.
+The \Code{matmul} function definition includes the sizes of the arrays.
+These arrays will be mapped to the device when the \Code{target} region is encountered.
+When execution finishes on the device, they will be mapped from the device back to the host again.
+The \Code{C} array on the host will contain the result of the matrix multiplication, which was performed on the device.
+
 
 
 \subsection{Warning: heap arrays and pointers - reference later chapter}
@@ -371,6 +385,24 @@ The allocation/deallocation follows reference counting semantics.
   \item This section says that we must do something explicit for everything not covered by the implicit rules.
   \item Examples of those would be heap arrays, and data-structures with pointers.
 \end{itemize}
+What happens if our matrix multiplication function didn't use stack allocated arrays?
+We might have written the function definition using pointers, for arrays allocated on the heap (using \Code{malloc()}):
+\begin{verbatim}
+void matmul(int Ndim, int Mdim, int Pdim, float *A, float *B, float *C);
+\end{verbatim}
+
+OpenMP doesn't know how much data is at the end of these pointers.
+With the target directive as shown in Figure~\ref{code:matmulTarget}, the data in the arrays will not be copied to and from the device in this case.
+We had better hope the data was already there!
+We will look at how to make sure that the data is copied in Chapter~\ref{chapter:memory}.
+
+The variables \Code{A}, \Code{B}, and \Code{C} are pointers, and there are some implicit rules in OpenMP for them.
+They are mapped as zero-length arrays.
+
+In plain terms, the pointer itself is translated, but the target of the pointer doesn't move.
+This means we can use the pointer inside the target region, but dereferencing it is might be a bad idea.
+
+Reference counting?
 
 
 \section{Example: Walking through vector addition}
