@@ -9,17 +9,38 @@
 \chapter{Running on a target device}
 \label{chapter:target}
 
-
-TODO: use matmul running example from chapter 2.
-
-We will walk through the important steps for running on a target device such as a GPU with OpenMP over the next three chapters.
-We break down the task into three parts: transferring execution from the host to the device, running in parallel on the device once execution is happening there, and finally managing the movement of data between the host and device.
-When thinking about heterogeneous programming thinking of these different aspects can often make things easier to grapple with.
-The main divide surrounds dealing with parallelism and memory as two distinct concepts.
-
+As seen with the matrix multiplication example at the end of the previous chapter, there is a long directive we can add to our loops to run on the target device.
+We will break this big directive down and consider the different parts of the following three chapters.
+It is divided into three parts: transferring execution from the host to the device, running in parallel on the device once execution is happening there, and finally managing the movement of data between the host and device.
 OpenMP has different constructs and clauses for performing each of these tasks.
+When programming heterogeneous devices, particularly GPUs, it is often best to think about these different aspects separately to make things easier to grapple with.
+
 This chapter will cover the first of these topics, along with the implicit data movement rules; with this knowledge we'll have a first program running on the device, although it won't be very fast.
-Parallelism is discussed in Chapter~\ref{chapter:parallelism} and the tools to control the memory movement in more optimal ways are introduced in Chapter~\ref{chapter:memory}.
+Recalling the matrix multiplication example from the previous chapter shown again in Figure~\ref{code:matmulTarget}, this chapter will look what happens for the \Code{#pragma omp target} part of the directive.
+
+\begin{CodeExample}%
+{\textbf{Matrix Multiplication program} --\small This program will multiply two matrices $A$ and $B$
+to produce a third $C$ which has been set to zero, running on the target device.
+}%
+{code:matmulTarget}
+\begin{lstlisting}
+void matmul(int Ndim, int Mdim, int Pdim,
+            float A[Ndim][Pdim], float B[Pdim][Mdim], float C[Ndim][Mdim]) {
+
+  #pragma omp target teams distribute parallel for simd collapse(2)
+  for (int i = 0; i < Ndim; i++) {
+    for (int j = 0; j < Mdim; j++) {
+      for(int k = 0; k < Pdim; k++) {
+        /* C(i,j) = sum(over k) A(i,k) * B(k,j) */
+	C[i][j] += A[i][k] * B[k][i];
+      }
+    }
+  }
+}
+\end{lstlisting}
+\end{CodeExample}
+
+The remaining part of the directive is discussed in the next chapter on parallelism (Chapter~\ref{chapter:parallelism}).
 
 
 \section{Host/device model}
