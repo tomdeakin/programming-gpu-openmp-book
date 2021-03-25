@@ -64,10 +64,9 @@ This means that data in our programs will be stored either in host memory or dev
 OpenMP provides us with implicit rules for automatic data transfer along with explicit controls for the transfer of data between these memory spaces.
 If the hardware supports it, OpenMP can also operate with a unified view of memory where the whole system sees a single memory space available to all; a topic we discuss in chapter~\ref{chapter:memory}.
 
-In figure~\ref{fig:host_device} we show a host with three connected target devices.
+In Figure~\ref{fig:host_device} we show a host with three connected target devices.
 
 \begin{figure}[t]
-\label{fig:host_device}
 \centerline{\includegraphics[width=200pt]{\ArtDir/host_device.pdf}}
 \caption[The OpenMP host/device model consits of a host processor (typically a CPU) where execution begins, with zero or more attached target devices.
 Data and execution can be offloaded from the host to the target device.
@@ -75,6 +74,7 @@ The memory spaces are distinct.]
 {The OpenMP host/device model consists of a host processor (typically a CPU) where execution begins, with zero or more attached target devices.
 Data and execution can be offloaded from the host to the target device.
 The memory spaces are distinct.}
+\label{fig:host_device}
 \end{figure}
 
 
@@ -97,7 +97,9 @@ This means we can use the same mechanisms for programming attached target device
 
 One of the devices will be chosen by the implementation to be the \emph{default device}.
 This is the device that will be used unless another is explicitly chosen.
-In the main body of this book we will show code which will run on the default device.
+The device used can be chosen using clauses or calls to APIs.
+In general we will not choose a device and so the majority of code we show throughout this book will run on the default device.
+
 In Section~\ref{sec:multi_gpu} we will explore how to use OpenMP to program systems with multiple devices, where devices will be chosen using this simple numbering scheme above.
 
 This model of a host with some attached devices, each with their own separated memory space, is a model commonly found in heterogeneous programming models.
@@ -229,6 +231,9 @@ The structured block between the curly braces is the target region offloaded to 
 
 The implicit rules for what variables are copied at this stage are limited to scalars, stack arrays and structures (\Code{struct}) with complete types.
 We will explain the most commonly occurring types of variables and what happens automatically at the beginning and end of a target region.
+The copying of data to and from the target device is known as \emph{mapping}.
+We might also say a variable is \emph{mapped}.
+There are a number of ways a variable can be mapped, and we will go through some common examples here.
 The full details can be found in \S2.21.7 of the OpenMP 5.1 specification.
 
 Data allocated on heap or free store must be explicitly copied, and we will show how to do this later in Chapter~\ref{chapter:memory}.
@@ -244,9 +249,15 @@ The main thing to remember is that any data referred to with a pointer \emph{wil
 %%   \item {\bf Not} copied back to the host at end of target region.
 %% \end{itemize}
 
-Programs usually contain lots of scalar variables, and following usual C coding styles, these are often declared in line, close to where they are used.
-If they are declared before the target region, then OpenMP will implicitly make those variables available for use inside the target region.
+Programs perform some operations on data, and that data can take various forms.
+Usually programs contain lots of scalar variables.
+These variables hold a single piece of data, and they are given a name.
 
+For OpenMP programs, scalar variables are just as they are in the base language of the program, be it C, C++ or Fortran.
+For a C program therefore, scalar variables will have one of the basic data types from the C language: \Code{char}, \Code{int}, \Code{float}, \Code{double}, etc.
+(A scalar variable can also be a pointer --- \Code{int *} --- however we will discuss these later.)
+
+OpenMP implicitly makes scalar variables available inside the target region, so that they are automatically copied to the device when the target construct is encountered.
 For example, consider the program in Figure~\ref{code:scaleTarget}.
 This code multiplies the array \Code{A} by a scalar floating point number \Code{alpha}.
 We will deal with how \Code{A} appears on the device in a moment.
@@ -274,20 +285,21 @@ int main()
 \end{lstlisting}
 \end{CodeExample}
 
-The data in scalar variables is copied to the device on entry to the target region.
-OpenMP maps them as \Code{firstprivate} (recall Section~\ref{sssec:data_sharing}).
+The data held in scalar variables is copied to the device on entry to the target region.
+OpenMP transfers them as \Code{firstprivate} (recall Section~\ref{sssec:data_sharing}).
 This means that all parallel threads which will run on the target device have their own copy of the variable.
-It also means that the variable is initialized with the original value.
+It also means that the variable is initialized with the original value (\Code{firstprivate} rather than \Code{private} is used so the value of the variable is retained).
 This is important: we know our \Code{alpha} variable will contain the number \Code{2.0} as this is what the variable was set to on the host before it encountered the target construct.
 
 With scalar variables being mapped from the host to the target device as \Code{firstprivate} we much also consider what happens to those variables at the end of the target region.
-As with all \Code{private} variables, the value of the original variable (the one on the host) will become undefined outside of the associated construct.
+As with all \Code{private} (and by extension \Code{firstprivate}) variables, the value of the original variable (the one on the host) will become undefined outside of the associated construct.
 Here this means that once the target region is executed on the device and control is returned back to the host, the value of \Code{alpha} should be considered undefined.
 
 We can extend this further with the small snippet of code in Figure~\ref{code:firstprivateTarget}.
 The \Code{alpha} variable will be copied to the device at the start of the target region on line 7 of the program.
 On line 9, the copy of the variable on the device is updated to a new value (\Code{1.0}), but this update will not necessarily be seen on the host device.
 We have no way of knowing what the value shown by the \Code{printf} on line 12 will be.
+By mapping scalar variables as \Code{firstprivate} any updates to those variables will not be seen by the host.
 
 \begin{CodeExample}%
 {\textbf{Forgotten value program} --\small This program sets a \Code{firstprivate} variable
@@ -311,17 +323,31 @@ int main()
 \end{lstlisting}
 \end{CodeExample}
 
-By mapping scalar variables as \Code{firstprivate} any updates to those variables will not be seen by the host.
+For those of you who may be familiar with the kernel-style programming language of OpenCL, passing scalar variables as private variables is equivalent to passing them directly as arguments to the kernels.
+For some context, imagine the target region was outlined into a new function; what arguments would that function take?
+For scalar variables we can think as if they are passed by value to this outlined function.
+
+
+Lets look back at the matrix multiplication program from Figure~\ref{code:matmulTarget}.
+Of all the variables in this snippet of code, there are three scalar variables declared before the target construct: \Code{Ndim}, \Code{Mdim} and \Code{Pdim}, the sizes of the matrices.
+These variables will be mapped \Code{firstprivate}, and a copy of the data held in the variables will be transferred to the device.
+These variables are not changed inside the target region, but if they were to be their new values would be lost at the end of the target region.
+
+The loop iteration variables are declared \emph{inside} the target region and so follow the usual scoping rules for all OpenMP programs.
+They need no special treatment.
+The other variables defined before the target construct in our matrix multiplication program are not scalar variables --- the are the matrices stored on the stack as arrays.
+We will come to what happens to them in the next section.
 
 In summary, scalar variables will be copied automatically to the target device at the start of the target region.
-They will be initialized on the device with the value on the host.
-But the original variable on the host will no longer contain valid data from this point onwards so it must be reset.
+Scalar variables are those which have a basic type in the base language.
+They will be initialized on the device with the value they held on the host prior to encountering the target construct.
+Any updates to the variable will not be made available to the host because it is private.
 
 This behaviour also means that we need a different mechanism to return scalar values from the device back to the host.
 We will show how this is done in Chapter~\ref{chapter:memory}.
 
 
-\subsection{Stack arrays}
+\subsection{Stack arrays and derived types}
 
 %% Original notes
 %% \begin{itemize}
@@ -343,6 +369,11 @@ Now the compiler knows how much memory to allocate for variables of that type.
 We may commonly run into arrays of numbers in codes that we want to run on the device.
 For now, we assume they are allocated on the stack, being declared in the code using an array type with a known extent.
 Later we will deal with arrays of unknown size which are allocated on the heap and accessed via pointers.
+
+Arrays allocated on the stack are variables, but they are not scalar variables as they contain other variables.
+We can use \Code{struct} to define a composite data type made up of other data types.
+Although these are not scalar types, OpenMP will transfer the data held in these variables automatically.
+The behaviour is different to scalars which are mapped \Code{firstprivate}.
 
 Non-scalar variables with complete types will be copied to the device at the start of the target region, \emph{and} copied back to the host at the end of the target region.
 We can update the device copy of that data inside the target region, and the updated values will then be retained.
@@ -369,6 +400,51 @@ This means OpenMP will allocate memory on the device, copy the data from the hos
 The process is reversed at the end of the target region: the data is copied back to the host variables and then deallocated.
 The allocation/deallocation follows reference counting semantics.
 
+Structures containing multiple types are also copied to and from the device at the start and end of the target region respectively.
+The variable along with the component parts are all mapped the same way.
+Including just the structure variable on the target construct will automatically map the structure members too.
+
+
+\begin{CodeExample}%
+{\textbf{Structure mapping program} --\small This program shows the mapping of a C \Code{struct} variable.
+}%
+{code:structMapping}
+\begin{lstlisting}
+#include <math.h>
+
+struct complex {
+  float real;
+  float imag;
+};
+
+int main()
+{
+   struct complex data = {.real = 1.0f, .imag = 2.0f};
+   float len[1];
+
+   #pragma omp target
+   {
+     len[0] = sqrtf(data.real * data.real + data.imag * data.imag);
+   }
+
+}	  
+\end{lstlisting}
+\end{CodeExample}
+
+
+Figure~\ref{code:structMapping} shows a structure to hold two single-precision floating point numbers, which we use to represent a complex number.
+As a slightly contrived example, we wish to use the target device to complete the absolute value of the complex number and store the result in an array stored on the stack.
+
+We use an array here so that the value is automatically copied back, just as it is for the vector addition program.
+If we used a scalar variable instead, it would be implicitly mapped \Code{firstprivate} and the value we set it to inside the target region would be lost.
+By using an array (of length one), OpenMP will copy the new value back to the host automatically at the end of the target region.
+
+The \Code{struct complex} is made up of other variables (two \Code{float}s), and is a complete type because it is made up of types of a known size.
+As such, the \Code{data} variable will be copied to the device when the target construct is encountered on line 13 and copied back at the end of the target region on line 16.
+
+If the structure contained a pointer then the structure will still be mapped in the same way as described.
+However the target of the pointer will not be nor will the pointer be translated into the device memory equivalent.
+
 We look back again at our matrix multiplication in Figure~\ref{code:matmulTarget}.
 The arrays \Code{A}, \Code{B} and \Code{C} have been allocated on the stack in the calling host program.
 The \Code{matmul} function definition includes the sizes of the arrays.
@@ -377,14 +453,15 @@ When execution finishes on the device, they will be mapped from the device back 
 The \Code{C} array on the host will contain the result of the matrix multiplication, which was performed on the device.
 
 
+\subsection{Pointers and arrays on the heap}
+%Warning: heap arrays and pointers - reference later chapter}
+%\begin{itemize}
+%  \item We don't introduce the map clause yet.
+%  \item This is done in Chapter~\ref{chapter:memory}.
+%  \item This section says that we must do something explicit for everything not covered by the implicit rules.
+%  \item Examples of those would be heap arrays, and data-structures with pointers.
+%\end{itemize}
 
-\subsection{Warning: heap arrays and pointers - reference later chapter}
-\begin{itemize}
-  \item We don't introduce the map clause yet.
-  \item This is done in Chapter~\ref{chapter:memory}.
-  \item This section says that we must do something explicit for everything not covered by the implicit rules.
-  \item Examples of those would be heap arrays, and data-structures with pointers.
-\end{itemize}
 What happens if our matrix multiplication function didn't use stack allocated arrays?
 We might have written the function definition using pointers, for arrays allocated on the heap (using \Code{malloc()}):
 \begin{verbatim}
@@ -401,8 +478,6 @@ They are mapped as zero-length arrays.
 
 In plain terms, the pointer itself is translated, but the target of the pointer doesn't move.
 This means we can use the pointer inside the target region, but dereferencing it is might be a bad idea.
-
-Reference counting?
 
 
 \section{Example: Walking through vector addition}
@@ -505,6 +580,8 @@ int main()
 
 \section{Advanced: Corresponding Variables}
 Into specification details, explain how the term corresponding variable.
+Reference counting.
+
 
 %-----------------------------------------------------------------------
 %------------------------- From Next Step ------------------------------
