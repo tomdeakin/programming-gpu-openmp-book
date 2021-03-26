@@ -501,6 +501,9 @@ The input arrays here are initialized to \Code{1.0} and \Code{2.0} for every arr
 The program sets the elements of the output array to their sum: $1+2=3$.
 
 Line 2 sets the size of the arrays.
+\begin{verbatim}
+2: #define N 4000
+\end{verbatim}
 This is done by the C pre-processor just before compile time.
 Every reference to \Code{N} in the program is replaced by the value \Code{4000}.
 We do this so that we're able to allocate our three arrays on line 8.
@@ -511,10 +514,24 @@ OpenMP takes care of stack arrays for us.
 
 The host initalizes the arrays to their starting values on lines 10--12.
 
+\begin{verbatim}
+10:   for (int i = 0; i < N; i++) {
+11:     A[i] = 1.0; B[i] = 2.0; C[i] = 0.0;
+12:   }
+\end{verbatim}
+
 So far we've just written a standard serial C program.
 But on line 16 we have our first (and only) OpenMP construct: the \Code{target} directive.
-This construct is associated with a the structred block of code underneath it, which forms the target region.
+This construct is associated with the structured block of code underneath it, which forms the target region.
 The target region in our vector addition program is the \Code{for} loop on lines 17--19.
+\begin{verbatim}
+14:   // Transfer execution to the device
+15:   // Also map arrays to and from the device
+16:   #pragma omp target
+17:   for (int i = 0; i < N; i++) {
+18:      C[i] = A[i] + B[i];
+19:   }
+\end{verbatim}
 The target region will be executed on the target device.
 The target region will run in serial on the target device because we have not exposed any parallelism through the various constructs available in OpenMP for expressing the concurrency.
 The for-loop then is run in sequential order on the device.
@@ -533,11 +550,16 @@ The three arrays exist on the host, and are found in the stack.
 They are of a known extent, and so form a complete type.
 OpenMP will therefore implicitly map these arrays to the device for us.
 This will happen on line 16 as part of the target construct.
-Space will be allocated in the device data ennvoronment (in the device memory space) and the values of these arrays as found on the host will be copied over to these new device arrays.
+Space will be allocated in the device data environment (in the device memory space) and the values of these arrays as found on the host will be copied over to these new device arrays.
 This means both the host and device have identical copies of the three arrays just before execution is transferred.
 
 Once this data is transferred, execution is transferred.
 The device runs lines 17--19.
+\begin{verbatim}
+17:   for (int i = 0; i < N; i++) {
+18:      C[i] = A[i] + B[i];
+19:   }
+\end{verbatim}
 
 After the execution of the for-loop has finished, the target region ends, and execution must be returned to the waiting host.
 Just before this happens, the target construct might copy back any variables that were implicitly mapped.
@@ -556,7 +578,7 @@ to produce a third vector, running on the target device.
 {code:vaddTargetWalkthrough}
 \begin{lstlisting}
 // Array length, defined at compile time
-#define N 4000;
+#define N 4000
 
 int main()
 {
