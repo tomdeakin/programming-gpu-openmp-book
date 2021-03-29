@@ -93,7 +93,7 @@ here, we will simplify the problem by thinking in terms of three basic processor
 
 \begin{itemize}
 \item  the CPU
-\item  the SIMD Unit
+\item  the SIMD Vector Unit
 \item  the GPU
 \end{itemize}
 
@@ -148,7 +148,7 @@ When data access patterns are regular and the data needed by a core is likely to
 the latencies observed by the human using the chip are low.  However, if the data needed by a program is
 not in the cache, latencies fall off and the chip can't keep up with the demands of interactive computing.
 
-One solution to this problem is for the CPU to exploit the concurrency in the workflows we run.
+One solution to this problem is for the CPU to exploit the concurrency in the workflows run on the system.
 The term \emph{concurrency}\index{Concurrency} is seriously abused in computer science literature so we will
 take the time to define it here.   Consider the work carried out in a program.   We can break this work into 
 distinct units of work.  When multiple units of work (usually called a ``thread'' on a CPU) are 
@@ -159,7 +159,7 @@ each thread a small block of time to execute moving quickly from one thread to t
 If each thread is given an equal chance
 to become active and make forward progress through its work, we say the scheduling is \emph{fair}.  With fair scheduling\index{Fair scheduling}
 and concurrent threads, the system swaps from one thread to the next so it appears to the user that all the threads
-are making forward progress at the same time (assuming they are blocked on a resource).   This in essence makes the
+are making forward progress at the same time (assuming they are not blocked and waiting on a resource).   This, in essence, makes the
 software expressed in terms of concurrent threads appear more responsive and therefore supports interactive use.
 
 All modern operating systems and most commercial-grade applications running on CPUs utilize multiple threads to
@@ -175,7 +175,7 @@ responsive computing, so work can proceed from one unit-of-work while another is
 memory).  Parallelism is only at play when multiple units-of-work are \emph{actually} making progress at the same time.  We will have 
 much more to say about concurrency later when we talk about synchronization between units-of-work on a GPU.
 
-\subsection{SIMD and the vector unit}
+\subsection{The SIMD Vector Unit}
 
 We don't often think about it, but it takes considerable time for a computer to pull instructions from memory
 and decode them for execution.  Wouldn't it be nice if that effort could be amortized over multiple data 
@@ -185,7 +185,7 @@ SIMD\index{SIMD} or ``Single Instruction Multiple Data''\index{Single Instructio
 
 Problems that can exploit SIMD parallelism occur when they can be expressed as a sequence of
 operations that operate on dense arrays of data.   These problems are common enough that SIMD units optimized
-for vectors have become one of the standard parallel building blocks of parallel architectures.  To see
+for vectors have become one of the standard building blocks of parallel architectures.  To see
 how they are used, it helps to consider an example.  Consider the loop in figure~\ref{code:vaddLoop}.  
 We add vector $A$ to vector $B$ to produce the result $C$.   
 
@@ -201,8 +201,10 @@ to produce a third vector.
 int main()
 {
 
-   float A[N], B[N], C[N];
-
+   double A[N], B[N], C[N];
+     
+   init(A,B,C); // initialize arrays ... code not shown
+   
    for (int i = 0; i < N; i++) {
       C[i] = A[i] + B[i];
    }
@@ -213,8 +215,8 @@ int main()
 
 A computational element called a \emph{vector unit}
 will use SIMD parallelism to execute blocks of instructions between elements of these three arrays. The 
-first step is to define the blocks by unrolling the loop.  Let's consider a case where our vector unit is 128 bits
-wide so we can process four 32-bit floating point operations in the vector unit.  We therefore 
+first step is to define the blocks by unrolling the loop.  Let's consider a case where our vector unit is 256 bits
+wide so we can process four 64-bit floating point operations in the vector unit.  We therefore 
 unroll the loop by four as shown in figure~\ref{code:vaddUnroll}.  
 
 \begin{CodeExample}%
@@ -229,7 +231,9 @@ simplicity, we assume that N can be evenly divided by 4.
 
 int main()
 {
-   float A[N], B[N], C[N];
+   double A[N], B[N], C[N];
+   
+   init(A,B,C); // initialize arrays ... code not shown
    
    assert(N%4==0);
 
@@ -248,8 +252,55 @@ to do all the operations in the loop body.   That's one instruction to complete 
 per clock-cycle of the vector unit.  When the workflow in a program maps onto a vector unit, the performance 
 benefits are substantial.
 
+\begin{CodeExample}%
+{\textbf{Vector Add program with vector intrinsics} --\small We use vector intrinsics to compute 
+4 additions in parallel across the lanes of our SIMD vector unit. 
+}%
+{code:vaddUnroll}
+\begin{lstlisting}
+#include <assert.h>
+#include <immintrin.h>
+#define N 4000;
+
+int main()
+{
+   float A[N], B[N], C[N];
+   __m256d Avec, Bvec, Cvec;    
+     
+   init(A,B,C); // initialize arrays ... code not shown
+   
+   assert(N%4==0);
+
+   for (int i=0; i<N; i=i+4){
+
+       Avec = _mm256_loadu_pd(&A[i]);
+       Bvec = _mm256_loadu_pd(&B[i]);
+       Cvec = _mm256_add_pd(Avec,Bvec);
+      _mm256_storeu_pd(&C[i],Cvec);
+   }
+ }
+\end{lstlisting}
+\end{CodeExample}
+
+Advanced Vector Extensions (AVX) introduced in 2008.   compile as \Code{gcc -mavx}.  The two character "pd" means packed double.
+\begin{itemize}
+\item \Code{ __m256d}: The type for the 256 bit wide vector register to hold (in our case) four 64-bit floating point numbers.
+\item \Code{_mm256_loadu_pd()}:  loads 4 doubles from an address that may not be aligned on a 32 byte boundary.
+\item \Code{_mm256_storeu_pd()}:  stores 4 doubles to an address that may not be aligned on a 32 byte boundary.
+\item \Code{_mm256_add_pd()}: adds  two vector registers holding floating point numbers to return 
+their sum in another vector register.
+\end{itemize}
+
+The above operations assume the data is unaligned.  For best efficiency, the arrays \Code{A, B, C} should be 
+aligned to a 32 byte boundary.  We can do this by allocating the memory for these arrays using the following statement.
+\begin{verbatim}
+double *A = (double *)aligned_alloc(32,N*sizeof(double));
+\end{verbatim}
+
+
+
 Most programmers do not write vector code directly.  The compiler unrolls the loop, organizes the instructions for SIMD
-execution, and replaces them with specialized vector instructions.  In an idea world, that would be good enough. Indeed,
+execution, and replaces them with specialized vector instructions.  In an ideal world, that would be good enough. Indeed,
 for a simple case such as vector addition, the compiler does quite well.  In practice, however, codes do not so directly map
 onto vector instructions and the exploitation of the vector units are often quite poor.
 To help the compiler with transformations needed to support vectorization (such as loop unrolling) OpenMP added
@@ -257,21 +308,79 @@ a SIMD construct and a collection of clauses\footnote{SIMD in the context of Ope
 \emph{Using OpenMP: the Next Step}, published by MIT Press.}.
 
 Vector units for SIMD parallelism are rapidly evolving.  The widths of the vector units are commonly 256 on lower-end
-CPUs and have climbed up to 512 or even 1024 for high-end server CPUs.  There is no reason the concept must 
+CPUs and have climbed up to 512 or even 1024 for CPUs used in high-end servers.  There is no reason the concept must 
 be restricted to one dimension vectors.   SIMD units for two dimension arrays have appeared on the market optimized
 for the matrix-multiply operations common inside Deep Learning pipelines. 
 
 
 \subsection{The GPU}
 
-%
-%  TGM:  This section needs to be edited to fit with the others.   
-%
+A program defines work to be carried out by a computer.  The work is divided into distinct units or ``work-items''.  A GPU
+is a processor optimized for throughput, that is, the time needed to complete work on the full set of work-items.
+The latency for any particular work-item may be highly variable and much longer than other items in the set.
+The concurrency across the set of work-items, however, is utilized to execute them in parallel and complete the 
+full set as quickly as possible.  We show a block diagram for a typical (and somewhat idealized) 
+GPU in figure~\ref{figure:GPU}.
 
-I will write this section in the style of the other two.
+\begin{figure}[!htbp]
+\centerline{\includegraphics[width=400pt]{\ArtDir/GPU}}
+\caption{A simplified block diagram of a typical GPU.  The computing within the GPU happens in the
+SIMD lanes of a multithreaded SIMD Processor which in addition to the SIMD lanes often includes
+load/store and special function units (not shown in this diagram).   The multithreaded SIMD processors
+are organized hierarchically around caches and on-device GPU memory.}
+\label{figure:GPU}
+\end{figure}
 
-I will show a schematic of a GPU.  The one Tom wrote is OK, but it doesn't bring out the large number of PEs 
-in a modern GPU.   So I will be creating a different diagram.
+GPUs for ``general purpose programming'' (GPGPU) are young compared to CPUs.  
+While the terms used with CPUs are well established,
+the terminology of GPUs varies widely between different GPU vendors and programming
+languages.  To help pull the concepts together, we review the terminology from three
+different sources in table~\ref{table:GPUjargon}: Hennessy and 
+Patterson\footnote{Computer Architecture: A Quantitative Approach, Sixth Edition, 
+John L. Hennessy and David A. Patterson, Morgan Kaufmann, 2019.}, Nvidia's CUDA, 
+and OpenCL from the Khronos Group.
+
+\begin{table}[!htbp]
+\centering
+\caption{\textbf{GPU Terminology: } 
+-- \small
+GPU Terminology Hennesy and Patterson, CUDA, and 
+OpenCL.   The one uncertain match is the last row;
+a sub-group usually corresponds to a warp, but a conforming implementation of OpenCL 
+may use a subgroup to refer to smaller blocks of work-items that make up a warp.}
+\label{table:GPUjargon}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Hennessy and Patterson}  & \textbf{CUDA} & \textbf{OpenCL} \\
+\hline
+%============================================================
+Multithreaded SIMD Processor    & Streaming multiprocessor & Compute Unit \\
+\hline
+SIMD Thead Scheduler               & Warp Scheduler                 & Work-group scheduler \\
+\hline
+SIMD Lane                                  & CUDA Core                        & Processing Element \\
+\hline
+GPU Memory                              & Global Memory                   & Global Memory \\
+\hline
+Private Memory                          & Local Memory                     & Private Memory \\
+\hline
+Local Memory                            & Shared Memory                   & Local Memory \\
+\hline
+Vectorizable Loop                       & Grid                                     & NDRange \\
+\hline
+Sequence of SIMD Lane operations & CUDA Thread                & work-item \\
+\hline
+A thread of SIMD instructions            & Warp                              & sub-group \\
+\hline
+\end{tabular}
+\end{table}
+
+
+
+
+
+
+
 
 I will talk about the history of the GPU.  How they started as an accelerator for graphics applications but over time
 more and more programmable features were added to the GPU.  In 2006 with the introduction of CUDA and 
@@ -291,9 +400,8 @@ I want to talk about the core programming  model behind GPUs.  I'll show the sta
 show the code for OpenCL and CUDA kernels in this case.  I'll talk about the index map, kernels, and kernel instances at each point
 in the index map.
 
-The following text comes from Tom's first stab at this content.  I will end up rewriting much of this, but I will use some of it and therefore am 
-keeping it around for now.
 
+\subsection{Tom's text for The GPU section}
 
 When discussing parallel programming models in general, is it sometimes important to distinguish between concurrent concepts in the programming model and parts of the hardware.
 On CPUs for instance, parallel items called perhaps ``threads'' are assigned to run on physical parts of the CPU called perhaps ``cores''.
