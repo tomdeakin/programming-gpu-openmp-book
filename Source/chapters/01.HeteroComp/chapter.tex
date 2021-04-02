@@ -177,14 +177,17 @@ much more to say about concurrency later when we talk about synchronization betw
 
 \subsection{The SIMD Vector Unit}
 
-We don't often think about it, but it takes considerable time for a computer to pull instructions from memory
-and decode them for execution.  Wouldn't it be nice if that effort could be amortized over multiple data 
-elements?   In general this is not always possible, but there are situation and workloads where the parallelism is ``in the data''
-and this mode of execution is possible and straightforward to implement.  We call this 
+We can think of high performance computing applications as programs where performance is a feature.
+The goal is to a fixed body or work done in less time or conversely, to complete more work in a fixed unit of time.
+In both cases, a key ingredient is to complete the rate at which operations complete.   
+
+A CPU does this with multithreading; that is, concurrent threads running in parallel across a collection of cores. 
+Another approach is to use parallelism that is ``in the data'' where a stream of instructions are applied in
+parallel to a collection of data elements.  We call this 
 SIMD\index{SIMD} or ``Single Instruction Multiple Data''\index{Single Instruction Multiple Data} parallelism.
 
 Problems that can exploit SIMD parallelism occur when they can be expressed as a sequence of
-operations that operate on dense arrays of data.   These problems are common enough that SIMD units optimized
+operations that operate on dese arrays of data.   These problems are common enough that SIMD units optimized
 for vectors have become one of the standard building blocks of parallel architectures.  To see
 how they are used, it helps to consider an example.  Consider the loop in figure~\ref{code:vaddLoop}.  
 We add vector $A$ to vector $B$ to produce the result $C$.   
@@ -214,15 +217,18 @@ int main()
 
 
 A computational element called a \emph{vector unit}
-will use SIMD parallelism to execute blocks of instructions between elements of these three arrays. The 
-first step is to define the blocks by unrolling the loop.  Let's consider a case where our vector unit is 256 bits
-wide so we can process four 64-bit floating point operations in the vector unit.  We therefore 
-unroll the loop by four as shown in figure~\ref{code:vaddUnroll}.  
+will use SIMD parallelism to execute blocks of instructions between elements of these three arrays.  
+Let's consider a case where our vector unit is 256 bits
+wide so we can process four 64-bit floating point operations in instruction of the vector unit.  You write
+vector code in two distinct phases. First, you transform the code so the loop matches the one you'll
+need for the vectorized code.   In this case, tht means we need to 
+modify the loop so the loop body carries out four additions of the vector elements per loop iteration.
+This is called unrolling a loop.  We show our loop unrolled by four in figure~\ref{code:vaddUnroll}.  
 
 \begin{CodeExample}%
-{\textbf{Vector Add program unrolled} --\small We unroll our vector add loop based with execution 
-on a vector unit that is 128 bits wide and can support vectors with four 32-bit floating point numbers.  For 
-simplicity, we assume that N can be evenly divided by 4.
+{\textbf{Vector Add program unrolled} --\small We unroll our vector addition loop by four meaning
+the loop body acts on four elements of the data (4 64 bit numbers for a 256 bit wide vector unit).   For 
+simplicity, we require that N can be evenly divided by 4.
 }%
 {code:vaddUnroll}
 \begin{lstlisting}
@@ -247,16 +253,30 @@ int main()
 \end{lstlisting}
 \end{CodeExample}
 
-The compiler takes the code from figure~\ref{code:vaddUnroll} and uses a single vector instruction 
-to do all the operations in the loop body.   That's one instruction to complete four floating point additions
-per clock-cycle of the vector unit.  When the workflow in a program maps onto a vector unit, the performance 
+In the second phase of our vectorization process, we replace the operations over scalar values with vector instructions.
+We will use the well-known Advanced Vector Extensions (AVX) introduced in 2008. The resulting vector code is
+shown in figure~\ref{code:vaddVec}.  In this code, we use the following AVX instructions.  
+\begin{itemize}
+\item \Code{ __m256d}: The type for the 256 bit wide vector register to hold (in our case) four 64-bit floating point numbers.
+\item \Code{_mm256_loadu_pd()}:  loads 4 doubles (pd or ``packed double'') from an address that may not be aligned on a 32 byte boundary.
+\item \Code{_mm256_storeu_pd()}:  stores 4 doubles to an address that may not be aligned on a 32 byte boundary.
+\item \Code{_mm256_add_pd()}: adds  two vector registers holding double precision floating point numbers to return 
+their sum in another vector register.
+\end{itemize}
+We would compile this code as \Code{gcc -mavx}.  The above operations assume the data is unaligned.  
+For best efficiency, the arrays \Code{A, B, C} should be 
+aligned to a 32 byte boundary.  We can do this by allocating the memory for these arrays using the following statement.
+\begin{verbatim}
+double *A = (double *)aligned_alloc(32,N*sizeof(double));
+\end{verbatim}
+When the workflow in a program maps onto a vector unit, the performance 
 benefits are substantial.
 
 \begin{CodeExample}%
 {\textbf{Vector Add program with vector intrinsics} --\small We use vector intrinsics to compute 
 4 additions in parallel across the lanes of our SIMD vector unit. 
 }%
-{code:vaddUnroll}
+{code:vaddVec}
 \begin{lstlisting}
 #include <assert.h>
 #include <immintrin.h>
@@ -264,12 +284,13 @@ benefits are substantial.
 
 int main()
 {
-   float A[N], B[N], C[N];
+   double A[N], B[N], C[N];
+   // 256 bit vector registers to be packed with double precision numbers
    __m256d Avec, Bvec, Cvec;    
      
    init(A,B,C); // initialize arrays ... code not shown
    
-   assert(N%4==0);
+   assert(N\%4==0);
 
    for (int i=0; i<N; i=i+4){
 
@@ -282,24 +303,9 @@ int main()
 \end{lstlisting}
 \end{CodeExample}
 
-Advanced Vector Extensions (AVX) introduced in 2008.   compile as \Code{gcc -mavx}.  The two character "pd" means packed double.
-\begin{itemize}
-\item \Code{ __m256d}: The type for the 256 bit wide vector register to hold (in our case) four 64-bit floating point numbers.
-\item \Code{_mm256_loadu_pd()}:  loads 4 doubles from an address that may not be aligned on a 32 byte boundary.
-\item \Code{_mm256_storeu_pd()}:  stores 4 doubles to an address that may not be aligned on a 32 byte boundary.
-\item \Code{_mm256_add_pd()}: adds  two vector registers holding floating point numbers to return 
-their sum in another vector register.
-\end{itemize}
-
-The above operations assume the data is unaligned.  For best efficiency, the arrays \Code{A, B, C} should be 
-aligned to a 32 byte boundary.  We can do this by allocating the memory for these arrays using the following statement.
-\begin{verbatim}
-double *A = (double *)aligned_alloc(32,N*sizeof(double));
-\end{verbatim}
 
 
-
-Most programmers do not write vector code directly.  The compiler unrolls the loop, organizes the instructions for SIMD
+Most programmers, however, do not write vector code directly.  The compiler unrolls the loop, organizes the instructions for SIMD
 execution, and replaces them with specialized vector instructions.  In an ideal world, that would be good enough. Indeed,
 for a simple case such as vector addition, the compiler does quite well.  In practice, however, codes do not so directly map
 onto vector instructions and the exploitation of the vector units are often quite poor.
@@ -312,7 +318,28 @@ CPUs and have climbed up to 512 or even 1024 for CPUs used in high-end servers. 
 be restricted to one dimension vectors.   SIMD units for two dimension arrays have appeared on the market optimized
 for the matrix-multiply operations common inside Deep Learning pipelines. 
 
-
+Vector instructions operate on vector registers to operate on multiple data elements in parallel. There is a second (and equivalent)
+way to think about vector instructions.   It's a perspective where you transpose your view and think in terms of scalar operations
+happening on lanes of the vector unit, or the \emph{SIMD lanes}.   For example, the sequence over packed doubles
+with 256 bit vector instructions:
+\begin{verbatim}
+   Cvec = _mm256_add_pd(Avec,Bvec);
+   Dvec = _mm256_add_pd(Avec,Cvec);
+   Fvec = _mm256_add_pd(Bvec,Dvec);
+\end{verbatim}
+can be considered as four SIMD lanes
+\begin{verbatim}
+   SIMD-Lane0:  C[0] = A[0] + B[0]; D[0] = A[0]+C[0]; F[0] = B[0] + D[0];
+   SIMD-Lane1:  C[1] = A[1] + B[1]; D[1] = A[1]+C[1]; F[1] = B[1] + D[1];
+   SIMD-Lane2:  C[2] = A[2] + B[2]; D[2] = A[2]+C[2]; F[2] = B[2] + D[2];
+   SIMD-Lane3:  C[3] = A[3] + B[3]; D[3] = A[3]+C[3]; F[3] = B[3] + D[3];
+\end{verbatim}
+The computation is the same in both cases as far as the hardware in concerned.  Thinking in terms
+of SIMD lanes, however, is a useful abstraction for programmers trying to understand their vector code,
+especially for more complex streams of instructions.  In essence, the vector lanes act like scale processing 
+elements execution in lockstep through the stream of instructions.   
+   
+   
 \subsection{The GPU}
 
 A program defines work to be carried out by a computer.  The work is divided into distinct units or ``work-items''.  A GPU
