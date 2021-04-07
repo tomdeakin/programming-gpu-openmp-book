@@ -26,7 +26,7 @@ As the '80s progressed and the full force of Moore's Law kicked in, the game cha
 microprocessor performance doubling every year, a programmer was actually punished for 
 spending too much time optimizing code for a particular system.  The pendulum had swung from
 a world where the programmer was almost a hardware engineer to the opposite.  The ability to 
-add new features instead became the focus.  Productivity and portability where the driving concerns and
+add new features instead became the focus.  Productivity and portability were the driving concerns and
 programmers came to think of themselves as software engineers working to make ever more
 complex programs correct and full-featured.
 
@@ -53,7 +53,7 @@ We hoped the pendulum would swung through the low point in its journey and that 
 would take us back to a time when programmers didn't have to spend their days coding to low level features of the
 hardware.  We were wrong.  The pendulum swing into hardware-aware programming was just getting started.
 First there were the many-core chips with non-uniform memory cost models that required programmers to understand
-where their threads executed and how they lined up with memory.  Then Chaos struck the life of programmers again with
+where their threads executed and how they lined up with memory.  Then chaos struck the life of programmers again with
 the advent of heterogeneous computing.
 
 The idea is simple, though the software response is anything but simple.  Hardware specialized to a specific task is
@@ -116,7 +116,7 @@ of memory, a CPU keeps high speed blocks of memory (Static Random Access Memory 
 cache hierarchy to maintain a window into DRAM memory.  As long as the items needed from memory 
 reside in cache, all is well and low latencies are provided.  
 
-We show a typical server in figure~\ref{figure:CPU} with a common configuration of CPUs.   
+We show a typical server in Figure~\ref{figure:CPU} with a common configuration of CPUs.   
 We show this figure to drive home the fact that the cache hierarchy is complicated.  The design
 of the CPU is optimized around managing memory to deliver low latencies.   Each core may
 support a number of hardware threads (in the figure there are two: $HT_0$ and $HT_1$).  By switching between the two threads
@@ -132,9 +132,9 @@ consistent between the two CPUs.  These two CPUs and all of their cores share a 
 Ideally this view is the same from any one core to any location in memory. This arrangement is often 
 called a Symmetric Multiprocessor (SMP).   Note, however, that SMP is an idealization and the fact of the matter
 is that due to multiple memory controllers (DDR) and the cache hierarchy, the cost function for a memory-access is
-anything but uniform and therefore the system in figure~\ref{figure:CPU} is a Non-Uniform Memory Architecture (NUMA).
-We won't explore NUMA issues in this book\footnote{The concept of SMP as an idealization. The implications
-for NUMA in the context of OpenMP is discussed at length in the book \emph{Using OpenMP: the Next Step}, published by MIT Press.}.
+anything but uniform and therefore the system in Figure~\ref{figure:CPU} is a Non-Uniform Memory Architecture (NUMA)\footnote{
+The concept of SMP as an idealization. We won't explore NUMA issues in this book, as it is discussed at length in
+the context of OpenMP in the book \emph{Using OpenMP: the Next Step}, published by MIT Press.}.
 
 \begin{figure}[t]
 \centerline{\includegraphics[width=400pt]{\ArtDir/CPU}}
@@ -183,9 +183,9 @@ in this simplified way with the processors ($Proc_1$ to $Proc_N$) as the cores o
 \end{figure}
 
 We now have a good understanding of the CPU and how the components that make up a CPU are organized.  If programmers had
-to think in terms of a complex system as that shown in figure~\ref{figure:CPU}, very few multithreaded programs would be written.   
+to think in terms of a complex system as that shown in Figure~\ref{figure:CPU}, very few multithreaded programs would be written.
 Fortunately, a programmer can often write code thinking in terms of a much simpler model, leaving the complex details for later when
-optimizing a working program. The simple model used with OpenMP is that of a symmetric multiprocessor as shown in figure~\ref{figure:SMP}.
+optimizing a working program. The simple model used with OpenMP is that of a symmetric multiprocessor as shown in Figure~\ref{figure:SMP}.
 This is a vast oversimplification and it won't work when reasoning about optimizations for the NUMA features of a chip.  For writing initial code, and 
 frankly, for most programmers writing all their OpenMP code, this is the level of hardware abstraction used.  The fact this simplified architectural 
 model works as well as it does is one of the reasons the CPU with OpenMP has been so successful for multithreading. 
@@ -194,7 +194,7 @@ model works as well as it does is one of the reasons the CPU with OpenMP has bee
 \subsection{The SIMD Vector Unit}
 
 We can think of high performance computing as involving programs where performance is a feature of the application.
-The goal is to a fixed body or work completed in less time or, conversely, to complete more work in a fixed unit of time.
+The goal is to have processed a fixed body of work completed in less time or, conversely, to complete more work in a fixed unit of time.
 In both cases, a key ingredient is to complete the rate at which operations complete.   
 
 A CPU does this with multithreading; that is, concurrent threads running in parallel across a collection of cores. 
@@ -205,12 +205,12 @@ SIMD\index{SIMD} or ``Single Instruction Multiple Data''\index{Single Instructio
 A common type of problem that can exploit SIMD parallelism is one expressed as a sequence of
 operations that operate on data packed into vectors.   These problems are common enough that SIMD units optimized
 for vectors have become one of the standard building blocks of parallel architectures.  To see
-how they are used, it helps to consider a specific example.  Consider the loop in figure~\ref{code:vaddLoop}.  
+how they are used, it helps to consider a specific example.  Consider the loop in Figure~\ref{code:vaddLoop}.  
 We add vector $A$ to vector $B$ to produce the result $C$.   
 
 
 \begin{CodeExample}%
-{\textbf{Vector Add program} --\small This program will add two vectors of length $N$
+{\textbf{Vector Add program} -- \small This program will add two vectors of length $N$
 to produce a third vector.
 }%
 {code:vaddLoop}
@@ -238,13 +238,13 @@ Let's consider a case where our vector unit is 256 bits
 wide so we can process four 64-bit floating point operations in each instruction of the vector unit.  
 We will convert our vector addition program into a vectorized program in two distinct phases. First, 
 we transform the code so the loop matches the one you'll
-need for the vectorized code.   Taht means we need to 
+need for the vectorized code.   That means we need to 
 modify the loop so the loop body carries out four additions of the vector elements per loop iteration.
-We do this by \emph{unrolling the loop}\index{Unrolling a Loop}.  We show our loop unrolled by four in figure~\ref{code:vaddUnroll}.  
+We do this by \emph{unrolling the loop}\index{Unrolling a Loop}.  We show our loop unrolled by four in Figure~\ref{code:vaddUnroll}.  
 
 \begin{CodeExample}%
-{\textbf{Vector Add program unrolled} --\small We unroll our vector addition loop by four meaning
-the loop body acts on four elements of the data (4 64 bit numbers for a 256 bit wide vector unit).   For 
+{\textbf{Vector Add program unrolled} -- \small We unroll our vector addition loop by four meaning
+the loop body acts on four elements of the data (four 64-bit numbers for a 256 bit wide vector unit).   For 
 simplicity, we require that N can be evenly divided by 4.
 }%
 {code:vaddUnroll}
@@ -258,10 +258,10 @@ int main()
    
    init(A,B,C); // initialize arrays ... code not shown
    
-   assert(N\%4==0);
+   assert(N%4==0);
 
-   for (int i = 0;i < N4; i=i+4) {
-      C[i]     = A[i]     + B[i];
+   for (int i = 0; i < N4; i=i+4) {
+      C[i]   = A[i]   + B[i];
       C[i+1] = A[i+1] + B[i+1];
       C[i+2] = A[i+2] + B[i+2];
       C[i+3] = A[i+3] + B[i+3];   
@@ -272,7 +272,7 @@ int main()
 
 In the second phase of our vectorization process, we replace the operations in the body of the loop over scalar values with vector instructions.
 We will use the well-known Advanced Vector Extensions (AVX) introduced in 2008. The resulting vector code is
-shown in figure~\ref{code:vaddVec}.  In this code, we use the following AVX instructions.  
+shown in Figure~\ref{code:vaddVec}.  In this code, we use the following AVX intrinsics:
 \begin{itemize}
 \item \Code{ __m256d}: The type for the 256 bit wide vector register to hold (in our case) four 64-bit floating point numbers.
 \item \Code{_mm256_loadu_pd()}:  loads 4 doubles (\emph{pd} or ``packed double'') from an address that may not be aligned on a 32 byte boundary.
@@ -282,7 +282,8 @@ their sum in another vector register.
 \end{itemize}
 We would compile this code as \Code{gcc -mavx}.  The above operations assume the data is unaligned.  
 For best efficiency, the arrays \Code{A, B, C} should be 
-aligned to a 32 byte boundary.  We can do this by allocating the memory for these arrays using the following statement.
+aligned to a 32 byte boundary, enabling the use of other AVX instructions which assume alignment.
+We can do the former by allocating the memory for these arrays using the following statement.
 \begin{verbatim}
 double *A = (double *)aligned_alloc(32,N*sizeof(double));
 \end{verbatim}
@@ -330,7 +331,7 @@ To help the compiler with transformations needed to support vectorization (such 
 a SIMD construct and a collection of clauses\footnote{SIMD in the context of OpenMP is discussed at length in the book
 \emph{Using OpenMP: the Next Step}, published by MIT Press.}.
 
-Vector units for SIMD parallelism are rapidly evolving.  The widths of the vector units are commonly 256 on lower-end
+Vector units for SIMD parallelism are rapidly evolving.  The widths of the vector units are commonly 256 bits on lower-end
 CPUs and have climbed up to 512 or even 1024 for CPUs used in high-end servers.  There is no reason the concept must 
 be restricted to one dimension vectors.   SIMD units for two dimension arrays have appeared on the market optimized
 for the matrix-multiply operations common inside Deep Learning pipelines. 
@@ -344,7 +345,7 @@ with 256 bit vector instructions:
    Dvec = _mm256_add_pd(Avec,Cvec);
    Fvec = _mm256_add_pd(Bvec,Dvec);
 \end{verbatim}
-can be considered as four SIMD lanes
+can be considered as four SIMD lanes:
 \begin{verbatim}
    SIMD-Lane0:  C[0] = A[0] + B[0]; D[0] = A[0]+C[0]; F[0] = B[0] + D[0];
    SIMD-Lane1:  C[1] = A[1] + B[1]; D[1] = A[1]+C[1]; F[1] = B[1] + D[1];
@@ -353,8 +354,9 @@ can be considered as four SIMD lanes
 \end{verbatim}
 The computation is the same in both cases as far as the hardware in concerned.  Thinking in terms
 of SIMD lanes, however, is a useful abstraction for programmers trying to understand their vector code,
-especially for more complex streams of instructions.  In essence, the vector lanes act like scale processing 
-elements execution in lockstep through the stream of instructions.   
+especially for more complex streams of instructions.  In essence, the vector lanes act like scalar processing 
+elements of the vector in parallel. Execution occurs in lock-step through the stream of instructions, so all elements of the
+vector are processed together.
    
    
 \subsection{The GPU}
@@ -365,13 +367,13 @@ in a computer generated video.   The problem defines a certain frame-rate for im
 observer.  The time to display any given pixel in an image is immaterial.  What matters is the time to update the entire
 image so the frame-rate can be supported.  This is the classic throughput computing problem.  
 
-Graphics Processing Units have been an important component within PCs dating back to the late 90's.  They consisted of large numbers of
+Graphics Processing Units have been an important component within PCs dating back to the late '90s.  They consisted of large numbers of
 simple processing elements specialized to graphics operations.  Complex memory hierarchies were not needed since if the
 update of a pixel is stalled waiting for data, the processor could shift to other pixels while waiting for updates from memory.
-This meant most of the ``real estate'' on the chip was dedicated to computing rather than caches leading to high compute densities are possible.
+This meant most of the ``real estate'' on the chip was dedicated to computing rather than caches leading to high compute densities.
 
-The first papers talking about using graphics processing hardware for general computing appeared in the mid 90's; right around the
-same time GPUs were emerging.  The term GPGPU for general purpose GPU programming appeared in the early 2020s, but the
+The first papers talking about using graphics processing hardware for general computing appeared in the mid '90s; right around the
+same time GPUs were emerging.  The term GPGPU for general purpose GPU programming appeared in the early 2010s, but the
 field of GPGPU programming really took off with the introduction of CUDA in 2006 (for NVIDIA GPUs only) and the open standard for 
 programming GPUs OpenCL in 2008.  These programming languages were designed in close collaboration with GPU architects who
 created fully programmable graphics pipelines.
@@ -393,8 +395,8 @@ together.  This width is the GPU's natural block size for execution.  It is in e
 sub-group size or warp of the GPU.  For high performance code, you want the work-items in a sub-group
 to execute ``as~if'' in lock-step (a converged execution flow).
 
-A Modern GPU optimized for throughput provides high compute densities.  We show a block diagram 
-for a typical (and somewhat idealized) GPU in figure~\ref{figure:GPU}. The GPU is divided into a number
+A modern GPU optimized for throughput provides high compute densities.  We show a block diagram 
+for a typical (and somewhat idealized) GPU in Figure~\ref{figure:GPU}. The GPU is divided into a number
  of compute units that are driven by a stream of SIMD instructions.  It acts much like a multiprocessor 
  optimized for streaming SIMD instructions (hence why in CUDA this is called a ``streaming multiprocessor).
  Each compute unit conatins a block of SIMD~lanes
@@ -406,7 +408,7 @@ in the L1 cache for compute unit.
 
 \begin{figure}[!htbp]
 \centerline{\includegraphics[width=400pt]{\ArtDir/GPU}}
-\caption{A simplified block diagram of a typical GPU.  The computing within the GPU happens in the
+\caption{A simplified block diagram of a typical GPU -- \small The computing within the GPU happens in the
 SIMD lanes of a multithreaded SIMD Processor which in addition to the SIMD lanes often includes
 load/store and special function units (not shown in this diagram).   The multithreaded SIMD processors
 are organized hierarchically around caches and on-device GPU memory.}
@@ -414,15 +416,15 @@ are organized hierarchically around caches and on-device GPU memory.}
 \end{figure}
 
 The GPU contains multiple compute units (16 in this case) which together share memory global to 
-all of the processing elements.  As shown in figure~\ref{figure:GPU}, the arrangement of compute units
+all of the processing elements.  As shown in Figure~\ref{figure:GPU}, the arrangement of compute units
 is not flat with respect to memory.   They are hierarchical and therefore optimizing code for a GPU requires
 many of the techniques familiar to programmers working on OpenMP for a NUMA system.
 
-A modern GPU is even more complicated than what we show in figure~\ref{figure:GPU}.  In addition to
+A modern GPU is even more complicated than what we show in Figure~\ref{figure:GPU}.  In addition to
 the replicated SIMD~lanes, a compute unit usually has load/store units, special function units, and other
 special purpose processing elements.  The presence of these additional hardware elements, however,
 does not change the basic programming model as they are just local accelerators from instructions within a 
-work~item so including them at this point in the discussion is not helpful 
+work-item so including them at this point in the discussion is not helpful.
 
 In this discussion, we've shifted between different terms for many aspects of GPGPU programming.
 This is a fundamental frustration of GPU programming. 
@@ -430,7 +432,7 @@ GPUs for GPGPU programming are young compared to CPUs.
 While the terms used with CPUs are well established,
 the terminology of GPUs varies widely between different GPU vendors and programming
 languages.  To help pull the concepts together, we review the terminology from three
-different sources in table~\ref{table:GPUjargon}: Hennessy and 
+different sources in Table~\ref{table:GPUjargon}: Hennessy and 
 Patterson\footnote{Computer Architecture: A Quantitative Approach, Sixth Edition, 
 John L. Hennessy and David A. Patterson, Morgan Kaufmann, 2019.}, Nvidia's CUDA, 
 and OpenCL from the Khronos Group.  By pulling these terms together in one place, we
@@ -446,7 +448,7 @@ from Hennesy~and~Patterson is sometimes preferred.
 GPU Terminology Hennesy and Patterson, CUDA, and 
 OpenCL.   The one uncertain match is the last row;
 a sub-group usually corresponds to a warp, but a conforming implementation of OpenCL 
-may use a subgroup to refer to smaller blocks of work-items that make up a warp.}
+may use a sub-group to refer to smaller blocks of work-items that make up a warp.}
 \label{table:GPUjargon}
 \begin{tabular}{|l|l|l|}
 \hline
@@ -474,9 +476,9 @@ A thread of SIMD instructions            & Warp                              & s
 \end{tabular}
 \end{table}
 
-Few Programmers would undertake the task of GPGPU programming if the full complexity shown in figure~\ref{figure:GPU}
+Few Programmers would undertake the task of GPGPU programming if the full complexity shown in Figure~\ref{figure:GPU}
 needed to be fully embraced when writing code.  Much of what a programmer does can be done using a much 
-simpler model.  Consider the abstraction of a GPU shown in figure~\ref{figure:target_device_hierarchy}.
+simpler model.  Consider the abstraction of a GPU shown in Figure~\ref{figure:target_device_hierarchy}.
 While a GPU has multiple levels of hierarchy, a programmer typically thinks in terms of a basic host-device
 architecture with a three-level hierarchy on the device.  A host (generally a CPU) offloads kernels onto a device
 for execution.   Data moves between the Device memory and the host memory.   Once on a device, instances 
