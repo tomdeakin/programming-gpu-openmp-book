@@ -11,6 +11,22 @@
 
 Note: Use C for examples in the book. Provide Fortran supplement.
 
+What are the concepts we need to build on as we construct the rest of the book?  Here is my attempt at that list.  
+\begin{itemize}
+\item Directives, clauses, structured blocks, environment variables, library routines
+\item a team of threads
+\item Memory: stack vs heap
+\item a memory consistency model and synchronization
+\item The openMP data environment: private, firstprivate, shared.  Do we need threadprivate?
+\item tasks and their role in understanding the core of OpenMP.  Initial tasks and implicit tasks
+\item explicit tasks and how tasks interact with the data environment.
+\item tied tasks, untied tasks, and nowait
+\item worksharing loops including collapse, reduction, and schedule clauses
+\item design patterns: SPMD, loop-level parallelism, fork-join
+\end{itemize}
+I need everyone working on the book to go over this list and tell me what is missing.
+
+
 \section{Set the Background/Context for the book.}
 
 Starts with the {\bf problem} of trying to program a GPU.
@@ -48,7 +64,7 @@ This section will give the reader a very concise introduction into enough OpenMP
 \begin{itemize}
   \item private and firstprivate.
   \item shared and default(none) clauses.
-  \item Need to be careful how we explain “shared memory” given the memory sharing rules between host/target we’ll introduce later.
+  \item Need to be careful how we explain shared memory given the memory sharing rules between host/target we’ll introduce later.
 \end{itemize}
 
 \subsection{Tasks in OpenMP}
