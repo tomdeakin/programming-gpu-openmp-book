@@ -486,7 +486,7 @@ A thread of SIMD instructions            & Warp                              & s
 
 Few Programmers would undertake the task of GPGPU programming if the full complexity shown in Figure~\ref{figure:GPU}
 needed to be fully embraced when writing code.  Much of what a programmer does can be done using a much 
-simpler model.  Consider the abstraction of a GPU shown in Figure~\ref{figure:target_device_hierarchy}.
+simpler model.  Consider the abstraction of a GPU shown in Figure~\ref{figure:ideal_gpu}.
 While a GPU has multiple levels of hierarchy, a programmer typically thinks in terms of a basic host-device
 architecture with a three-level hierarchy on the device.  A host (generally a CPU) offloads kernels onto a device
 for execution.   Data moves between the Device memory and the host memory.   Once on a device, instances 
@@ -495,9 +495,9 @@ The work-item run on Processing elements (PEs) or in some cases, down an additio
 the lanes of a SIMD unit inside a PE.
 
 \begin{figure}[t]
-\centerline{\includegraphics[width=200pt]{\ArtDir/target_device.pdf}}
-\caption{A target device is formed of a number of Compute Units (CU). Each of these Compute Units is formed of a number of Processing Elements (PE), which may be able to execute vector (SIMD) instructions.}
-\label{figure:target_device_hierarchy}
+\centerline{\includegraphics[width=300pt]{\ArtDir/ideal_gpu.pdf}}
+\caption{A target device is always connected to a host, which behaves like a CPU. The device is formed of a number of Compute Units (CU). Each of these Compute Units is formed of a number of Processing Elements (PE). The PEs may be able to execute vector (SIMD) instructions, or behave as a SIMD lane.}
+\label{figure:ideal_gpu}
 \end{figure}
 
 The device memory is shared and available to all processing elements in the GPUs hierarchical structure.
