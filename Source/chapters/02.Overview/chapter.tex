@@ -17,11 +17,14 @@ What are the concepts we need to build on as we construct the rest of the book? 
 \item a team of threads
 \item Memory: stack vs heap
 \item a memory consistency model and synchronization
-\item The openMP data environment: private, firstprivate, shared.  Do we need threadprivate?
+\item The openMP data environment: private, firstprivate, shared.  
+\item Do we need threadprivate?  No, we do not.
 \item tasks and their role in understanding the core of OpenMP.  Initial tasks and implicit tasks
 \item explicit tasks and how tasks interact with the data environment.
 \item tied tasks, untied tasks, and nowait
+\item we need mergeable tasks since ``A target task is mergable and untied''.
 \item worksharing loops including collapse, reduction, and schedule clauses
+\item for the schedule clauses, only cover static. 
 \item design patterns: SPMD, loop-level parallelism, fork-join
 \end{itemize}
 I need everyone working on the book to go over this list and tell me what is missing.
