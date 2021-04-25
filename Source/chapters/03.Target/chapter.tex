@@ -9,14 +9,18 @@
 \chapter{Running on a target device}
 \label{chapter:target}
 
-As seen with the matrix multiplication example at the end of the previous chapter, there is a long directive we can add to our loops to run on the target device.
-We will break this big directive down and consider the different parts of the following three chapters.
-It is divided into three parts: transferring execution from the host to the device, running in parallel on the device once execution is happening there, and finally managing the movement of data between the host and device.
-OpenMP has different constructs and clauses for performing each of these tasks.
-When programming heterogeneous devices, particularly GPUs, it is often best to think about these different aspects separately to make things easier to grapple with.
+At the end of the previous chapter, we provided a matrix multiplication program.   By placing the \BUD in front of the loop next,
+we caused the loop body to execute on the target device.
+We will break down this \BUD into three components parts and discuss each part in the next three chapters.
+The first part transfers execution from the host to the device. The second part of the \BUD runs the loop body in parallel on the 
+device, and the third part manages the movement of data between the host and device.
+While all three parts are needed and must work together to effectively use the target device, it is often best to discuss these different parts
+of the directive separately to make things easier to absorb.
 
-This chapter will cover the first of these topics, along with the implicit data movement rules; with this knowledge we'll have a first program running on the device, although it won't be very fast.
-Recalling the matrix multiplication example from the previous chapter shown again in Figure~\ref{code:matmulTarget}, this chapter will look what happens for the \Code{#pragma omp target} part of the directive.
+This chapter will cover the first of these topics, along with the implicit data movement rules; 
+with this knowledge we'll have a first program running on the device, although it won't be very fast.
+Recalling the matrix multiplication example from the previous chapter, reproduced in Figure~\ref{code:matmulTarget}, this chapter 
+will consider what happens due to the \Code{#pragma omp target} part of the directive.
 
 \begin{CodeExample}%
 {\textbf{Matrix Multiplication program} --\small This program will multiply two matrices $A$ and $B$
