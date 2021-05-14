@@ -9,18 +9,25 @@
 \chapter{Running on a target device}
 \label{chapter:target}
 
-At the end of the previous chapter, we provided a matrix multiplication program.   By placing the \BUD in front of the loop next,
-we caused the loop body to execute on the target device.
-We will break down this \BUD into three components parts and discuss each part in the next three chapters.
-The first part transfers execution from the host to the device. The second part of the \BUD runs the loop body in parallel on the 
-device, and the third part manages the movement of data between the host and device.
-While all three parts are needed and must work together to effectively use the target device, it is often best to discuss these different parts
-of the directive separately to make things easier to absorb.
+At the end of the previous chapter, we provided a 
+matrix multiplication program.   By placing the \BUD in front 
+of the loop nest, we caused the loop body to execute on the target 
+device.  In the next three chapters, We will break down this \BUD into 
+three components parts; one component per chapter.    
+The first component transfers execution from 
+the host to the device. The second component of \BUD runs the 
+loop body in parallel on the device, and the third part manages the 
+movement of data between the host and device.  While all three components 
+are needed and must work together to effectively use the target device, 
+it is best to discuss them separately to make them easier to absorb.
 
-This chapter will cover the first of these topics, along with the implicit data movement rules; 
-with this knowledge we'll have a first program running on the device, although it won't be very fast.
-Recalling the matrix multiplication example from the previous chapter, reproduced in Figure~\ref{code:matmulTarget}, this chapter 
-will consider what happens due to the \Code{#pragma omp target} part of the directive.
+This chapter addresses the first of these components, along with the 
+rules for implicit data movement.  With this knowledge we'll run
+our first program on a device, although it won't be very fast.
+Recalling the matrix multiplication example from the previous chapter, 
+reproduced in Figure~\ref{code:matmulTarget}, this chapter 
+will consider the \Code{#pragma omp target} part of the directive.
+The remaining part will be addressed in the next chapter when we discuss parallelism (Chapter~\ref{chapter:parallelism}).
 
 \begin{CodeExample}%
 {\textbf{Matrix Multiplication program} --\small This program will multiply two matrices $A$ and $B$
@@ -44,7 +51,7 @@ void matmul(int Ndim, int Mdim, int Pdim,
 \end{lstlisting}
 \end{CodeExample}
 
-The remaining part of the directive is discussed in the next chapter on parallelism (Chapter~\ref{chapter:parallelism}).
+
 
 
 \section{Host/device model}
@@ -66,7 +73,8 @@ Connected to this host are zero or more target devices. These target devices cou
 They each have their own memory space, which is distinct from the memory space of the host processor or any other device.
 This means that data in our programs will be stored either in host memory or device memory.
 OpenMP provides us with implicit rules for automatic data transfer along with explicit controls for the transfer of data between these memory spaces.
-If the hardware supports it, OpenMP can also operate with a unified view of memory where the whole system sees a single memory space available to all; a topic we discuss in chapter~\ref{chapter:memory}.
+If the hardware supports it, OpenMP can also operate with a unified view of memory where the whole system sees a single 
+memory space available to all; a topic we discuss in chapter~\ref{chapter:memory}.
 
 In Figure~\ref{fig:host_device} we show a host with three connected target devices.
 
@@ -106,7 +114,7 @@ In general we will not choose a device and so the majority of code we show throu
 
 In Section~\ref{sec:multi_gpu} we will explore how to use OpenMP to program systems with multiple devices, where devices will be chosen using this simple numbering scheme above.
 
-This model of a host with some attached devices, each with their own separated memory space, is a model commonly found in heterogeneous programming models.
+This model of a host with some attached devices, each with their own separated memory space, is commonly used in heterogeneous programming models.
 
 \subsection{Target construct offloading execution}
 
