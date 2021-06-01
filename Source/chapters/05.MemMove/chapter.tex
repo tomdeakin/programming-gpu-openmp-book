@@ -9,6 +9,42 @@
 \chapter{Memory movement}
 \label{chapter:memory}
 
+In the previous two chapters, we have been working with the matrix multiplication program.
+By placing the \BUD in front of the loop nest, we caused the loop body to execute on the target device.
+We explored the first two components of this \BUD to transfer execution (and data) from the host to the device and to run the loop body in parallel on the device.
+
+This chapter addresses the final component of the \BUD.
+We will cover ways to control the data movement between the host and device explicitly.
+These work in combination with the implicit data movement and provide more control over when, and what, data is transferred.
+
+We update the matrix multiplication example from the previous chapter so that the arrays are allocated not on the stack, but on the heap. The example code in Figure~\ref{code:matmulTargetHeap} shows our final goal. In comparison to Figure~\ref{code:matmulTarget}, the matrices are passed as pointers\footnote{We have also split the \BUD onto two lines, but this is just so that that rather long directive appears nicely in print.}. As such, the data they point to will not be implicitly transferred and we must specify the movement through \Code{map} clauses.
+This chapter introduces the \Code{map} clauses and the device data directives.
+
+\begin{CodeExample}%
+{\textbf{Matrix Multiplication program} --\small This program will multiply two matrices $A$ and $B$
+to produce a third $C$ which has been set to zero, running on the target device.
+All arrays are allocated in heap memory.
+}%
+{code:matmulTargetHeap}
+\begin{lstlisting}
+void matmul(int Ndim, int Mdim, int Pdim,
+            float *A, float *B, float *C) {
+
+  #pragma omp target map(tofrom: A[0:Ndim*Pdim], B[0:Pdim*Mdim], C[0:Ndim*Mdim])
+  #pragma omp teams distribute parallel for simd collapse(2)
+  for (int i = 0; i < Ndim; i++) {
+    for (int j = 0; j < Mdim; j++) {
+      for(int k = 0; k < Pdim; k++) {
+	C[i*Mdim+j] += A[i*Pdim+k] * B[k*Pdim+i];
+      }
+    }
+  }
+}
+\end{lstlisting}
+\end{CodeExample}
+
+
+
 \section{Recap implicit data movement}
 \begin{itemize}
   \item So far only could work with scalars and stack arrays.
@@ -18,15 +54,51 @@
   \item But the data needs to be mapped\dots
 \end{itemize}
 
+
+\section{OpenMP array syntax}
+
+%% Array syntax: important as non-intuitive in C}
+%% \begin{itemize}
+%%   \item Introduce OpenMP array notation.
+%%   \item array[start:length].
+%%   \item It is not array[start:end] in C.
+%%   \item Follows pointer size rules, so don't have to worry about sizeof(T).
+%%   \item Array notation in Fortran.
+%% \end{itemize}
+
+OpenMP uses an array section syntax in order to specify a subset of elements of an array in C.
+An arrays in C are pointer-based, and the square brackets used to index that pointer provide a convenient short-and for the pointer arithmetic and dereferencing.
+For a C programmer familiar with the array syntax used in Fortran programs, the OpenMP syntax can be a bit unintuitive at first glance.
+Array sections are passed to various OpenMP clauses, and are most often used in target device data movement and task dependencies.
+
+For a pointer to an array \Code{var}, the syntax to define is as follows:
+\begin{verbatim}
+var[lower-bound : length]
+\end{verbatim}
+The lower bound defines the first index of the array that this array section begins at.
+The length defines the number of elements, beginning at the lower bound, that are included in the array section.
+For example, if \Code{var} is a pointer to an array length \Code{N} elements, the array syntax \Code{var[0:N]} would refer to the entire array: beginning at the start and running its entire length.
+Note that this does not mean ``from the 0 to N`` as it might in other languages\footnote{The notation for array sections for OpenMP in Fortran uses the standard Fortran approach, and so does take this meaning there.}.
+
+The lower bound parameter is optional, and defaults to the start of the array. As such, it is common to see array sections which just specify the length: \Code{var[:N]}. Note that we must still include the colon character.
+
+The length is usually always included, but is optional if the size of the array is already known.
+The length counts in the number of elements of the array, so we don't have to worry about the size of the underlying data type. The pointer arithmetic is taken care of, just as it is when we index into an array.
+
+A zero-length array section takes the form \Code{var[:0]}. The length parameter is set to zero. We've already mentioned that pointers are mapped as zero-length arrays back in Section~\ref{sec:implicit_map_pointers}. As the array has zero length, the associated section of the array has no length, and so if this was used to copy data between the host and target device, no data would move. Zero-length arrays give OpenMP the information it needs about the start of the array (i.e.\ the pointer value) so that it can translate between the address space and do the required referencing counting. They won't be written in our applications very often.
+
+It is also possible to specify a stride:
+\begin{verbatim}
+var[lower-bound : length : stride]
+\end{verbatim}
+The stride defines the number of elements to skip when selecting elements from the array.
+
+For example, the array \Code{nums} contains the natural numbers from 0 to 1024 such at \Code{nums[i] = i} (\Code{nums[0] = 0}, \Code{nums[1] = 1}, \dots).
+The array section \Code{nums[0:8:2]} would then be referring to 8 elements, starting from the beginning of the array, selecting every third element: \Code{\{0,3,6,9,12,15,18,21\}}.
+We don't use strides very often when programming target devices.
+
+
 \section{Explicit data sharing with the map clause}
-\subsection{Array syntax: important as non-intuitive in C}
-\begin{itemize}
-  \item Introduce OpenMP array notation.
-  \item array[start:length].
-  \item It is not array[start:end] in C.
-  \item Follows pointer size rules, so don't have to worry about sizeof(T).
-  \item Array notation in Fortran.
-\end{itemize}
 
 \subsection{The map clause}
 \label{ssec:map_clause}
