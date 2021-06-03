@@ -45,14 +45,35 @@ void matmul(int Ndim, int Mdim, int Pdim,
 
 
 
-\section{Recap implicit data movement}
-\begin{itemize}
-  \item So far only could work with scalars and stack arrays.
-  \item Now we explain heap arrays.
-  \item Recall firstprivate clause.
-  \item The pointer itself will be mapped firstprivate.
-  \item But the data needs to be mapped\dots
-\end{itemize}
+\section{A quick recap of implicit data transfers}
+%\begin{itemize}
+%  \item So far only could work with scalars and stack arrays.
+%  \item Now we explain heap arrays.
+%  \item Recall firstprivate clause.
+%  \item The pointer itself will be mapped firstprivate.
+%  \item But the data needs to be mapped\dots
+%\end{itemize}
+
+Back in Chapter~\ref{chapter:target} we looked at what data is copied on entry to, and exit from, a \Code{target} region.
+When a \Code{target} region is encountered, execution is transferred to the target device, and some data might be copied.
+On exit, execution is returned to the host and some data might be copied back.
+
+Scalar variables are mapped as a \Code{firstprivate} variable. This means the target has a copy of the data, but it won't be copied back to the host at the end of the target region. That variable will follow the usual sharing rules as we discussed in Chapter~\ref{chapter:overview} for any threads that are launched, and so there may be one or more copies of this variable on the device.
+
+%What happens to a firstprivate variable when its then shared?
+% #pragma omp target firstprivate(N)
+% #pragma omp teams parallel ?shared(N)
+% {
+%  #pragma omp atomic
+%  N = omp_get_team_num();
+% }
+
+Arrays declared on the stack will be copied to device memory at the start of the target region and copied back to host memory at the end. There will just be a single copy of the array, stored in device memory, that is available to all threads launched on the device. As such, it is important to know that concurrent updates to the same location of the array should be synchronized.
+Non-scalar data types such as structures of a known size have the same behaviour.
+
+This chapter will focus on arrays accessed via a pointer to data. That data is normally allocated on the heap, via a call to the \Code{malloc()} routine in the standard library. The pointer variable behaves differently to a scalar variable. The pointer is translated to an address in the device memory space at the start of the target region, but the data it points to is not copied.
+This chapter will introduce the \Code{map} clause which is the primary mechanism for initiating the transfer of data accessed via a pointer.
+
 
 
 \section{OpenMP array syntax}
