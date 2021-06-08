@@ -110,7 +110,24 @@
   \item Mention loop collapse clause is not mechanical collapse, applies loop semantics to the loop nest.
   \item Mention it's teams loop, to split up creation of parallelism with the concurrency of the loop.
   \item BUT we need teams first, so loop has to come after.
+  \item Explore semantic differences around synchronization and implicit parallel regions with this example:
 \end{itemize}
+
+\begin{Verbatim}
+#pragma omp target teams loop
+for (int i = 0; i < N; ++i) {
+  // .. do something per team
+  #pramga omp loop bind(parallel)
+  for (int j = 0; j < M; ++j) {}
+}
+
+#pragma omp target teams distribute
+for (int i = 0; i < N; ++i) {
+  // .. do something per team
+  #pramga omp parallel for simd
+  for (int j = 0; j < M; ++j) {}
+}
+\end{Verbatim}
 
 
 %-----------------------------------------------------------------------
