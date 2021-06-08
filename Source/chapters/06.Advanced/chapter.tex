@@ -6,13 +6,78 @@
 
 \def\ArtDir{06.Advanced/figures}
 
-\chapter{Advanced topics}
+\chapter{Multi-GPU programming}
+\label{chapter:multi_gpu}
 
-\section{Asynchronous offload}
-\label{sec:async}
+Heterogeneity is here! In the previous chapters you've learnt how to program one
+of these devices. But as we alluded to in Chapter~\ref{chapter:heterogeneity},
+modern processors and systems often contain multiple devices. OpenMP gives us
+the tools to program multiple devices within the same program.
 
-This chapter might be a good place for multi-GPU as will require a similar task-based approach.
+Before we cover this topic though, it is worth exploring an alternative view of
+systems with multiple devices. Many of the fastest supercomputers in the
+world\footnote{As ranked by the Top500 list at \url{www.top500.org}} are
+designed by GPU-accelerated nodes connected together with a high-speed
+interconnect. Each node contains multiple high-performance GPUs; four or six
+GPUs per node is currently a common configuration.
 
+Memory is said to be distributed, as it is not shared between those nodes. Data
+is passed between processes running on the nodes via a message passing API;
+most commonly this is the standard Message Passing Interface (MPI).
+
+How then, might we map our application to such a system? As an example, consider
+a grid-based code, where each cell in the grid can be updated concurrently.
+Typically they require some data from neighbouring cells.
+To run this code in parallel on a system, we would first perform a domain
+decomposition to partition the grid. We would assign each partition to a process
+running on a different node in our supercomputer. If the node contained
+multi-core CPUs, we could either decompose until there was one process per
+physical core, or one processes per node, or some combination in between.
+OpenMP could then be used (as in Chapter\ref{chapter:overview}) to thread each
+processes and utilise any remaining cores. The worksharing constructs in OpenMP
+make this step simple: loops are annotated with a \Code{parallel for} directive
+and the work is shared between all cores.
+
+To distribute our work across a system with multiple GPUs per node, we face a
+similar choice. The most common approach we find is to assign one processes in
+our distributed memory scheme to each GPUs. In a node with four GPUs, we would
+run four MPI processes per node. The application therefore would use OpenMP to
+target a single GPU, and communication between processes (and GPUs) would occur
+firstly via the host and then via the message passing interface. This means that
+without advanced and compatible libraries, communication cannot always take
+advantage of a network with directly connects local GPUs together.
+
+This is simple, as we only need perform the decomposition of concurrent work
+once (for the distributed memory). Each process also needs only be aware of a
+single target device. Environment variables and the system queue are used to
+ensure processes are distributed across the machine, and each process has
+exclusive access to a single GPU.
+
+OpenMP gives us the ability to target multiple accelerators within a single
+OpenMP program. This functionality is enabled by the \Code{device} clause, which
+can be put on nearly all of the \Code{target} directives. As these directives
+can be made asynchronous via the tasking model in OpenMP, the program is able to
+run different target tasks in parallel across multiple target devices.
+
+However, the distribution of work is left up to the programmer. There are no
+worksharing constructs to generate target tasks automatically so that each
+device can be kept busy. Therefore, the programmer must implement another level
+of decomposition, to further decompose the partition across the local system.
+Although this means communication between GPUs may be fast as it can take
+advantage of a device-to-device interconnect path that does not require the
+host, it is at the expense of increased code complexity via this manual
+worksharing.
+This unattractive extra level of decomposition usually results in HPC programs
+using just one device per MPI process, using a single level decomposition.
+
+In other domains of course, where distribution of the problem is less common,
+the ability to target multiple devices within the same program is very valuable.
+This chapter will look at how to write OpenMP programs that can run on multiple
+target devices in parallel. We will first look at the target task model so that
+target regions can be run asynchronously to the host (and each other), and how
+to define the dependencies between them.
+We will then show how this can be combined with the \Code{device} clause so that
+different tasks can be run on different devices in parallel.
 
 \section{OpenMP tasking model and target regions as tasks}
 \begin{itemize}
@@ -24,7 +89,7 @@ This chapter might be a good place for multi-GPU as will require a similar task-
   \item Undeferred, runs straight away.
 \end{itemize}
 
-\section{no wait clause}
+\section{no wait clause for asynchronous offload}
 \begin{itemize}
   \item nowait clause
   \item host continues execution
@@ -39,11 +104,6 @@ This chapter might be a good place for multi-GPU as will require a similar task-
   \item task reductions.
 \end{itemize}
 
-\section{if clause}
-\label{sec:if_clause}
-\begin{itemize}
-  \item conditional offload
-\end{itemize}
 
 \section{Example: TBA}
 \begin{itemize}
@@ -52,11 +112,22 @@ This chapter might be a good place for multi-GPU as will require a similar task-
   \item MPI comms?
 \end{itemize}
 
-\section{Multi-GPU}
-\label{sec:multi_gpu}
+
 
 \section{Interop}
 \label{sec:interop}
+\begin{itemize}
+  \item \Code{use_device_ptr} and \Code{is_device_ptr}
+  \item Example: BLAS/LAPACK library call
+  \item This seems an important path for legacy codes using those vendor APIs
+\end{itemize}
+
+\section{Further misc topics}
+\subsection{if clause}
+\label{sec:if_clause}
+\begin{itemize}
+  \item conditional offload
+\end{itemize}
 
 %-----------------------------------------------------------------------
 %------------------------- From Next Step ------------------------------
