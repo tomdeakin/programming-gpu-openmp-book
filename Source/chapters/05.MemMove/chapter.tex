@@ -77,7 +77,7 @@ This chapter will introduce the \Code{map} clause which is the primary mechanism
 
 
 \section{OpenMP array syntax}
-
+\label{sec:array_syntax}
 %% Array syntax: important as non-intuitive in C}
 %% \begin{itemize}
 %%   \item Introduce OpenMP array notation.
@@ -119,26 +119,155 @@ The array section \Code{nums[0:8:2]} would then be referring to 8 elements, star
 We don't use strides very often when programming target devices.
 
 
-\section{Explicit data sharing with the map clause}
+\section{Sharing data explicitly with the map clause}
+For data allocated on the heap, accessed via a pointer, we as programmers need to tell OpenMP what to do with it when encountering a target region.
+For this we must use a \Code{map()} clause, which is associated with the \Code{target} directives.
+We can explicitly control the movement of data using the \Code{map} clause.
+
+Looking at this very simple sketch of a program below, where we allocate some memory on the heap and then start offloading to a target device.
+Following the implicit rules, all the scalar variables, and the pointers, are mapped \Code{firstprivate}.
+But the data that we allocated, accessed via the \Code{A} pointer is not copied at all --- it remains on the host inaccessible to the device.
+
+\begin{Verbatim}
+int N = 1024;
+int* A = malloc(sizeof(int) * N);
+
+#pragma omp target
+{
+  // N and A exist here, as firstprivate variables.
+  // *A, A[0] (the data A points to) _does not_ exist here!
+}
+\end{Verbatim}
+
+In order to make the data that \Code{A} points to available on the target device, we add the \Code{map()} clause to the \Code{target} directive.
+We must use the OpenMP array syntax (recall Section~\ref{sec:array_syntax}) to describe the amount of data that needs to be copied.
+By default data in a map clause is copied to the target device at the start of the target region and from the device back to the host at the end.
+
+\begin{Verbatim}
+int N = 1024;
+int* A = malloc(sizeof(int) * N);
+
+#pragma omp target map(A[0:N])
+{
+  // N and A exist here, as firstprivate variables.
+  // *A, A[0] (the data A points to) _does_ exist here!
+}
+\end{Verbatim}
+
+The \Code{map()} clause gives us lots of power and flexibility for controlling how and what data is copied between the host memory space and the target memory space (target data environment).
 
 \subsection{The map clause}
 \label{ssec:map_clause}
+
 \begin{itemize}
-  \item Map clause on a target directive.
-  \item List notation of things to map.
-  \item to, from and tofrom.
+%  \item Map clause on a target directive.
+%  \item List notation of things to map.
+%  \item to, from and tofrom.
   \item Recall the scoped behaviour: from transfer happens on the closing curly brace.
   \item alloc and delete and release.
   \item Pointer attachment from OpenMP 5.0
-  \item Some mention of reference counting. Things only transfer based on that. Read the spec for the details.
+  \item Some mention of reference counting. Things only transfer based on that. Read the spec for the details. OpenMP 5.1 2.21.7.1 page 347.
+  \item map type modifier always, close
 \end{itemize}
 
+The movement of data between the host and device in OpenMP is always defined as from the perspective of the host.
+It is the host that encounters the \Code{target} directive, and what data needs to be moved is also described with this in mind.
+We will always talk of ``copying data to the device'' and `copying data from the device''.
+We will try to refrain from using phrases such as ``copying data from the host to the device'' as this can become confusing with the OpenMP syntax.
+
+The \Code{map()} clause takes a list of variables to copy between the host and device, in one or both directions.
+The list of variables is a comma-separated list of variables names, and you will see much in common with the usual data-sharing clauses like \Code{private}, \Code{firstprivate}, etc.
+
+We can also specify these directions using one of the map types: \Code{to}, \Code{from} and \Code{tofrom}.
+There are other modifiers (\Code{alloc}, \Code{release} and \Code{delete}) which we will use less often and will discuss them in Section~\ref{sec:TBC}.
+
+A map type of \Code{to} will copy data that exists on the host to the device data environment on entry to the target region.
+The variables are made available on the device, and they are populated with the same values as the host.
+This is a copy of data to the device.
+
+A map type of \Code{from} will copy data from the device data environment back to the host at the end of the target region.
+Those device variables are copied back to their original locations on the host --- the location that is used is what was given in the \Code{map()} clause.
+Note that with this map type, the mapped variables exist in the device data environment but are uninitialized.
+
+A map type of \Code{tofrom} has the same effect as a map type of both \Code{to} and \Code{from}.
+Data is then copied to the device at the start of the region, and then copied from the device back to the host at the end.
+This means that the device will contain a copy of the host data, ready for use in the target region, and will return these (updated) values back to the host when the region ends.
+This is the default behaviour if a map type is not specified.
+
 \subsection{Example: Vector add on the heap}
-\begin{itemize}
-  \item Similar to vector add example so far.
-  \item Arrays now allocated on the heap.
-  \item Show use of map(tofrom) clauses to copy the data to the device, run in parallel, then copy back at end.
-\end{itemize}
+
+To see this in action, let us go back to the Vector Add program that we first saw in Chapter~\ref{chapter:target}.
+This time, in addition to parallelising it on the target device with the \BUD, we will allocate the data arrays on the heap.
+The final program is shown in Figure~\ref{code:vaddTargetMap}.
+The execution of the program proceeds in a very similar way to Section~\ref{sec:vadd_walkthrough}, but the data movement is different.
+
+\begin{CodeExample}%
+{\textbf{Vector Add program} --\small This program will add two vectors of length $N$
+to produce a third vector, running on the target device.
+}%
+{code:vaddTargetMap}
+\begin{lstlisting}
+#define N 4000;
+
+int main()
+{
+
+   float * A = malloc(sizeof(float) * N);
+   float * B = malloc(sizeof(float) * N);
+   float * C = malloc(sizeof(float) * N);
+
+   init(A,B,C); // Set initial values
+
+   #pragma omp target map(to: A[0:N], B[0:N]) map(from: C[0:N])
+   #pragma omp teams distribute parallel for simd
+   for (int i = 0; i < N; i++) {
+      C[i] = A[i] + B[i];
+   }
+}	  
+\end{lstlisting}
+\end{CodeExample}
+
+On line 12, the host encounters the target directive.
+There are no scalar variables in this program that need mapping into the device data environment\footnote{The pointers to the arrays \Code{A}, \Code{B} and \Code{C} would be mapped as zero-length arrays if they had not appeared in the \Code{map()} clauses.}.
+The pointers \Code{A}, \Code{B} and \Code{C} appear in the \Code{map()} causes.
+We have used the OpenMP array syntax to show the extent of those arrays.
+For example, \Code{A[0:N]} describes the full extent of the array \Code{A}: \Code{N} elements starting from the beginning of the array.
+The map types define when data is copied between the host and device.
+On line 12, at the start of the target region, the \Code{map(to:...)} clause will be invoked and the variables will be copied to the device.
+In this program, it is the arrays \Code{A} and \Code{B} that are copied at the start of the target region.
+
+We use a different map type for the array \Code{C}: \Code{map(from:...)}.
+This will ensure there is memory allocated for the array \Code{C} on the device, but it will be uninitialized.
+This is perfect for our loop where we write to this array, and do not read to it inside the target data region.
+The \Code{map(from:...)} clause therefore does not copy anything to the device at this point.
+But it will later copy the array from the device back to the host.
+This will occur at the end of the target region: between lines 16 and 17 in the example.
+Once the array \Code{C} has been copied back to the host, the target region has ended and so execution returns back to the host.
+
+There is a lot of similarity here to how the vector addition program from Figure~\ref{code:vaddTarget} behaved.
+In the first example, the arrays were on the stack and the OpenMP runtime was able to automatically copy the data arrays.
+In this example where the arrays are on the heap instead, we add the \Code{map()} clauses to cause the same data copies to occur.
+These copies need to happen for the program be correct.
+With more complex examples, we will start to see how having control of the data movement gives us significant opportunity to optimizing the data movement beyond what would be possible with the implicit rules.
+
+\section{Mapping Matrix Multiplication}
+We have now covered enough about memory movement to cover the matrix multiplication example in Figure~\ref{code:matmulTargetHeap} introduced at the very beginning of this chapter.
+The \Code{map(tofrom: A[0:Ndim*Pdim], B[0:Pdim*Mdim], C[0:Ndim*Mdim])} clause on the \Code{target} directive describes the data copies required.
+The OpenMP array syntax is used to show the extents of each of the three arrays.
+In this case, they are all different sizes. Note how we can have a expression in the clause.
+
+The \Code{tofrom} map type is used so that all the arrays are copied to the device at the start of the target region, and then all three are copied from the device back to the host at the end of the target region.
+Just like the vector addition program in Figure~\ref{code:vaddTargetMap}, the matrix multiplication program only updates one of the arrays, and that two of the arrays are only read from.
+As an optimization we could therefore map the \Code{A} and \Code{B} arrays with the \Code{to} map type.
+They do not change value in the target region and so it is wasteful to copy them back to the host.
+
+Importantly however, we must ensure that the \Code{C} array is properly initialized on the device.
+It would not be enough to use a \Code{from} map type because we use the \Code{+=} operator inside the target region.
+The original value of \Code{C} is updated, and so we must ensure this array in the target data environment is correctly initialized.
+We also must copy it back at the end of the target region so that the host can use the result of the matrix multiplication.
+We ensured the data would be copied at the beginning and end of the target region by using a \Code{tofrom} map type.
+
+In the remainder of this chapter, we will cover data movement optimizations to try to reduce the number of data copies where we wish data to remain resident on the target device between target regions.
 
 \section{Reductions and mapping back result.}
 \label{sec:target_reductions}
