@@ -10,20 +10,20 @@
 \label{chapter:heterogeneity}
 
 How do you summarize over 40 years of computing history in a few pages?   
-Think of a pendulum swinging from one extreme to another.  The pendulum spends very little time at
+Picture a pendulum swinging from one extreme to another.  The pendulum spends very little time at
 the low-point where forces are balanced.  In fact, that point is precisely where the pendulum is
 moving the fastest and those trying to follow the motion must struggle the most  to keep up.
 
 This mental model is a good way to think about the history of computing.  We could start with the
 works of Babbage or much later with Turing, but for the sake of brevity, let's start with the era of computing
-that emerged with the microprocessor.  In those days (the late 1970s and early '80s) a programmer
+that emerged with the microprocessor.  In those days (the late 1970s and early '1980s) a programmer
 needed to understand the low level details of the system.  A professional programmer as a matter
-of their normal work-day wrote in low level languages regularly dropping down to assembly code 
+of their normal work-day wrote in low-level languages regularly dropping down to assembly code 
 as needed.   Programming was a matter of understanding hardware bottlenecks and then working at the lowest 
-level to knock them back to get these computers (primitive by today's standards) to do what was needed.
+level to knock them back to get those computers (primitive by today's standards) to do what was needed.
 
 As the '80s progressed and the full force of Moore's Law kicked in, the game changed.   With
-microprocessor performance doubling every year, a programmer was actually punished for 
+microprocessor performance doubling every couple years, a programmer was actually punished for 
 spending too much time optimizing code for a particular system.  The pendulum had swung from
 a world where the programmer was almost a hardware engineer to the opposite.  The ability to 
 add new features instead became the focus.  Productivity and portability were the driving concerns and
@@ -39,7 +39,7 @@ ubiquitous computers filling every facet of our lives.
 Pendulums, however, keep moving.  In the early 2000s the ability to manage static effects such as electrical
 leakage came to dominate.   Power densities made cooling a major problem.  Manufacturing  microprocessors was harder. Moore's Law was 
 still with us, but it could no longer be used to double performance every couple years.
-As Herb Sutter famously observed, ``the free lunch'' for software engineers was over. 
+As Herb Sutter famously observed, for software engineers ``the free lunch was over''. 
 
 This is all ancient history at this point.  Multicore chips emerged.  Core counts were small, cache hierarchies were 
 simple, and DRAM cost models were relatively flat.   People had to write multithreaded programs.   While OpenMP
@@ -69,7 +69,9 @@ so the ``whole is greater than the sum of the parts'' by matching each part of y
 And this is where the pendulum sits today.   Programmers need to understand a great deal about the hardware.  Programmers need to 
 know which classes of algorithms map to which types of hardware.  Programmers need to understand how to target one block of 
 code to a throughput optimized device (e.g. a GPU) while another block of code asynchronously runs on another device
-that may be latency optimized (e.g. a CPU).  The pendulum will swing back.  Some day, the tools programmers use will 
+that may be latency optimized (e.g. a CPU).  
+
+The pendulum will swing back.  Some day, the tools programmers use will 
 hide those details from programmers.   That day, however, is not today.   And let's face it, when the pendulum swings to the
 blissful extreme of programmer productivity where hardware is hidden behind layers of abstraction, we know it will someday
 swing back again.  That's just how computing seems to work.
@@ -97,7 +99,7 @@ we will simplify the problem by thinking in terms of three basic processor build
 \item  the GPU
 \end{itemize}
 
-We skip many important developments in computer architecture with this oversimplification, but 
+We skip many important developments in computer architecture with this simplified view of hardware, but 
 it turns out that most of what you need to know as an application programmer working in 
 heterogeneous computing can be addressed in terms of these three basic building blocks.
 We will consider each in turn.
