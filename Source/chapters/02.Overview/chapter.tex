@@ -6,8 +6,311 @@
 
 \def\ArtDir{02.Overview/figures}%
 
+
+
 \chapter[OpenMP overview]{OpenMP overview}
-\label{chapter:overview}
+\label{chapter:OMPoverview}
+
+OpenMP is old.  The first release (OpenMP 1.0 for Fortran) was in 1997.  
+ It started as the simplest way we could think of for applications programmers 
+ in high performance computing to write multithreaded code.  The focus
+was on parallelizing loops in Fortran and the full OpenMP definition took only 40 pages.
+
+At the time we are writing this book, OpenMP is at release 5.1.  The specification covers
+Fortran, C and C++.  It includes multiple ways to parallelize loops, explicit tasks, 
+SIMD parallelism (to vectorize loops), manage complex memory hierarchies, and much 
+more (including programming GPUs, of course).
+
+With OpenMP 1.0, the entire language could be covered in a single day.  Now, it takes months if
+not years to master the entire specification.  New versions of the specification come out roughly every 
+two years.  Hence, once the language is mastered, something new comes along to expand its scope 
+even future.
+
+The situation with OpenMP would be unexpectedly frustrating, if not for one simple fact.  Nobody
+uses the entire language.  OpenMP programmers learn the foundational terminology of OpenMP and 
+a simplified common core of the language elements of OpenMP.  Most of the time, that common core
+is all a programmer needs.  When additional features of OpenMP are needed, programmers look them up in 
+the specification.  By learning and then using just those parts of OpenMP needed to solve a programming 
+problem, the complexity of OpenMP is manageable and that inner-simplicity that motivated us at the beginning
+shines through.
+
+In this chapter, we will cover the essential elements of OpenMP that all programmers use.   We will be brief
+and expose them through an investigation of the three fundamental design patterns of multithreaded programming
+with OpenMP; loop-level parallelism, SPMD, and Task-parallelism.   Then we will go back through the core
+elements of OpenMP and explain how they are organized around the behavior of both implied and explicit tasks.
+This is essential since we can't explain GPU programming in OpenMP without using those details.  We 
+then close the chapter with an overview of our journey into GPU programming in OpenMP.  
+
+\section{The fundamental design patterns of OpenMP}
+
+I will describe the fork-join model and the concept of thread teams.  I'll probably talk about 
+numbers of threads, environment variables to control threads and a few other concepts.
+
+Then I'll list the three patterns we'll cover and the program we'll use to explore them.  
+Take a look at figure~\ref{code:PiSeq}.  It's really pretty.  This is the serial or sequential code for the pi
+program. 
+
+
+
+
+\begin{CodeExample}%
+{\textbf{Sequential $\pi$ program} --\small This program carries out a numerical integration 
+of a definite integral selected such that the result should be the number $\pi$.
+}%
+{code:PiSeq}
+\begin{lstlisting}
+
+#include <stdio.h>
+#include <omp.h>
+static long num_steps = 1024*1024*1024;
+
+int main()
+{
+   double x, pi, step, sum = 0.0;
+   step = 1.0 / (double) num_steps;
+
+   for (int i = 0; i < num_steps; i++) {
+      x = (i + 0.5) * step;
+      sum += 4.0 / (1.0 + x * x);
+   }
+
+   pi = step * sum;
+   printf("pi = %lf, with %ld steps\n ", pi, num_steps);
+}
+\end{lstlisting}
+\end{CodeExample}
+
+
+
+\subsection{The SPMD pattern}
+
+ have an SPMD parallel version of this code in figure~\ref{code:piSPMD}.
+ 
+ 
+ 
+\begin{CodeExample}%
+{\textbf{OpenMP $\pi$ program, SPMD pattern} --\small This program carries out a numerical integration 
+of a definite integral selected such that the result should be the number $\pi$.  This code uses the 
+SPMD pattern.
+}%
+{code:PiSPMD}
+\begin{lstlisting}
+#include <stdio.h>
+#include <omp.h>
+
+static long num_steps = 1024*1024*1024;
+int main ()
+{
+   int numthreads;
+   double pi, step, full_sum = 0.0;
+   step = 1.0 / (double) num_steps;
+
+   #pragma omp parallel 
+   {
+      int id = omp_get_thread_num();
+      double x, partial_sum = 0;
+
+      #pragma omp single
+         numthreads = omp_get_num_threads();
+
+      for (int i = id; i < num_steps; i += numthreads) {
+         x = (i + 0.5) * step;
+         partial_sum += 4.0 / (1.0 + x*x);
+      }
+      #pragma omp critical
+         full_sum += partial_sum;
+    }
+      
+   pi = step * full_sum;
+   printf("\n pi is %f with %d with threads \n ", pi, numthreads);
+}	  
+
+\end{lstlisting}
+\end{CodeExample}
+
+
+
+\subsection{The Loop level pattern}
+
+\begin{CodeExample}%
+{\textbf{Parallel $\pi$ program, Loop parallelism pattern} --\small This program carries out a numerical integration 
+of a definite integral selected such that the result should be the number $\pi$.
+}%
+{code:PiLoop}
+\begin{lstlisting}
+
+#include <stdio.h>
+#include <omp.h>
+static long num_steps = 100000000;
+
+int main ()
+{
+   double x, pi, step, sum = 0.0;
+   int numthreads;
+   step = 1.0 / (double) num_steps;
+
+    #pragma omp parallel  
+    {
+         #pragma omp single
+              numthreads =omp_get_num_threads();
+
+         #pragma omp for private(x) reduction(+:sum) 
+            for (int i = 0; i < num_steps; i++){
+                 x = (i + 0.5) * step;
+                 sum = sum + 4.0 / (1.0 + x*x);
+	     }
+     }
+    pi = step * sum;
+    printf("\n pi is %f with %d threads\n", pi,numthreads);
+}	  
+\end{lstlisting}
+\end{CodeExample}
+
+
+
+\subsection{Divide and conquer}
+
+While we are at it, we have figure~\ref{code:PiLoop} figure~\ref{code:PiSeqDivCon} figure~\ref{code:PiParDivCon}
+
+
+\begin{CodeExample}%
+{\textbf{Sequential $\pi$ program, divide and conquer} --\small This program carries out a numerical integration 
+of a definite integral selected such that the result should be the number $\pi$.
+}%
+{code:PiSeqDivCon}
+\begin{lstlisting}
+
+#include <omp.h>
+#include <stdio.h>
+static long num_steps = 1024*1024*1024;
+#define MIN_BLK 1024*256
+double pi_comp(int Nstart, int Nfinish, double step)
+{   
+   int iblk;
+   double x, sum = 0.0, sum1, sum2;
+   if (Nfinish - Nstart < MIN_BLK){
+      for (int i = Nstart; i < Nfinish; i++) {
+         x = (i + 0.5) * step;
+         sum += 4.0 / (1.0 + x * x);
+      }
+   }
+   else {
+      iblk = Nfinish - Nstart;
+      sum1 = pi_comp(Nstart, Nfinish - iblk/2, step);
+      sum2 = pi_comp(Nfinish - iblk/2, Nfinish, step);
+      sum = sum1 + sum2;
+   }
+   return sum;
+}
+
+int main () 
+{
+   int i;
+   double step, pi, sum;
+   step = 1.0 / (double) num_steps;
+
+   sum = pi_comp(0, num_steps, step);
+   pi = step * sum;
+
+   printf(" for %ld steps pi = %f \n", num_steps, pi);
+} 
+\end{lstlisting}
+\end{CodeExample}
+
+\begin{CodeExample}%
+{\textbf{Parallel $\pi$ program, divide and conquer with tasks} --\small This program carries out a numerical integration 
+of a definite integral selected such that the result should be the number $\pi$.
+}%
+{code:PiParDivCon}
+\begin{lstlisting}
+
+#include <omp.h>
+#include <stdio.h>
+static long num_steps = 1024*1024*1024;
+#define MIN_BLK 1024*256
+
+double pi_comp(int Nstart,int Nfinish,double step)
+{ 
+   int iblk;
+   double x, sum = 0.0, sum1, sum2;
+   if (Nfinish - Nstart < MIN_BLK) {
+      for (int i = Nstart; i < Nfinish; i++){
+         x = (i + 0.5) * step;
+         sum = sum + 4.0 / (1.0 + x*x); 
+      }
+   }
+   else {
+      iblk = Nfinish - Nstart;
+      #pragma omp task shared(sum1)
+         sum1 = pi_comp(Nstart, Nfinish - iblk/2, step);
+      #pragma omp task shared(sum2)
+         sum2 = pi_comp(Nfinish - iblk/2, Nfinish, step);
+      #pragma omp taskwait
+         sum = sum1 + sum2;
+   }
+   return sum;
+}
+
+int main ()
+{
+   double step, pi, sum;
+   step = 1.0 / (double) num_steps;
+
+      #pragma omp parallel 
+      {
+         #pragma omp single
+         {
+            printf("num threads=%d", omp_get_num_threads());
+            sum = pi_comp(0, num_steps, step);
+         }
+      }
+      pi = step * sum;
+      printf(" for %ld steps pi = %f \n", num_steps, pi);
+}  
+\end{lstlisting}
+\end{CodeExample}
+
+
+
+
+
+
+
+
+
+
+\section{Tasks and the nature of OpenMP's execution model}
+
+
+\section{Our journey ahead}
+
+
+
+\begin{CodeExample}%
+{\textbf{Matrix Multiplication program} --\small This program will multiply two matrices $A$ and $B$
+to produce a third $C$ which has been set to zero, running on the target device.
+All arrays have been previously allocated in stack memory.
+}%
+{code:matmulTarget}
+\begin{lstlisting}
+void matmul(int Ndim, int Mdim, int Pdim,
+            float A[Ndim][Pdim], float B[Pdim][Mdim], float C[Ndim][Mdim]) {
+
+  #pragma omp target teams distribute parallel for simd collapse(2)
+  for (int i = 0; i < Ndim; i++) {
+    for (int j = 0; j < Mdim; j++) {
+      for(int k = 0; k < Pdim; k++) {
+	C[i][j] += A[i][k] * B[k][i];
+      }
+    }
+  }
+}
+\end{lstlisting}
+\end{CodeExample}
+
+
+
+\section{Notes: to be deleted later}
 
 Note: Use C for examples in the book. Provide Fortran supplement.
 
@@ -25,9 +328,29 @@ What are the concepts we need to build on as we construct the rest of the book? 
 \item we need mergeable tasks since ``A target task is mergable and untied''.
 \item worksharing loops including collapse, reduction, and schedule clauses
 \item for the schedule clauses, only cover static. 
-\item design patterns: SPMD, loop-level parallelism, fork-join
+\item design patterns: SPMD, loop-level parallelism, divide-and-conquer
 \end{itemize}
 I need everyone working on the book to go over this list and tell me what is missing.
+
+\section{The plan for the chapter}
+
+The running example will be matrix multiply.  I'd use the PI program but I've used that so much in
+other places that its getting a bit old. Time to try something else.   Since we already decided to
+close the chapter with matrix multiply, why not use it throughout the chapter?  This will be easy for 
+SPMD and loop-level parallelism, but a bit trickier for divide-and-conquer.   Environment variables.
+
+I will present a patterns based discussion mixed with a bit of history.
+
+SPMD matrix multiply to introduce threads, fork join, the parallel construct, structured blocks, runtime-library-routines and
+synchronization.   I will cover default rules of data sharing
+
+Then loop-level parallelism.  Cover worksharing, data environment clauses, schedule(static) and reductions.  
+collapse
+
+Memory consistency, flushes, barriers, nowait.
+
+Tasks in openMP.  Divide and conquer algorithms.   implied tasks, explicit tasks, tied vs untied
+tasks, initial task, and mergeable tasks.  We need mergeable tasks since ``A target task is mergable and untied''.
 
 
 \section{Set the Background/Context for the book.}
@@ -67,11 +390,10 @@ This section will give the reader a very concise introduction into enough OpenMP
 \begin{itemize}
   \item private and firstprivate.
   \item shared and default(none) clauses.
-  \item Need to be careful how we explain shared memory given the memory sharing rules between host/target weâ€™ll introduce later.
+  \item Need to be careful how we explain shared memory given the memory sharing rules between host/target we wi€™ll introduce later.
 \end{itemize}
 
 \subsection{Tasks in OpenMP}
-% Question do we do this now, or in the asynchronous chapter?
 \begin{itemize}
    \item What is a task in OpenMP
    \item Explicit tasks 
@@ -104,6 +426,29 @@ This sets out the climax of the book, and excites that this book is going to exp
 Introduce Matrix Multiply and
 \Code{#pragma target teams distribute parallel for simd collapse(2)}
 NB: put the arrays on the stack.
+
+\section{another idea}
+
+You probably already know quite a bit about OpenMP.  It is around 25 years old and shows no sign of fading away.  As long as
+CPUs contain multiple cores, there will be need for OpenMP.   Anyone picking up this book has probably been exposed to 
+OpenMP already.  If not, we recommend the book \emph{The OpenMP Common Core: making OpenMP simple again}.  
+To make this book self contained, we will briefly cover the major topics in OpenMP that you need to understand in order to
+work with a GPU using OpenMP.
+
+\subsection{The key patterns}
+
+Most programmers think of OpenMP as a system for turning serial loops into parallel loops.  Start with a well tested serial program.  
+Then go through the following steps loop by loop to create a parallel program.
+\begin{itemize}
+\item Find a compute intensive loop.
+\item Find the concurrency in the loop.  
+\item Transform the loop body to expose the concurrency; that is, make changed needed 
+so the loop iterations can execute in any order and the result will still be correct.
+\item Add OpenMP directives to run the concurrent iterations in parallel
+\end{itemize}
+We show and example of this process in figure-pi-program
+
+If parallel loops were all you could do with OpenMP, the language would not have lasted as long as it has. 
 
 
 
