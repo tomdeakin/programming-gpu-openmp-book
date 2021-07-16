@@ -1,0 +1,19 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%  
+%% chapter 8: Interop
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\def\ArtDir{08.Interop/figures}
+
+\chapter{Interop}
+\label{chapter:interop}
+
+\section{Interop}
+\label{sec:interop}
+\begin{itemize}
+  \item \Code{use_device_ptr} and \Code{is_device_ptr}
+  \item Example: BLAS/LAPACK library call
+  \item This seems an important path for legacy codes using those vendor APIs
+  \item Async API call, need to use a callback to \Code{omp_fulfill_event} and the \Code{detach} clause
+\end{itemize}

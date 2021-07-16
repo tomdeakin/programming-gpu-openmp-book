@@ -1,6 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%  
-%% chapter 6: Advanced topics: async, multi-gpu and interop
+%% chapter 6: Advanced topics: async and multi-gpu
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -102,6 +102,7 @@ different tasks can be run on different devices in parallel.
 \label{sec:in_reduction}
 \begin{itemize}
   \item task reductions.
+  \item might be covered in Chapter~\ref{chapter:memory}\dots
 \end{itemize}
 
 
@@ -113,15 +114,6 @@ different tasks can be run on different devices in parallel.
 \end{itemize}
 
 
-
-\section{Interop}
-\label{sec:interop}
-\begin{itemize}
-  \item \Code{use_device_ptr} and \Code{is_device_ptr}
-  \item Example: BLAS/LAPACK library call
-  \item This seems an important path for legacy codes using those vendor APIs
-  \item Async API call, need to use a callback to \Code{omp_fulfill_event} and the \Code{detach} clause
-\end{itemize}
 
 \section{Further misc topics}
 \subsection{if clause}
