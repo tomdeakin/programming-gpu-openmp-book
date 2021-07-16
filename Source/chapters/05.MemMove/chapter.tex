@@ -194,6 +194,11 @@ Data is then copied to the device at the start of the region, and then copied fr
 This means that the device will contain a copy of the host data, ready for use in the target region, and will return these (updated) values back to the host when the region ends.
 This is the default behaviour if a map type is not specified.
 
+It is worth noting at this point that the copying of data occurs when the target region is executed.
+So far, this is straight away when the \Code{target} directive is encountered by the host.
+Later, in Chapter~\ref{chapter:multi_gpu} we will introduce the mechanisms for launching target regions \emph{asynchronously}, so that the host can continue doing something else.
+This distinction of when the mapping happens will make a difference there, which is why we point it out at this point.
+
 \subsection{Example: Vector add on the heap}
 
 To see this in action, let us go back to the Vector Add program that we first saw in Chapter~\ref{chapter:target}.
@@ -271,20 +276,132 @@ In the remainder of this chapter, we will cover data movement optimizations to t
 
 \section{Reductions and mapping back result.}
 \label{sec:target_reductions}
-\begin{itemize}
-  \item In OpenMP 5, the reduction result is brought back automatically.
-  \item Need to add a note that in OpenMP 4.5, need to use the map clause to do a reduction on the device.
-  \item map(tofrom: scalar)
-  \item Explain that without this it is firstprivate and not copied back.
-  \item Explain interaction of reduction clause with teams and threads and simd in the OpenMP hierarchy of parallelism.
-\end{itemize}
+%% \begin{itemize}
+%%   \item In OpenMP 5, the reduction result is brought back automatically.
+%%   \item Need to add a note that in OpenMP 4.5, need to use the map clause to do a reduction on the device.
+%%   \item map(tofrom: scalar)
+%%   \item Explain that without this it is firstprivate and not copied back.
+%%   \item Explain interaction of reduction clause with teams and threads and simd in the OpenMP hierarchy of parallelism.
+%% \end{itemize}
 
-\subsection{Example: Pi}
-\begin{itemize}
-  \item Show pi reduction example.
-  \item Has no data arrays to map.
-  \item But need to map the reduction result.
-\end{itemize}
+What happens to variables that appear in \Code{reduction} clauses?
+We know (from Chapter~\ref{chapter:overview} that variables cannot appear in more than one data sharing clause\footnote{Other than appearing in both \Code{firstprivate} and \Code{lastprivate}.}.
+This means the same list item cannot be put into both a \Code{reduction} clause and a \Code{map} clause on the same OpenMP directive.
+We need to know what happens for reduction variables.
+
+What you have to do depends a little on how we write out OpenMP directives.
+There are two cases we'll look at: first, the combined directives, such as the \BUD; and secondly where we split out the \Code{target} directive on its own line in the source code.
+
+When we use a combined construct like the \BUD to run our parallel loops on a target device, if that loop is a reduction, we will need to add a \Code{reduction} clause for the reduction variable.
+This indicates to OpenMP that a reduction needs to take place, and it will do the right thing to compute the final, reduced result.
+Where does this result go when it's ready?
+When we use a combined construct, that is one that begins \Code{target teams}, the reduction variable will implicitly also be mapped \Code{tofrom}.
+So for a variable \Code{sum}, by stating it is a reduction variable with the reduction clause as \Code{reduction(+:sum)}, it additionally behaves as if there was also a \Code{map(tofrom:sum)} clause present\footnote{See the OpenMP 5.1 specification, page 254, lines 4--7.}.
+This means that when the target region begins executing, the original value is copied to the target device, the reduction is executed, and the result is copied back to the host at the end of the target region execution.
+
+To see this in action, let's look back at our program which computed Pi from earlier (\ref{the_pi_example}).
+Figure~\ref{code:piTarget} shows the program which runs on the target device.
+We use the \BUD for parallel execution along with the \Code{reduction} clause, but we are going to focus on the data mapping.
+The variables inside the target region are: \Code{step}, \Code{sum}, and \Code{i}.
+The \Code{i} is the loop iteration variable, and so it by default \Code{private}.
+The \Code{step} scalar variable is mapped \Code{firstprivate} according to the implicit data mapping rules back in Section~\ref{sec:implicit_map_scalars}.
+Finally, there is the \Code{sum} variable, but this is listed in the \Code{reduction} clause: it is a reduction variable.
+Therefore, it behaves as if a \Code{map(tofrom: sum)} was also present on the directive (line 7).
+The variable is copied to the device at the start of the target region.
+Once the reduction has finished, the final scalar result will be copied back to the host at the end of the target region.
+
+\begin{CodeExample}%
+{\textbf{Pi program} --\small This program will compute pi on the target device.
+Note how the result is implicitly mapped from the device to the host.
+}%
+{code:piTarget}
+\begin{lstlisting}
+#include <stdio.h>
+static long num_steps = 100000000;
+int main() {
+  double sum = 0.0;
+  double step = 1.0 / (double)num_steps;
+
+  #pragma omp target teams distribute parallel for simd reduction(+:sum)
+  for (int i = 0; i < num_steps; i++) {
+    double x = (i + 0.5) * step;
+    sum += 4.0 / (1.0 + x * x);
+  }
+
+  double pi = step * sum;
+  printf(" pi with %ld steps is %lf\n", num_steps, pi);
+}
+\end{lstlisting}
+\end{CodeExample}
+
+We might wonder what an OpenMP implementation has to do to compute the final reduction result.
+Each OpenMP team will have some partial reduction value.
+But there is no way to synchronize between OpenMP teams, that is until the target region finishes executing.
+An OpenMP implementation is responsible for completing the reduction operation, collating the result from each team and returning the value to the host.
+The way it does this is going to depend on the type of target device, and on the quality of implementation.
+As such, by using the \Code{reduction} clause itself, we can ensure that our programs are likely going to perform well on different devices.
+
+Now to address the other case, where we split the combined \Code{target teams} directive across two lines, so that the \Code{target} and \Code{teams} directives are separate.
+
+\begin{CodeExample}%
+{\textbf{Pi program} --\small This program will compute pi on the target device.
+Note how the result is implicitly mapped from the device to the host.
+}%
+{code:piTargetInReduction}
+\begin{lstlisting}
+#include <stdio.h>
+static long num_steps = 100000000;
+int main() {
+  double sum = 0.0;
+  double step = 1.0 / (double)num_steps;
+
+  #pragma omp target in_reduction(+:sum)
+  #pragma omp teams distribute parallel for simd reduction(+:sum)
+  for (int i = 0; i < num_steps; i++) {
+    double x = (i + 0.5) * step;
+    sum += 4.0 / (1.0 + x * x);
+  }
+
+  double pi = step * sum;
+  printf(" pi with %ld steps is %lf\n", num_steps, pi);
+}
+\end{lstlisting}
+\end{CodeExample}
+
+\hl{TODO: target in\_reduction clause. Will always be mapped tofrom, 5.1:254:8--10. Will come back to this later because no compiler currently supports this clause.}
+
+
+\subsection{Here be dragons: reductions in OpenMP 4.5}
+In OpenMP 4.5, there was a small oversight in the specification where the above rule had to be broken in order to collect the result of a reduction.
+If you just used a \Code{reduction} clause, as we do now, the implicit mapping rules were applied and the reduction variable was unfortunately mapped as \Code{firstprivate}, which meant there was no way to get the result back!
+The reduction variable (\Code{sum}) needed to be placed in the \Code{reduction} clause so that the reduction operation happened, but it also needed to be used in a \Code{map} clause so that the host could recover the result.
+Figure~\ref{code:omp45Reduction} shows what was required to generate correct answers.
+All major compilers supported this so that reductions were functional, despite the violation of the rules.
+
+This was of course resolved in later versions of the OpenMP specification, beginning with version 5.0.
+It is unlikely that there are many OpenMP implementations that do not yet support this OpenMP 5.0 feature, but it is useful to be aware of this just in case.
+Most major OpenMP implementations now support this part of the OpenMP 5.0 specification so that we can write our OpenMP programs correctly following the new standard just as we have explained in the main part of Section~\ref{sec:target_reductions}.
+
+\begin{CodeExample}%
+{\textbf{OpenMP 4.5 reduction mapping example} --\small In OpenMP 4.5, developers had to ignore the specification and include
+the reduction variable in the reduction clause and the map clause. This is no longer allowed (or necessary) in OpenMP 5.0.
+}%
+{code:omp45Reduction}
+\begin{lstlisting}
+#define N 1024
+int A[1024]; init(A);
+
+double sum = 0.0;
+
+#pragma omp target teams distribute parallel for simd reduction(+:sum) map(tofrom:sum)
+for (int i = 0; i < N; ++i) {
+  sum += A[i];
+}
+
+printf("sum=%lf\n", sum);
+\end{lstlisting}
+\end{CodeExample}
+
 
 \section{Data regions}
 \begin{itemize}
@@ -335,6 +452,7 @@ In the remainder of this chapter, we will cover data movement optimizations to t
   \item Will be remapped/reevaluated on each target region.
   \item How do you do pointer swapping in a target data region.
   \item How do you do pointer swapping when you use target enter/exit.
+  \item Note that mapping happens at execution, but uses information when encountered.
 \end{itemize}
 
 \section{Example: Jacobi or CG or simple linear solver.}
