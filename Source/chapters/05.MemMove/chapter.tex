@@ -165,7 +165,7 @@ The \Code{map()} clause gives us lots of power and flexibility for controlling h
 %  \item to, from and tofrom.
   \item Recall the scoped behaviour: from transfer happens on the closing curly brace.
 %  \item alloc and delete and release.
-  \item Pointer attachment from OpenMP 5.0
+  \item Pointer attachment from OpenMP 5.0 §2.21.7.2
   \item Some mention of reference counting. Things only transfer based on that. Read the spec for the details. OpenMP 5.1 2.21.7.1 page 347.
 %  \item map type modifier always, close
 \end{itemize}
@@ -404,15 +404,46 @@ printf("sum=%lf\n", sum);
 \end{CodeExample}
 
 
-\section{Data regions}
-\begin{itemize}
-  \item Motivation: so far expressed data movement for each target region.
-  \item Wasteful as can often just leave it there between target regions.
-  \item Multiple target regions, leaving data resident.
-  \item Motivating example: multiple subsequent transformations to data, and/or iterative solve.
-  \item Wasteful as only want to do the mapping: both writing and in terms of optimal data movement.
-  \item Idea of target data region. Inherited by target regions. Data already exists on the device.
-\end{itemize}
+\section{Keeping data resident in the device data environment}
+In all our examples so far, we've looked at how data is transferred between the host and device (and back again) when target regions are encountered.
+Importantly, we've only considered a single target region.
+The structure of the program starts on the host, transfers data and execution to the device for some time, and then returns execution and some data back to the host.
+But many applications will have a number of target regions.
+
+For example, consider an iterative algorithm, where for every iteration we have a target region:
+\begin{Verbatim}
+for (int it = 0; it < num_iters; ++it) {
+  #pragma omp target map(A[0:N])
+  {
+    // Update the data stored in A
+    // on the target device
+    update(A, it);
+  }
+  // Then, use A on the host
+  use(A);
+}
+\end{Verbatim}
+Here, the data array \Code{A} will be copied to and from the device \emph{every} iteration.
+The host doesn't need the data until all the iterations (the \Code{it} for-loop) are completed.
+But the array is copied to the device at the start of each iteration, and copied back the host at the end, only for it to be copied to the device again unchanged at the start of the next iteration.
+This is very wasteful! Memory movement is expansive compared to computation (as we said back in Chapter~\ref{chapter:heterogeneity}), and moving it unnecessarily is clearly not optimal.
+
+We can solve this problem by using the OpenMP target data constructs.
+These give us the controls to leave data on the target device, ready to be accessed again in a subsequent target region.
+Data is left on the device between target regions.
+We will describe the \emph{device data environment} and how to interact with it with the \Code{target data} and \Code{target update} constructs.
+
+The OpenMP specification says that a \emph{data environment} consists of all the variables associated with a particular region.
+There exists the \emph{device data environment} which is the memory available to device and was created implicitly when the program started running.
+When we map variables to and from the device (using \Code{map} clauses) at the beginning and end of target regions, they are placed into this device data environment.
+This means that they are available for use during the target region.
+We can use the \Code{target data} constructs to map variables into the device data environment \emph{without} also transferring execution to the device as it would for the \Code{target} directive.
+This means that we can handle the copying of data separately to the transfer of execution.
+
+There is a lot of detail about how everything gets wired up together.
+We will explain some of this through the examples, but we won't necessarily cover all the cases that are covered by the formal language in the OpenMP specification.
+Those rules do behave intuitively, and the most common cases will be covered in the following examples.
+
 
 \subsection{Target data directive}
 \label{ssec:target_data}
@@ -425,6 +456,15 @@ printf("sum=%lf\n", sum);
   \item From destination determined at start of region.
 \end{itemize}
 
+\subsection{Target update directive}
+\label{ssec:target_update}
+\begin{itemize}
+  \item Need to get data back in the middle of target data region.
+  \item target update directive.
+  \item Uses same map clauses as before.
+  \item Example: convergence, or halo exchange.
+\end{itemize}
+
 \subsection{Target enter/exit data}
 \label{ssec:target_enter_exit_data}
 \begin{itemize}
@@ -434,15 +474,6 @@ printf("sum=%lf\n", sum);
   \item Example use just after every allocation.
   \item Means this helps with C++ class data in constructors.
   \item Example: Show the same target data example with the target enter/exit data.
-\end{itemize}
-
-\subsection{Target update directive}
-\label{ssec:target_update}
-\begin{itemize}
-  \item Need to get data back in the middle of target data region.
-  \item target update directive.
-  \item Uses same map clauses as before.
-  \item Example: convergence, or halo exchange.
 \end{itemize}
 
 \subsection{Pointer swapping}
