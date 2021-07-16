@@ -285,7 +285,7 @@ In the remainder of this chapter, we will cover data movement optimizations to t
 %% \end{itemize}
 
 What happens to variables that appear in \Code{reduction} clauses?
-We know (from Chapter~\ref{chapter:overview} that variables cannot appear in more than one data sharing clause\footnote{Other than appearing in both \Code{firstprivate} and \Code{lastprivate}.}.
+We know (from Chapter~\ref{chapter:OMPoverview} that variables cannot appear in more than one data sharing clause\footnote{Other than appearing in both \Code{firstprivate} and \Code{lastprivate}.}.
 This means the same list item cannot be put into both a \Code{reduction} clause and a \Code{map} clause on the same OpenMP directive.
 We need to know what happens for reduction variables.
 
@@ -299,7 +299,7 @@ When we use a combined construct, that is one that begins \Code{target teams}, t
 So for a variable \Code{sum}, by stating it is a reduction variable with the reduction clause as \Code{reduction(+:sum)}, it additionally behaves as if there was also a \Code{map(tofrom:sum)} clause present\footnote{See the OpenMP 5.1 specification, page 254, lines 4--7.}.
 This means that when the target region begins executing, the original value is copied to the target device, the reduction is executed, and the result is copied back to the host at the end of the target region execution.
 
-To see this in action, let's look back at our program which computed Pi from earlier (\ref{the_pi_example}).
+To see this in action, let's look back at our program which computed Pi from earlier (Figure~\ref{code:PiLoop}).
 Figure~\ref{code:piTarget} shows the program which runs on the target device.
 We use the \BUD for parallel execution along with the \Code{reduction} clause, but we are going to focus on the data mapping.
 The variables inside the target region are: \Code{step}, \Code{sum}, and \Code{i}.
