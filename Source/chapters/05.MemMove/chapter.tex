@@ -447,14 +447,75 @@ Those rules do behave intuitively, and the most common cases will be covered in 
 
 \subsection{Target data directive}
 \label{ssec:target_data}
-\begin{itemize}
-  \item Scoped target data region.
-  \item Useful for lots of kernels running after each other.
-  \item Show an example of this.
-  \item No need to map on the target regions themselves.
-  \item Downsides are the structured block requirements.
-  \item From destination determined at start of region.
-\end{itemize}
+%% \begin{itemize}
+%%   \item Scoped target data region.
+%%   \item Useful for lots of kernels running after each other.
+%%   \item Show an example of this.
+%%   \item No need to map on the target regions themselves.
+%%   \item Downsides are the structured block requirements.
+%%   \item From destination determined at start of region.
+%% \end{itemize}
+
+We'll begin with the simplest way to keep data resident on the device between target regions by showing the \Code{target data} directive.
+This will give us the opportunity to show much of the mechanics around this.
+They define a structured block of code for which data remains resident on the device.
+In complex applications, describing data in a structured block of code is inconvenient, and so later in Section~\ref{ssec:target_enter_exit_data} we will show you how to do this in a more unstructured way where we don't have to follow programming language scoping rules.
+But for now, we can learn most of what we need with the structured version.
+
+The code in Figure~\ref{code:targetDataRegion} shows a simple program that initalises two arrays, and adds one to the other.
+We want to do as much of this computation on the target device.
+The program first allocates and initalises memory for the arrays in the host memory space (on the heap) on lines 2--3.
+
+\begin{CodeExample}%
+{\textbf{Target data region example} --\small The arrays are kept resident on the device between target regions, and mapped from/to the host once.
+}%
+{code:targetDataRegion}
+\begin{lstlisting}
+const int N = 1024;
+int *A = malloc(sizeof(int)*N); initA(A,N);
+int *B = malloc(sizeof(int)*N); initB(B,N);
+
+#pragma omp target data map(tofrom: A[0:N], B[0:N])
+{
+  #pragma omp target teams distribute parallel for simd
+  for (int i = 0; i < N; ++i)
+    A[i] += 1;
+
+  #pragma omp target teams distribute parallel for simd
+  for (int i = 0; i < N; ++i)
+    B[i] += 2;
+
+  #pragma omp target teams distribute parallel for simd
+  for (int i = 0; i < N; ++i)
+    A[i] += B[i];
+}
+
+// Continue using A and B on the host
+use(A, B);
+\end{lstlisting}
+\end{CodeExample}
+
+We have three target regions in this program.
+The first, lines 7--9, updates array \Code{A}.
+It's a simplistic example, so the update isn't very complicated, but you could imagine this update was more involved.
+The second, lines 11--13, updates array \Code{B}.
+The third, lines 15--17, adds array \Code{B} to array \Code{A} element-wise.
+Each of these is performed in turn, and the host waits for each target region to execute.
+
+Notice how there are no \Code{map} clauses on any of these target directives.
+This means that all the variables will be mapped by the implicit rules (scalars as \Code{firstprivate}, etc.).
+So how do we make sure the arrays \Code{A} and \Code{B} are copied to the device?
+We do this on line 5, where the map clause is used on the \Code{target data} construct.
+This creates a data environment on the target for the duration of the scope, that is lines 5--18.
+The map clauses behaves just the same as it does for a \Code{target}, but execution isn't transferred to the device: just the data is copied.
+In this example, the arrays are copied to the device at the start of the target data region on line 5, and copied back to the host at the end of the target data region on line 18.
+In between, during the data region, those arrays are present in the device data environment, ready to be used by any target regions that execute.
+Importantly, the arrays aren't copied back to the host until the end of the target data region on line 18.
+The data is staying resident on the device between target regions.
+
+Note that the host is not allowed to access these arrays during the scope of the target data region.
+Doing so would be undefined, and so anything could happen. We'll show you how to access data on the host whilst inside a target data region in the next Section~\ref{ssec:target_update}.
+
 
 \subsection{Target update directive}
 \label{ssec:target_update}
