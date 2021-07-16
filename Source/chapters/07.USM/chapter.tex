@@ -1,0 +1,24 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%  
+%% chapter 7: Unified Shared Memory for Productivity
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\def\ArtDir{07.USM/figures}
+
+\chapter{Productive Memory Sharing}
+\label{chapter:USM}
+
+\section{Unified shared memory}
+\label{sec:usm}
+\begin{itemize}
+  \item OpenMP 5 add requires directive
+  \item Which unified shared memory is.
+  \item Data moves back and from at will (page fault).
+  \item Requires hardware support.
+  \item Pros: each to get started, as don't have to map.
+  \item Cons: parallelism is the easy bit, it's the data movement which is important.
+  \item In 5.0, limited performance tuning opportunities.
+  \item Mapping gives you the control for optimal performance.
+\end{itemize}
+
