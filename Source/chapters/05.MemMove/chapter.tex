@@ -164,10 +164,10 @@ The \Code{map()} clause gives us lots of power and flexibility for controlling h
 %  \item List notation of things to map.
 %  \item to, from and tofrom.
   \item Recall the scoped behaviour: from transfer happens on the closing curly brace.
-  \item alloc and delete and release.
+%  \item alloc and delete and release.
   \item Pointer attachment from OpenMP 5.0
   \item Some mention of reference counting. Things only transfer based on that. Read the spec for the details. OpenMP 5.1 2.21.7.1 page 347.
-  \item map type modifier always, close
+%  \item map type modifier always, close
 \end{itemize}
 
 The movement of data between the host and device in OpenMP is always defined as from the perspective of the host.
@@ -474,6 +474,18 @@ printf("sum=%lf\n", sum);
   \item Device data environment formal definition.
 \end{itemize}
 
+\subsection{Allocating and Deleting variables}
+\begin{itemize}
+  \item Sometimes don't want to copy, just want memory.
+  \item alloc and release map-type
+  \item delete map-type
+\end{itemize}
+
+\subsection{Map Type modifiers}
+\begin{itemize}
+  \item In 5.x.
+  \item always, close, present
+\end{itemize}
 
 \subsection{Declare target}
 \label{ssec:declare_target}
